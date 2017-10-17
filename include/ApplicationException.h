@@ -8,7 +8,7 @@ using namespace std;
 class ApplicationException : public exception
 {
     public:
-        ApplicationException(const char* message) : message(message) {}
+        ApplicationException(const string& message) : message(message) {}
 
         virtual ~ApplicationException() {}
 

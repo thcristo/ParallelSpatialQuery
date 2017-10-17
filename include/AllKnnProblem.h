@@ -24,7 +24,7 @@ typedef struct{
 class AllKnnProblem
 {
     public:
-        AllKnnProblem(string inputFilename, string trainingFilename, int numNeighbors)
+        AllKnnProblem(const string& inputFilename, const string& trainingFilename, int numNeighbors)
         {
             this->inputFilename = inputFilename;
             this->trainingFilename = trainingFilename;
@@ -102,28 +102,43 @@ class AllKnnProblem
             pTrainingDataset = new vector<Point>();
             pTrainingDataset->reserve(numTrainingLines);
 
-            LoadPoints(inputFile, *pInputDataset);
-            LoadPoints(trainingFile, *pTrainingDataset);
+            inputFile.clear();
+            inputFile.seekg(0, ios_base::beg);
+
+            trainingFile.clear();
+            trainingFile.seekg(0, ios_base::beg);
+
+            LoadPoints(inputFilename, inputFile, *pInputDataset);
+            LoadPoints(trainingFilename, trainingFile, *pTrainingDataset);
 
         }
 
-        void LoadPoints(ifstream& file, vector<Point>& points)
+        void LoadPoints(const string& filename, ifstream& file, vector<Point>& points)
         {
+            long linenum = 0;
+
             while (file.good())
             {
                 string line;
                 getline(file, line);
+                ++linenum;
                 if (line.empty())
                     continue;
+
                 stringstream ss(line);
 
                 Point point = {0, 0.0, 0.0};
 
-                ss >> point.id;
-                ss >> point.x;
-                ss >> point.y;
-
-                points.push_back(point);
+                if ( (ss >> point.id) && (ss >> point.x) && (ss >> point.y) )
+                {
+                    points.push_back(point);
+                }
+                else
+                {
+                    stringstream s;
+                    s << "Error at reading file " << filename << " at line " << linenum;
+                    throw ApplicationException(s.str());
+                }
             }
         }
 

@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="10 E:\Files\eap\de\start\data\small-real-data\NArrpointNNew.txt E:\Files\eap\de\start\data\small-real-data\NArdpointNNew.txt 100 10000" />
+				<Option parameters="10 E:\Files\eap\de\start\data\small-real-data\NArdpointNNew.txt  E:\Files\eap\de\start\data\small-real-data\NArrpointNNew.txt" />
 				<Compiler>
 					<Add option="-g" />
 					<Add directory="include" />
@@ -22,6 +22,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option parameters="10 E:\Files\eap\de\start\data\small-real-data\NArdpointNNew.txt E:\Files\eap\de\start\data\small-real-data\NArrpointNNew.txt" />
 				<Compiler>
 					<Add option="-O2" />
 					<Add directory="include" />
