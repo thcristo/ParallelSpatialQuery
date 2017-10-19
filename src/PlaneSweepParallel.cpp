@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
         cout << "Read " << problem.GetInputDataset().size() << " input points and " << problem.GetTrainingDataset().size() << " training points." << endl;
 
         BruteForceAlgorithm bruteForce;
-        bruteForce.Process(problem);
+        unique_ptr<AllKnnResult> pResult = bruteForce.Process(problem);
 
         return 0;
     }

@@ -10,9 +10,13 @@ class ParallelPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
     public:
         ParallelPlaneSweepAlgorithm();
         virtual ~ParallelPlaneSweepAlgorithm();
-        AllKnnResult* Process(const AllKnnProblem& problem) const  override
+        unique_ptr<AllKnnResult> Process(const AllKnnProblem& problem) const  override
         {
-            return new AllKnnResult();
+            int numNeighbors = problem.GetNumNeighbors();
+
+            unique_ptr<neighbors_container_t> pNeighbors = this->CreateNeighborsContainer(problem.GetInputDataset(), numNeighbors);
+
+            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighbors));
         }
 
     protected:

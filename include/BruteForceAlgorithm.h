@@ -12,23 +12,14 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
         virtual ~BruteForceAlgorithm() {}
 
 
-        AllKnnResult* Process(const AllKnnProblem& problem) const override
+        unique_ptr<AllKnnResult> Process(const AllKnnProblem& problem) const override
         {
             int numNeighbors = problem.GetNumNeighbors();
 
-            neighbors_container_t* pNeighbors = this->CreateNeighborsContainer(problem.GetInputDataset(), numNeighbors);
-            /*
-            for (int i=0; i < inputPointsNum; ++i)
-            {
-                for (int j=0; j < trainingPointsNum; ++j)
-                {
+            unique_ptr<neighbors_container_t> pNeighbors = this->CreateNeighborsContainer(problem.GetInputDataset(), numNeighbors);
 
 
-                }
-            }
-            */
-
-            return new AllKnnResult();
+            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighbors));
         }
     protected:
 

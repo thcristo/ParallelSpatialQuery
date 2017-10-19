@@ -1,38 +1,20 @@
 #ifndef ABSTRACTALLKNNALGORITHM_H
 #define ABSTRACTALLKNNALGORITHM_H
 
-#include <set>
-#include <unordered_map>
 #include <vector>
 #include <limits>
+#include <memory>
 #include "AllKnnProblem.h"
 #include "AllKnnResult.h"
+#include "PlaneSweepParallel.h"
 
 using namespace std;
-
-typedef struct{
-    Point* point;
-    double distance;
-} Neighbor;
-
-class PointComparer
-{
-    public :
-        bool operator()(const Neighbor& n1, const Neighbor& n2) const
-        {
-            return n1.distance < n2.distance;
-        }
-};
-
-
-typedef multiset<Neighbor, PointComparer> point_neighbors_t;
-typedef unordered_map<int, point_neighbors_t> neighbors_container_t;
 
 class AbstractAllKnnAlgorithm
 {
     public:
         virtual ~AbstractAllKnnAlgorithm() {}
-        virtual AllKnnResult* Process(const AllKnnProblem& problem) const = 0;
+        virtual unique_ptr<AllKnnResult> Process(const AllKnnProblem& problem) const = 0;
 
     protected:
         AbstractAllKnnAlgorithm() {}
@@ -45,11 +27,11 @@ class AbstractAllKnnAlgorithm
          *
          */
 
-        neighbors_container_t* CreateNeighborsContainer(const vector<Point>& inputDataset, int numNeighbors) const
+        unique_ptr<neighbors_container_t> CreateNeighborsContainer(const vector<Point>& inputDataset, int numNeighbors) const
         {
             try
             {
-                neighbors_container_t* pContainer = new neighbors_container_t(inputDataset.size());
+                unique_ptr<neighbors_container_t> pContainer(new neighbors_container_t(inputDataset.size()));
 
                 vector<Neighbor> defaultNeighbors(numNeighbors, {nullptr, numeric_limits<double>::max()});
 

@@ -7,21 +7,18 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <memory>
 #include "ApplicationException.h"
+#include "PlaneSweepParallel.h"
+
 using namespace std;
-
-typedef struct{
-    long id;
-    double x;
-    double y;
-} Point;
-
 
 
 class AllKnnProblem
 {
     public:
         AllKnnProblem(const string& inputFilename, const string& trainingFilename, int numNeighbors)
+            : pInputDataset(new vector<Point>), pTrainingDataset(new vector<Point>)
         {
             this->inputFilename = inputFilename;
             this->trainingFilename = trainingFilename;
@@ -31,10 +28,7 @@ class AllKnnProblem
 
         virtual ~AllKnnProblem()
         {
-            if (pInputDataset)
-                delete pInputDataset;
-            if (pTrainingDataset)
-                delete pTrainingDataset;
+
         }
 
         vector<Point>& GetInputDataset() const
@@ -58,8 +52,8 @@ class AllKnnProblem
         string inputFilename;
         string trainingFilename;
         int numNeighbors;
-        vector<Point>* pInputDataset;
-        vector<Point>* pTrainingDataset;
+        unique_ptr<vector<Point>> pInputDataset;
+        unique_ptr<vector<Point>> pTrainingDataset;
 
         void LoadDataFiles()
         {
@@ -93,10 +87,8 @@ class AllKnnProblem
                 throw ApplicationException("Cannot open training file.");
             }
 
-            pInputDataset = new vector<Point>();
             pInputDataset->reserve(numInputLines);
 
-            pTrainingDataset = new vector<Point>();
             pTrainingDataset->reserve(numTrainingLines);
 
             inputFile.clear();
