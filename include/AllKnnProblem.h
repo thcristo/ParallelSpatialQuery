@@ -16,10 +16,7 @@ typedef struct{
     double y;
 } Point;
 
-typedef struct{
-    Point* point;
-    double distance;
-} Neighbor;
+
 
 class AllKnnProblem
 {
@@ -40,12 +37,12 @@ class AllKnnProblem
                 delete pTrainingDataset;
         }
 
-        vector<Point>& GetInputDataSet() const
+        vector<Point>& GetInputDataset() const
         {
             return *pInputDataset;
         }
 
-        vector<Point>& GetTrainingDataSet() const
+        vector<Point>& GetTrainingDataset() const
         {
             return *pTrainingDataset;
         }

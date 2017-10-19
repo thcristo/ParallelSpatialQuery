@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <exception>
 #include "ParallelPlaneSweepAlgorithm.h"
+#include "BruteForceAlgorithm.h"
 #include "AllKnnProblem.h"
 #include "AllKnnResult.h"
 
@@ -28,7 +29,11 @@ int main(int argc, char* argv[])
     {
         AllKnnProblem problem(argv[2], argv[3], numNeighbors);
 
-        cout << "Read " << problem.GetInputDataSet().size() << " input points and " << problem.GetTrainingDataSet().size() << " training points." << endl;
+        cout << "Read " << problem.GetInputDataset().size() << " input points and " << problem.GetTrainingDataset().size() << " training points." << endl;
+
+        BruteForceAlgorithm bruteForce;
+        bruteForce.Process(problem);
+
         return 0;
     }
     catch(exception& ex)

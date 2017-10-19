@@ -42,10 +42,7 @@
 		<Unit filename="include/ApplicationException.h" />
 		<Unit filename="include/BruteForceAlgorithm.h" />
 		<Unit filename="include/ParallelPlaneSweepAlgorithm.h" />
-		<Unit filename="src/AbstractAllKnnAlgorithm.cpp" />
 		<Unit filename="src/AllKnnResult.cpp" />
-		<Unit filename="src/BruteForceAlgorithm.cpp" />
-		<Unit filename="src/ParallelPlaneSweepAlgorithm.cpp" />
 		<Unit filename="src/PlaneSweepParallel.cpp" />
 		<Extensions>
 			<code_completion />

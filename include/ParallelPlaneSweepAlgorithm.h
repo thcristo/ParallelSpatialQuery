@@ -10,7 +10,10 @@ class ParallelPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
     public:
         ParallelPlaneSweepAlgorithm();
         virtual ~ParallelPlaneSweepAlgorithm();
-        AllKnnResult* Process(const AllKnnProblem& problem) const  override;
+        AllKnnResult* Process(const AllKnnProblem& problem) const  override
+        {
+            return new AllKnnResult();
+        }
 
     protected:
 
