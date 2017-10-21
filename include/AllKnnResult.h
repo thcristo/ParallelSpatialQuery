@@ -2,17 +2,19 @@
 #define AllKnnRESULT_H
 
 #include <memory>
-#include "PlaneSweepParallel.h"
 #include <chrono>
 #include <fstream>
+#include "PlaneSweepParallel.h"
+#include "AllKnnProblem.h"
 
 using namespace std;
 
 class AllKnnResult
 {
     public:
-        AllKnnResult(unique_ptr<neighbors_container_t>& ppNeighborsContainer, const chrono::duration<double>& elapsed,
-                     const string& filePrefix) : elapsed(elapsed), filePrefix(filePrefix)
+        AllKnnResult(unique_ptr<neighbors_container_t>& pNeighborsContainer, const chrono::duration<double>& elapsed,
+                     const string& filePrefix, const AllKnnProblem& problem)
+                     : elapsed(elapsed), filePrefix(filePrefix), problem(problem)
         {
             this->pNeighborsContainer = move(pNeighborsContainer);
         }
@@ -38,18 +40,20 @@ class AllKnnResult
 
             ofstream outFile(ss.str(), ios_base::out);
 
-            for (auto element = pNeighborsContainer->cbegin(); element != pNeighborsContainer->cend(); ++element)
+            const vector<Point>& inputDataset = problem.GetInputDataset();
+
+            for (auto inputPoint = inputDataset.cbegin(); inputPoint != inputDataset.cend(); ++inputPoint)
             {
-               outFile << element->first;
+                outFile << inputPoint->id;
 
-               auto& neighbors = element->second;
+                auto& neighbors = pNeighborsContainer->at(inputPoint->id);
 
-               for (auto neighbor = neighbors.cbegin(); neighbor != neighbors.cend(); ++neighbor)
-               {
-                   outFile << "\t(" << neighbor->point->id << "," << neighbor->distanceSquared << ")";
-               }
+                for (auto neighbor = neighbors.cbegin(); neighbor != neighbors.cend(); ++neighbor)
+                {
+                   outFile << "\t(" << neighbor->point->id << " " << neighbor->distanceSquared << ")";
+                }
 
-               outFile << endl;
+                outFile << endl;
             }
 
             outFile.close();
@@ -60,6 +64,7 @@ class AllKnnResult
         unique_ptr<neighbors_container_t> pNeighborsContainer;
         chrono::duration<double> elapsed;
         string filePrefix;
+        const AllKnnProblem& problem;
 };
 
 #endif // AllKnnRESULT_H

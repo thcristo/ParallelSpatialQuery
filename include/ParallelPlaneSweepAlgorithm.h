@@ -23,7 +23,7 @@ class ParallelPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
             auto finish = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = finish - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighbors, elapsed, "planesweep_parallel"));
+            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighbors, elapsed, "planesweep_parallel", problem));
         }
 
     protected:
