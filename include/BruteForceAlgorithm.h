@@ -2,7 +2,7 @@
 #define BRUTEFORCEALGORITHM_H
 
 #include <AbstractAllKnnAlgorithm.h>
-
+#include <chrono>
 
 class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
 {
@@ -16,10 +16,26 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
         {
             int numNeighbors = problem.GetNumNeighbors();
 
-            unique_ptr<neighbors_container_t> pNeighbors = this->CreateNeighborsContainer(problem.GetInputDataset(), numNeighbors);
+            unique_ptr<neighbors_container_t> pNeighborsContainer = this->CreateNeighborsContainer(problem.GetInputDataset(), numNeighbors);
+            neighbors_container_t& neighborsContainer = *pNeighborsContainer;
 
+            auto& inputDataset = problem.GetInputDataset();
+            auto& trainingDataset = problem.GetTrainingDataset();
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighbors));
+            auto start = chrono::high_resolution_clock::now();
+
+            for (auto inputPoint = inputDataset.cbegin(); inputPoint != inputDataset.cend(); ++inputPoint)
+            {
+                for (auto trainingPoint = trainingDataset.cbegin(); trainingPoint != trainingDataset.cend(); ++trainingPoint)
+                {
+                    CheckInsertNeighbor(*inputPoint, *trainingPoint, neighborsContainer, numNeighbors);
+                }
+            }
+
+            auto finish = chrono::high_resolution_clock::now();
+            chrono::duration<double> elapsed = finish - start;
+
+            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, "bruteforce_serial"));
         }
     protected:
 

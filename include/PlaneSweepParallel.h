@@ -11,8 +11,8 @@ typedef struct{
 } Point;
 
 typedef struct{
-    Point* point;
-    double distance;
+    const Point* point;
+    double distanceSquared;
 } Neighbor;
 
 class PointComparer
@@ -20,7 +20,7 @@ class PointComparer
     public :
         bool operator()(const Neighbor& n1, const Neighbor& n2) const
         {
-            return n1.distance < n2.distance;
+            return n1.distanceSquared < n2.distanceSquared;
         }
 };
 

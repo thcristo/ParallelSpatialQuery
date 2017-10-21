@@ -48,6 +48,33 @@ class AbstractAllKnnAlgorithm
             }
 
         }
+
+        void CheckInsertNeighbor(const Point& inputPoint, const Point& trainingPoint,
+                                 neighbors_container_t& neighborsContainer, int numNeighbors) const
+        {
+            double dsq = CalcDistanceSquared(inputPoint, trainingPoint);
+            long id = inputPoint.id;
+
+            auto& neighbors = neighborsContainer[id];
+            auto pLastNeighbor = prev(neighbors.end());
+
+            if (dsq < pLastNeighbor->distanceSquared)
+            {
+                neighbors.erase(pLastNeighbor);
+
+                Neighbor newNeighbor = {&trainingPoint, dsq};
+
+                neighbors.insert(newNeighbor);
+            }
+        }
+
+        inline double CalcDistanceSquared(const Point& p1, const Point& p2) const
+        {
+            double dx = p2.x - p1.x;
+            double dy = p2.y - p1.y;
+
+            return dx*dx + dy*dy;
+        }
 };
 
 #endif // ABSTRACTALLKNNALGORITHM_H

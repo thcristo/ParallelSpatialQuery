@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <exception>
+#include <iomanip>
+#include <chrono>
 #include "ParallelPlaneSweepAlgorithm.h"
 #include "BruteForceAlgorithm.h"
 #include "AllKnnProblem.h"
@@ -34,6 +36,9 @@ int main(int argc, char* argv[])
         BruteForceAlgorithm bruteForce;
         unique_ptr<AllKnnResult> pResult = bruteForce.Process(problem);
 
+        cout << fixed << setprecision(3) << "Brute force duration: " << pResult->duration().count() << " seconds" << endl;
+
+        pResult->SaveToFile();
         return 0;
     }
     catch(exception& ex)

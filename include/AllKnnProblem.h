@@ -31,12 +31,12 @@ class AllKnnProblem
 
         }
 
-        vector<Point>& GetInputDataset() const
+        const vector<Point>& GetInputDataset() const
         {
             return *pInputDataset;
         }
 
-        vector<Point>& GetTrainingDataset() const
+        const vector<Point>& GetTrainingDataset() const
         {
             return *pTrainingDataset;
         }
