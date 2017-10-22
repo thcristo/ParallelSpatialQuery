@@ -17,7 +17,6 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
             int numNeighbors = problem.GetNumNeighbors();
 
             unique_ptr<neighbors_container_t> pNeighborsContainer = this->CreateNeighborsContainer(problem.GetInputDataset(), numNeighbors);
-            neighbors_container_t& neighborsContainer = *pNeighborsContainer;
 
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();
@@ -26,9 +25,11 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
 
             for (auto inputPoint = inputDataset.cbegin(); inputPoint != inputDataset.cend(); ++inputPoint)
             {
+                auto& neighbors = pNeighborsContainer->at(inputPoint->id);
+
                 for (auto trainingPoint = trainingDataset.cbegin(); trainingPoint != trainingDataset.cend(); ++trainingPoint)
                 {
-                    CheckInsertNeighbor(*inputPoint, *trainingPoint, neighborsContainer, numNeighbors);
+                    CheckInsertNeighbor(inputPoint, trainingPoint, neighbors);
                 }
             }
 

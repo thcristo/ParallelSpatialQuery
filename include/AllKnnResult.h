@@ -48,9 +48,11 @@ class AllKnnResult
 
                 auto& neighbors = pNeighborsContainer->at(inputPoint->id);
 
-                for (auto neighbor = neighbors.cbegin(); neighbor != neighbors.cend(); ++neighbor)
+                while (!neighbors.empty())
                 {
-                   outFile << "\t(" << neighbor->point->id << " " << neighbor->distanceSquared << ")";
+                   auto& neighbor = neighbors.top();
+                   outFile << "\t(" << neighbor.point->id << " " << neighbor.distanceSquared << ")";
+                   neighbors.pop();
                 }
 
                 outFile << endl;

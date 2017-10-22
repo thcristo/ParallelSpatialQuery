@@ -1,8 +1,9 @@
 #ifndef PLANESWEEPPARALLEL_H_INCLUDED
 #define PLANESWEEPPARALLEL_H_INCLUDED
 
-#include <set>
 #include <unordered_map>
+#include <queue>
+#include <vector>
 
 typedef struct{
     long id;
@@ -15,7 +16,7 @@ typedef struct{
     double distanceSquared;
 } Neighbor;
 
-class PointComparer
+class NeighborComparer
 {
     public :
         bool operator()(const Neighbor& n1, const Neighbor& n2) const
@@ -25,7 +26,7 @@ class PointComparer
 };
 
 
-typedef multiset<Neighbor, PointComparer> point_neighbors_t;
+typedef priority_queue<Neighbor, vector<Neighbor>, NeighborComparer> point_neighbors_t;
 typedef unordered_map<int, point_neighbors_t> neighbors_container_t;
 
 #endif // PLANESWEEPPARALLEL_H_INCLUDED

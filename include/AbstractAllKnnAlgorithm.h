@@ -49,29 +49,27 @@ class AbstractAllKnnAlgorithm
 
         }
 
-        void CheckInsertNeighbor(const Point& inputPoint, const Point& trainingPoint,
-                                 neighbors_container_t& neighborsContainer, int numNeighbors) const
+        void CheckInsertNeighbor(vector<Point>::const_iterator inputPoint, vector<Point>::const_iterator trainingPoint,
+                                 point_neighbors_t& neighbors) const
         {
             double dsq = CalcDistanceSquared(inputPoint, trainingPoint);
-            long id = inputPoint.id;
 
-            auto& neighbors = neighborsContainer[id];
-            auto pLastNeighbor = prev(neighbors.end());
+            const auto& lastNeighbor = neighbors.top();
 
-            if (dsq < pLastNeighbor->distanceSquared)
+            if (dsq < lastNeighbor.distanceSquared)
             {
-                neighbors.erase(pLastNeighbor);
+                neighbors.pop();
 
-                Neighbor newNeighbor = {&trainingPoint, dsq};
+                Neighbor newNeighbor = {&*trainingPoint, dsq};
 
-                neighbors.insert(newNeighbor);
+                neighbors.push(newNeighbor);
             }
         }
 
-        inline double CalcDistanceSquared(const Point& p1, const Point& p2) const
+        inline double CalcDistanceSquared(vector<Point>::const_iterator p1, vector<Point>::const_iterator p2) const
         {
-            double dx = p2.x - p1.x;
-            double dy = p2.y - p1.y;
+            double dx = p2->x - p1->x;
+            double dy = p2->y - p1->y;
 
             return dx*dx + dy*dy;
         }
