@@ -5,13 +5,12 @@
 #include <chrono>
 #include "ParallelPlaneSweepAlgorithm.h"
 #include "BruteForceAlgorithm.h"
+#include "BruteForceParallelAlgorithm.h"
+#include "BruteForceParallelTBBAlgorithm.h"
 #include "AllKnnProblem.h"
 #include "AllKnnResult.h"
 
-
-
 using namespace std;
-
 
 int main(int argc, char* argv[])
 {
@@ -32,13 +31,27 @@ int main(int argc, char* argv[])
         AllKnnProblem problem(argv[2], argv[3], numNeighbors);
 
         cout << "Read " << problem.GetInputDataset().size() << " input points and " << problem.GetTrainingDataset().size() << " training points." << endl;
+        unique_ptr<AllKnnResult> pResult;
+
 
         BruteForceAlgorithm bruteForce;
-        unique_ptr<AllKnnResult> pResult = bruteForce.Process(problem);
-
+        pResult = bruteForce.Process(problem);
         cout << fixed << setprecision(3) << "Brute force duration: " << pResult->duration().count() << " seconds" << endl;
-
         pResult->SaveToFile();
+        pResult.reset();
+
+        BruteForceParallelAlgorithm bruteForceParallel;
+        pResult = bruteForceParallel.Process(problem);
+        cout << fixed << setprecision(3) << "Parallel brute force duration: " << pResult->duration().count() << " seconds" << endl;
+        pResult->SaveToFile();
+        pResult.reset();
+
+        BruteForceParallelTBBAlgorithm bruteForceParallelTBB;
+        pResult = bruteForceParallelTBB.Process(problem);
+        cout << fixed << setprecision(3) << "Parallel brute force TBB duration: " << pResult->duration().count() << " seconds" << endl;
+        pResult->SaveToFile();
+        pResult.reset();
+
         return 0;
     }
     catch(exception& ex)

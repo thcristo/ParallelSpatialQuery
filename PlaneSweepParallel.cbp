@@ -41,6 +41,8 @@
 		<Unit filename="include/AllKnnResult.h" />
 		<Unit filename="include/ApplicationException.h" />
 		<Unit filename="include/BruteForceAlgorithm.h" />
+		<Unit filename="include/BruteForceParallelAlgorithm.h" />
+		<Unit filename="include/BruteForceParallelTBBAlgorithm.h" />
 		<Unit filename="include/ParallelPlaneSweepAlgorithm.h" />
 		<Unit filename="include/PlaneSweepParallel.h" />
 		<Unit filename="src/PlaneSweepParallel.cpp" />
