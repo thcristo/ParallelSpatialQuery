@@ -27,7 +27,7 @@ class AbstractAllKnnAlgorithm
          *
          */
 
-        unique_ptr<neighbors_container_t> CreateNeighborsContainer(const vector<Point>& inputDataset, int numNeighbors) const
+        unique_ptr<neighbors_container_t> CreateNeighborsContainer(const point_vector_t& inputDataset, int numNeighbors) const
         {
             try
             {
@@ -49,7 +49,7 @@ class AbstractAllKnnAlgorithm
 
         }
 
-        void CheckInsertNeighbor(vector<Point>::const_iterator inputPoint, vector<Point>::const_iterator trainingPoint,
+        void CheckInsertNeighbor(point_vector_t::const_iterator inputPoint, point_vector_t::const_iterator trainingPoint,
                                  point_neighbors_t& neighbors) const
         {
             double dsq = CalcDistanceSquared(inputPoint, trainingPoint);
@@ -66,7 +66,7 @@ class AbstractAllKnnAlgorithm
             }
         }
 
-        inline double CalcDistanceSquared(vector<Point>::const_iterator p1, vector<Point>::const_iterator p2) const
+        inline double CalcDistanceSquared(point_vector_t::const_iterator p1, point_vector_t::const_iterator p2) const
         {
             double dx = p2->x - p1->x;
             double dy = p2->y - p1->y;

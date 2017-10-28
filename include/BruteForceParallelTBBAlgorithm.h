@@ -21,7 +21,7 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();
 
-            typedef blocked_range<vector<Point>::const_iterator> point_range_t;
+            typedef blocked_range<point_vector_t::const_iterator> point_range_t;
 
             auto start = chrono::high_resolution_clock::now();
 

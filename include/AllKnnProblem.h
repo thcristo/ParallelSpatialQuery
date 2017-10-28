@@ -18,7 +18,7 @@ class AllKnnProblem
 {
     public:
         AllKnnProblem(const string& inputFilename, const string& trainingFilename, int numNeighbors)
-            : pInputDataset(new vector<Point>), pTrainingDataset(new vector<Point>)
+            : pInputDataset(new point_vector_t), pTrainingDataset(new point_vector_t)
         {
             this->inputFilename = inputFilename;
             this->trainingFilename = trainingFilename;
@@ -31,12 +31,12 @@ class AllKnnProblem
 
         }
 
-        const vector<Point>& GetInputDataset() const
+        const point_vector_t& GetInputDataset() const
         {
             return *pInputDataset;
         }
 
-        const vector<Point>& GetTrainingDataset() const
+        const point_vector_t& GetTrainingDataset() const
         {
             return *pTrainingDataset;
         }
@@ -52,8 +52,8 @@ class AllKnnProblem
         string inputFilename;
         string trainingFilename;
         int numNeighbors;
-        unique_ptr<vector<Point>> pInputDataset;
-        unique_ptr<vector<Point>> pTrainingDataset;
+        unique_ptr<point_vector_t> pInputDataset;
+        unique_ptr<point_vector_t> pTrainingDataset;
 
         void LoadDataFiles()
         {
@@ -102,7 +102,7 @@ class AllKnnProblem
 
         }
 
-        void LoadPoints(const string& filename, ifstream& file, vector<Point>& points)
+        void LoadPoints(const string& filename, ifstream& file, point_vector_t& points)
         {
             long linenum = 0;
 

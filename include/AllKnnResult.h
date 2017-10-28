@@ -40,7 +40,7 @@ class AllKnnResult
 
             ofstream outFile(ss.str(), ios_base::out);
 
-            const vector<Point>& inputDataset = problem.GetInputDataset();
+            const point_vector_t& inputDataset = problem.GetInputDataset();
 
             for (auto inputPoint = inputDataset.cbegin(); inputPoint != inputDataset.cend(); ++inputPoint)
             {
