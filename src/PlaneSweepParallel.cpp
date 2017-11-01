@@ -35,13 +35,13 @@ int main(int argc, char* argv[])
         cout << "Read " << problem.GetInputDataset().size() << " input points and " << problem.GetTrainingDataset().size() << " training points." << endl;
         unique_ptr<AllKnnResult> pResult;
 
-        /*
+
         BruteForceAlgorithm bruteForce;
         pResult = bruteForce.Process(problem);
         cout << fixed << setprecision(3) << "Brute force duration: " << pResult->duration().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
-        */
+
 
         BruteForceParallelAlgorithm bruteForceParallel;
         pResult = bruteForceParallel.Process(problem);

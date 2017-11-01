@@ -21,43 +21,93 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
 
             auto start = chrono::high_resolution_clock::now();
 
-            vector<point_vector_size_t> trainingDatasetIndex(trainingDataset.size());
+            point_vector_index_t trainingDatasetIndex(trainingDataset.size());
 
-            point_vector_size_t n = 0;
+            point_vector_iterator_t n = trainingDataset.cbegin();
 
             generate(trainingDatasetIndex.begin(), trainingDatasetIndex.end(), [&n] { return n++; } );
 
             sort(trainingDatasetIndex.begin(), trainingDatasetIndex.end(),
-                 [&](const point_vector_size_t& index1, const point_vector_size_t& index2)
+                 [&](const point_vector_iterator_t& iter1, const point_vector_iterator_t& iter2)
                  {
-                     return trainingDataset[index1].x < trainingDataset[index2].x;
+                     return iter1->x < iter2->x;
                  });
 
             for (auto inputPoint = inputDataset.cbegin(); inputPoint != inputDataset.cend(); ++inputPoint)
             {
                 auto& neighbors = pNeighborsContainer->at(inputPoint->id);
 
-                int neighborsFound = 0;
+                point_vector_index_iterator_t nextTrainingPointIndex = lower_bound(trainingDatasetIndex.cbegin(), trainingDatasetIndex.cend(), inputPoint->x,
+                                    [&](const point_vector_iterator_t& iter, const double& value) { return iter->x < value; } );
 
-                point_vector_index_t nextTrainingPoint = lower_bound(trainingDatasetIndex.begin(), trainingDatasetIndex.end(), inputPoint->x,
-                                    [&](const point_vector_size_t& index, const double& value) { return trainingDataset[index].x < value; } );
-
-                do
+                point_vector_index_iterator_t prevTrainingPointIndex = nextTrainingPointIndex;
+                if (prevTrainingPointIndex > trainingDatasetIndex.cbegin())
                 {
-
-                } while (neighborsFound < numNeighbors);
-                /*
-                for (auto trainingPoint = trainingDataset.cbegin(); trainingPoint != trainingDataset.cend(); ++trainingPoint)
-                {
-                    CheckInsertNeighbor(inputPoint, trainingPoint, neighbors);
+                    --prevTrainingPointIndex;
                 }
-                */
+
+                bool lowStop = prevTrainingPointIndex == nextTrainingPointIndex;
+                bool highStop = nextTrainingPointIndex == trainingDatasetIndex.cend();
+
+                while (!lowStop || !highStop)
+                {
+                    if (!lowStop)
+                    {
+                        double dx = inputPoint->x - (*prevTrainingPointIndex)->x;
+                        double dxSquared = dx*dx;
+                        double maxDistance = neighbors.top().distanceSquared;
+
+                        if (dxSquared > maxDistance)
+                        {
+                            lowStop = true;
+                        }
+                        else
+                        {
+                            CheckInsertNeighbor(inputPoint, *prevTrainingPointIndex, neighbors);
+
+                            if (prevTrainingPointIndex > trainingDatasetIndex.cbegin())
+                            {
+                                --prevTrainingPointIndex;
+                            }
+                            else
+                            {
+                                lowStop = true;
+                            }
+                        }
+                    }
+
+                    if (!highStop)
+                    {
+                        double dx = (*nextTrainingPointIndex)->x - inputPoint->x;
+                        double dxSquared = dx*dx;
+                        double maxDistance = neighbors.top().distanceSquared;
+
+                        if (dxSquared > maxDistance)
+                        {
+                            highStop = true;
+                        }
+                        else
+                        {
+                            CheckInsertNeighbor(inputPoint, *nextTrainingPointIndex, neighbors);
+
+                            if (nextTrainingPointIndex < trainingDatasetIndex.cend())
+                            {
+                                ++nextTrainingPointIndex;
+                            }
+
+                            if (nextTrainingPointIndex == trainingDatasetIndex.cend())
+                            {
+                                highStop = true;
+                            }
+                        }
+                    }
+                }
             }
 
             auto finish = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = finish - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, "bruteforce_serial", problem));
+            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, "planesweep_serial", problem));
         }
     protected:
 
