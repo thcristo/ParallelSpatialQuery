@@ -10,7 +10,7 @@
 #include "AllKnnProblem.h"
 #include "AllKnnResult.h"
 #include "PlaneSweepAlgorithm.h"
-
+#include "SwitchingPlaneSweepAlgorithm.h"
 
 using namespace std;
 
@@ -35,13 +35,13 @@ int main(int argc, char* argv[])
         cout << "Read " << problem.GetInputDataset().size() << " input points and " << problem.GetTrainingDataset().size() << " training points." << endl;
         unique_ptr<AllKnnResult> pResult;
 
-
+/*
         BruteForceAlgorithm bruteForce;
         pResult = bruteForce.Process(problem);
         cout << fixed << setprecision(3) << "Brute force duration: " << pResult->duration().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
-
+*/
 
         BruteForceParallelAlgorithm bruteForceParallel;
         pResult = bruteForceParallel.Process(problem);
@@ -58,6 +58,12 @@ int main(int argc, char* argv[])
         PlaneSweepAlgorithm planeSweep;
         pResult = planeSweep.Process(problem);
         cout << fixed << setprecision(3) << "Plane sweep duration: " << pResult->duration().count() << " seconds" << endl;
+        pResult->SaveToFile();
+        pResult.reset();
+
+        SwitchingPlaneSweepAlgorithm switchingPlaneSweep;
+        pResult = switchingPlaneSweep.Process(problem);
+        cout << fixed << setprecision(3) << "Switching plane sweep duration: " << pResult->duration().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
 
