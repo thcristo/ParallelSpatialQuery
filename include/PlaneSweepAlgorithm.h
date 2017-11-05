@@ -47,7 +47,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
             for (auto inputPointIndex = inputDatasetIndex.cbegin(); inputPointIndex != inputDatasetIndex.cend(); ++inputPointIndex)
             {
                 auto inputPointIter = *inputPointIndex;
-                auto& neighbors = pNeighborsContainer->at(inputPointIter->id);
+                auto& pNeighbors = pNeighborsContainer->at(inputPointIter->id);
 
                 /*
                 point_vector_index_iterator_t nextTrainingPointIndex = lower_bound(startSearchPos, trainingDatasetIndex.cend(), inputPointIter->x,
@@ -75,7 +75,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                         auto prevTrainingPointIter = *prevTrainingPointIndex;
                         double dx = inputPointIter->x - prevTrainingPointIter->x;
                         double dxSquared = dx*dx;
-                        auto& topNeighbor = neighbors.top();
+                        auto& topNeighbor = pNeighbors->MaxDistanceElement();
                         double maxDistance = topNeighbor.distanceSquared;
 
                         if (dxSquared > maxDistance)
@@ -84,7 +84,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                         }
                         else
                         {
-                            CheckInsertNeighbor(inputPointIter, prevTrainingPointIter, neighbors);
+                            AddNeighbor(inputPointIter, prevTrainingPointIter, pNeighbors);
 
                             if (prevTrainingPointIndex > trainingDatasetIndex.cbegin())
                             {
@@ -102,7 +102,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                         auto nextTrainingPointIter = *nextTrainingPointIndex;
                         double dx = nextTrainingPointIter->x - inputPointIter->x;
                         double dxSquared = dx*dx;
-                        auto& topNeighbor = neighbors.top();
+                        auto& topNeighbor = pNeighbors->MaxDistanceElement();
                         double maxDistance = topNeighbor.distanceSquared;
 
                         if (dxSquared > maxDistance)
@@ -111,7 +111,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                         }
                         else
                         {
-                            CheckInsertNeighbor(inputPointIter, nextTrainingPointIter, neighbors);
+                            AddNeighbor(inputPointIter, nextTrainingPointIter, pNeighbors);
 
                             if (nextTrainingPointIndex < trainingDatasetIndex.cend())
                             {
@@ -133,7 +133,10 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
             return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, "planesweep_serial", problem));
         }
     protected:
-
+        unique_ptr<PointNeighbors> CreatePointNeighbors(size_t numNeighbors) const override
+        {
+            return unique_ptr<PointNeighbors>(new PointNeighborsPriorityQueue(numNeighbors));
+        }
     private:
 };
 

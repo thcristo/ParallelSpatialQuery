@@ -1,7 +1,7 @@
 #ifndef PLANESWEEPPARALLEL_H_INCLUDED
 #define PLANESWEEPPARALLEL_H_INCLUDED
 
-#include <unordered_map>
+
 #include <queue>
 #include <vector>
 
@@ -26,8 +26,7 @@ class NeighborComparer
 };
 
 
-typedef priority_queue<Neighbor, vector<Neighbor>, NeighborComparer> point_neighbors_t;
-typedef unordered_map<int, point_neighbors_t> neighbors_container_t;
+typedef priority_queue<Neighbor, vector<Neighbor>, NeighborComparer> neighbors_priority_queue_t;
 typedef vector<Point> point_vector_t;
 typedef point_vector_t::const_iterator point_vector_iterator_t;
 typedef vector<point_vector_iterator_t> point_vector_index_t;

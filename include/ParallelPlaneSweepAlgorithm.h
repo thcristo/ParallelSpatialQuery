@@ -27,7 +27,10 @@ class ParallelPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
         }
 
     protected:
-
+        unique_ptr<PointNeighbors> CreatePointNeighbors(size_t numNeighbors) const override
+        {
+            return unique_ptr<PointNeighbors>(new PointNeighborsPriorityQueue(numNeighbors));
+        }
     private:
 };
 

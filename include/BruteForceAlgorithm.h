@@ -25,11 +25,11 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
 
             for (auto inputPoint = inputDataset.cbegin(); inputPoint != inputDataset.cend(); ++inputPoint)
             {
-                auto& neighbors = pNeighborsContainer->at(inputPoint->id);
+                auto& pNeighbors = pNeighborsContainer->at(inputPoint->id);
 
                 for (auto trainingPoint = trainingDataset.cbegin(); trainingPoint != trainingDataset.cend(); ++trainingPoint)
                 {
-                    CheckInsertNeighbor(inputPoint, trainingPoint, neighbors);
+                    AddNeighbor(inputPoint, trainingPoint, pNeighbors);
                 }
             }
 
@@ -38,8 +38,12 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
 
             return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, "bruteforce_serial", problem));
         }
-    protected:
 
+    protected:
+        unique_ptr<PointNeighbors> CreatePointNeighbors(size_t numNeighbors) const override
+        {
+            return unique_ptr<PointNeighbors>(new PointNeighborsPriorityQueue(numNeighbors));
+        }
     private:
 };
 

@@ -46,6 +46,7 @@
 		<Unit filename="include/ParallelPlaneSweepAlgorithm.h" />
 		<Unit filename="include/PlaneSweepAlgorithm.h" />
 		<Unit filename="include/PlaneSweepParallel.h" />
+		<Unit filename="include/PointNeighbors.h" />
 		<Unit filename="include/SwitchingPlaneSweepAlgorithm.h" />
 		<Unit filename="src/PlaneSweepParallel.cpp" />
 		<Extensions>

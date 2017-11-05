@@ -70,7 +70,7 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
             for (auto inputPointIndex = inputDatasetIndexX.cbegin(); inputPointIndex != inputDatasetIndexX.cend(); ++inputPointIndex)
             {
                 auto inputPointIter = *inputPointIndex;
-                auto& neighbors = pNeighborsContainer->at(inputPointIter->id);
+                auto& pNeighbors = pNeighborsContainer->at(inputPointIter->id);
 
                 /*
                 point_vector_index_iterator_t nextTrainingPointIndex = lower_bound(startSearchPos, trainingDatasetIndex.cend(), inputPointIter->x,
@@ -162,13 +162,55 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                     switch(minDistancePos)
                     {
                         case 0:
+                            AddNeighbor(*prevTrainingPointIndexX, *minDistanceIter, pNeighbors);
+                            if (prevTrainingPointIndexX > trainingDatasetIndexX.cbegin())
+                            {
+                                --prevTrainingPointIndexX;
+                                distanceCalculated[0] = false;
+                            }
+                            else
+                            {
+                                distances[0] = maxDouble;
+                            }
+                            break;
                         case 1:
+                            AddNeighbor(*nextTrainingPointIndexX, *minDistanceIter, pNeighbors);
+                            if (nextTrainingPointIndexX < trainingDatasetIndexX.cend())
+                            {
+                                ++nextTrainingPointIndexX;
+                                distanceCalculated[1] = false;
+                            }
+                            else
+                            {
+                                distances[1] = maxDouble;
+                            }
+                            break;
                         case 2:
+                            AddNeighbor(*prevTrainingPointIndexY, *minDistanceIter, pNeighbors);
+                            if (prevTrainingPointIndexY > trainingDatasetIndexY.cbegin())
+                            {
+                                --prevTrainingPointIndexY;
+                                distanceCalculated[2] = false;
+                            }
+                            else
+                            {
+                                distances[2] = maxDouble;
+                            }
+                            break;
                         case 3:
-
+                            AddNeighbor(*nextTrainingPointIndexY, *minDistanceIter, pNeighbors);
+                            if (nextTrainingPointIndexY < trainingDatasetIndexY.cend())
+                            {
+                                ++nextTrainingPointIndexY;
+                                distanceCalculated[3] = false;
+                            }
+                            else
+                            {
+                                distances[3] = maxDouble;
+                            }
+                            break;
                     }
                 }
-
             }
 
             auto finish = chrono::high_resolution_clock::now();
@@ -177,7 +219,10 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
             return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, "switchingplanesweep_serial", problem));
         }
     protected:
-
+        unique_ptr<PointNeighbors> CreatePointNeighbors(size_t numNeighbors) const override
+        {
+            return unique_ptr<PointNeighbors>(new PointNeighborsVector(numNeighbors));
+        }
     private:
 };
 

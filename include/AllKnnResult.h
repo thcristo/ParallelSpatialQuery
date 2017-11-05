@@ -6,6 +6,7 @@
 #include <fstream>
 #include "PlaneSweepParallel.h"
 #include "AllKnnProblem.h"
+#include "PointNeighbors.h"
 
 using namespace std;
 
@@ -46,13 +47,12 @@ class AllKnnResult
             {
                 outFile << inputPoint->id;
 
-                auto& neighbors = pNeighborsContainer->at(inputPoint->id);
+                auto& pNeighbors = pNeighborsContainer->at(inputPoint->id);
 
-                while (!neighbors.empty())
+                while (pNeighbors->HasNext())
                 {
-                   auto& neighbor = neighbors.top();
+                   Neighbor neighbor = pNeighbors->Next();
                    outFile << "\t(" << neighbor.point->id << " " << neighbor.distanceSquared << ")";
-                   neighbors.pop();
                 }
 
                 outFile << endl;

@@ -28,7 +28,7 @@ class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
 
                 for (auto trainingPoint = trainingDataset.cbegin(); trainingPoint != trainingDataset.cend(); ++trainingPoint)
                 {
-                    CheckInsertNeighbor(inputPoint, trainingPoint, neighbors);
+                    AddNeighbor(inputPoint, trainingPoint, neighbors);
                 }
             }
 
@@ -38,7 +38,10 @@ class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
             return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, "bruteforce_parallel", problem));
         }
     protected:
-
+        unique_ptr<PointNeighbors> CreatePointNeighbors(size_t numNeighbors) const override
+        {
+            return unique_ptr<PointNeighbors>(new PointNeighborsPriorityQueue(numNeighbors));
+        }
     private:
 };
 
