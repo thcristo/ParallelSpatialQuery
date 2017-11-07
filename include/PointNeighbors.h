@@ -10,7 +10,7 @@ class PointNeighbors
     public:
         virtual bool HasNext() const = 0;
         virtual Neighbor Next() = 0;
-        virtual void Add(point_vector_t::const_iterator pointIter, const double& distanceSquared) = 0;
+        virtual void Add(point_vector_t::const_iterator pointIter, const double distanceSquared) = 0;
         virtual const Neighbor& MaxDistanceElement() const = 0;
 };
 
@@ -37,9 +37,9 @@ class PointNeighborsPriorityQueue : public PointNeighbors
             return neighbor;
         }
 
-        void Add(point_vector_t::const_iterator pointIter, const double& distanceSquared) override
+        void Add(point_vector_t::const_iterator pointIter, const double distanceSquared) override
         {
-            const auto& lastNeighbor = pContainer->top();
+            auto& lastNeighbor = pContainer->top();
 
             if (distanceSquared < lastNeighbor.distanceSquared)
             {
@@ -84,7 +84,7 @@ class PointNeighborsVector : public PointNeighbors
             return neighbor;
         }
 
-        void Add(point_vector_t::const_iterator pointIter, const double& distanceSquared) override
+        inline void Add(point_vector_t::const_iterator pointIter, const double distanceSquared) override
         {
             *insertIter = {&*pointIter, distanceSquared};
             --insertIter;
