@@ -8,8 +8,6 @@
 #include "AllKnnResult.h"
 #include "PlaneSweepParallel.h"
 
-using namespace std;
-
 class AbstractAllKnnAlgorithm
 {
     public:
@@ -17,7 +15,6 @@ class AbstractAllKnnAlgorithm
         virtual unique_ptr<AllKnnResult> Process(const AllKnnProblem& problem) const = 0;
     protected:
         AbstractAllKnnAlgorithm() {}
-        virtual unique_ptr<PointNeighbors> CreatePointNeighbors(size_t numNeighbors) const = 0;
 
         /** \brief Creates the container of nearest neighbors for all points
          *
@@ -26,16 +23,16 @@ class AbstractAllKnnAlgorithm
          * \return An unordered map of point Ids to multisets of Neighbors
          *
          */
-
-        unique_ptr<neighbors_container_t> CreateNeighborsContainer(const point_vector_t& inputDataset, size_t numNeighbors) const
+        template<class Container>
+        unique_ptr<neighbors_container_t<Container>> CreateNeighborsContainer(const point_vector_t& inputDataset, size_t numNeighbors) const
         {
             try
             {
-                unique_ptr<neighbors_container_t> pContainer(new neighbors_container_t(inputDataset.size()));
+                unique_ptr<neighbors_container_t<Container>> pContainer(new neighbors_container_t<Container>(inputDataset.size()));
 
                 for (auto point = inputDataset.cbegin(); point != inputDataset.cend(); ++point)
                 {
-                    pContainer->insert(make_pair(point->id, CreatePointNeighbors(numNeighbors)));
+                    pContainer->insert(make_pair(point->id, PointNeighbors<Container>(numNeighbors)));
                 }
 
                 return pContainer;
@@ -47,17 +44,19 @@ class AbstractAllKnnAlgorithm
 
         }
 
-        void AddNeighbor(point_vector_t::const_iterator inputPoint, point_vector_t::const_iterator trainingPoint,
-                                 unique_ptr<PointNeighbors>& pNeighbors) const
+        template<class Container>
+        inline void AddNeighbor(point_vector_t::const_iterator inputPoint, point_vector_t::const_iterator trainingPoint,
+                                 PointNeighbors<Container>& neighbors) const
         {
             double dsq = CalcDistanceSquared(inputPoint, trainingPoint);
-            pNeighbors->Add(trainingPoint, dsq);
+            neighbors.Add(trainingPoint, dsq);
         }
 
-        void AddNeighbor(point_vector_t::const_iterator trainingPoint, double distanceSquared,
-                                 unique_ptr<PointNeighbors>& pNeighbors) const
+        template<class Container>
+        inline void AddNeighbor(point_vector_t::const_iterator trainingPoint, double distanceSquared,
+                                 PointNeighbors<Container>& neighbors) const
         {
-            pNeighbors->Add(trainingPoint, distanceSquared);
+            neighbors.Add(trainingPoint, distanceSquared);
         }
 
         inline double CalcDistanceSquared(point_vector_t::const_iterator p1, point_vector_t::const_iterator p2) const

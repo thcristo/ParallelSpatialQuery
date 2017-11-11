@@ -8,24 +8,26 @@
 #include "AllKnnProblem.h"
 #include "PointNeighbors.h"
 
-using namespace std;
-
 class AllKnnResult
 {
     public:
-        AllKnnResult(unique_ptr<neighbors_container_t>& pNeighborsContainer, const chrono::duration<double>& elapsed,
+        AllKnnResult(unique_ptr<neighbors_priority_queue_container_t>& pNeighborsContainer,
+                     const chrono::duration<double>& elapsed,
                      const string& filePrefix, const AllKnnProblem& problem)
-                     : elapsed(elapsed), filePrefix(filePrefix), problem(problem)
+                     : pNeighborsPriorityQueueContainer(move(pNeighborsContainer)), elapsed(elapsed), filePrefix(filePrefix), problem(problem)
         {
-            this->pNeighborsContainer = move(pNeighborsContainer);
+
+        }
+
+        AllKnnResult(unique_ptr<neighbors_vector_container_t>& pNeighborsContainer,
+                     const chrono::duration<double>& elapsed,
+                     const string& filePrefix, const AllKnnProblem& problem)
+                     : pNeighborsVectorContainer(move(pNeighborsContainer)), elapsed(elapsed), filePrefix(filePrefix), problem(problem)
+        {
+
         }
 
         virtual ~AllKnnResult() {}
-
-        const unique_ptr<neighbors_container_t>& GetResultContainer() const
-        {
-            return pNeighborsContainer;
-        }
 
         const chrono::duration<double>& duration() const { return elapsed; }
 
@@ -47,7 +49,15 @@ class AllKnnResult
             {
                 outFile << inputPoint->id;
 
-                auto& pNeighbors = pNeighborsContainer->at(inputPoint->id);
+                NeighborsEnumerator* pNeighbors = nullptr;
+                if (pNeighborsPriorityQueueContainer != nullptr)
+                {
+                    pNeighbors = &pNeighborsPriorityQueueContainer->at(inputPoint->id);
+                }
+                else if (pNeighborsVectorContainer != nullptr)
+                {
+                    pNeighbors = &pNeighborsVectorContainer->at(inputPoint->id);
+                }
 
                 while (pNeighbors->HasNext())
                 {
@@ -63,7 +73,8 @@ class AllKnnResult
     protected:
 
     private:
-        unique_ptr<neighbors_container_t> pNeighborsContainer;
+        unique_ptr<neighbors_priority_queue_container_t> pNeighborsPriorityQueueContainer;
+        unique_ptr<neighbors_vector_container_t> pNeighborsVectorContainer;
         chrono::duration<double> elapsed;
         string filePrefix;
         const AllKnnProblem& problem;

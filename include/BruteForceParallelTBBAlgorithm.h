@@ -16,7 +16,8 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
         {
             int numNeighbors = problem.GetNumNeighbors();
 
-            unique_ptr<neighbors_container_t> pNeighborsContainer = this->CreateNeighborsContainer(problem.GetInputDataset(), numNeighbors);
+            unique_ptr<neighbors_priority_queue_container_t> pNeighborsContainer =
+                this->CreateNeighborsContainer<neighbors_priority_queue_t>(problem.GetInputDataset(), numNeighbors);
 
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();
@@ -44,11 +45,7 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
             return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, "bruteforce_parallel_tbb", problem));
         }
-    protected:
-        unique_ptr<PointNeighbors> CreatePointNeighbors(size_t numNeighbors) const override
-        {
-            return unique_ptr<PointNeighbors>(new PointNeighborsPriorityQueue(numNeighbors));
-        }
+
     private:
 };
 

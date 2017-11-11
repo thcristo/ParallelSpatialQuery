@@ -5,76 +5,94 @@
 #include <unordered_map>
 #include "PlaneSweepParallel.h"
 
-class PointNeighbors
+class NeighborsEnumerator
 {
     public:
         virtual bool HasNext() const = 0;
         virtual Neighbor Next() = 0;
-        virtual void Add(point_vector_t::const_iterator pointIter, const double distanceSquared) = 0;
-        virtual const Neighbor& MaxDistanceElement() const = 0;
 };
 
-class PointNeighborsPriorityQueue : public PointNeighbors
+template<class Container>
+class PointNeighbors : public NeighborsEnumerator
 {
     public:
-        PointNeighborsPriorityQueue(size_t numNeighbors)
+        PointNeighbors(size_t numNeighbors);
+        virtual ~PointNeighbors();
+
+        bool HasNext() const;
+        Neighbor Next();
+
+        void Add(point_vector_t::const_iterator pointIter, const double distanceSquared);
+        const Neighbor& MaxDistanceElement() const;
+
+    private:
+        Container container;
+};
+
+template<>
+class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
+{
+    public:
+        PointNeighbors(size_t numNeighbors) : PointNeighbors(neighbors_vector_t(numNeighbors, {nullptr, numeric_limits<double>::max()}))
         {
-            vector<Neighbor> defaultNeighbors(numNeighbors, {nullptr, numeric_limits<double>::max()});
-            pContainer.reset(new neighbors_priority_queue_t(defaultNeighbors.cbegin(), defaultNeighbors.cend()));
         }
 
-        virtual ~PointNeighborsPriorityQueue() {}
+        PointNeighbors(neighbors_vector_t defaultNeighbors) : container(defaultNeighbors.cbegin(), defaultNeighbors.cend())
+        {
+        }
+
+        virtual ~PointNeighbors() {}
 
         bool HasNext() const override
         {
-            return !pContainer->empty();
+            return !container.empty();
         }
 
         Neighbor Next() override
         {
-            Neighbor neighbor = pContainer->top();
-            pContainer->pop();
+            Neighbor neighbor = container.top();
+            container.pop();
             return neighbor;
         }
 
-        void Add(point_vector_t::const_iterator pointIter, const double distanceSquared) override
+        inline void Add(point_vector_t::const_iterator pointIter, const double distanceSquared)
         {
-            auto& lastNeighbor = pContainer->top();
+            auto& lastNeighbor = container.top();
 
             if (distanceSquared < lastNeighbor.distanceSquared)
             {
-                pContainer->pop();
+                container.pop();
 
                 Neighbor newNeighbor = {&*pointIter, distanceSquared};
 
-                pContainer->push(newNeighbor);
+                container.push(newNeighbor);
             }
         }
 
-        const Neighbor& MaxDistanceElement() const override
+        inline const Neighbor& MaxDistanceElement() const
         {
-            return pContainer->top();
+            return container.top();
         }
 
     private:
-        unique_ptr<neighbors_priority_queue_t> pContainer;
+        neighbors_priority_queue_t container;
 };
 
-class PointNeighborsVector : public PointNeighbors
+template<>
+class PointNeighbors<neighbors_vector_t> : public NeighborsEnumerator
 {
     public:
-        PointNeighborsVector(size_t numNeighbors)
+        PointNeighbors(size_t numNeighbors) : container(numNeighbors, {nullptr, numeric_limits<double>::max()})
         {
-            pContainer.reset(new vector<Neighbor>(numNeighbors, {nullptr, numeric_limits<double>::max()}));
-            insertIter = pContainer->end() - 1;
-            returnIter = pContainer->cbegin();
+            insertIter = container.end() - 1;
+            returnIter = container.cbegin();
         }
 
-        virtual ~PointNeighborsVector() {}
+        virtual ~PointNeighbors() {}
 
         bool HasNext() const override
         {
-            return returnIter < pContainer->cend();
+            return returnIter < container.cend();
         }
 
         Neighbor Next() override
@@ -84,23 +102,28 @@ class PointNeighborsVector : public PointNeighbors
             return neighbor;
         }
 
-        inline void Add(point_vector_t::const_iterator pointIter, const double distanceSquared) override
+        inline void Add(point_vector_t::const_iterator pointIter, const double distanceSquared)
         {
             *insertIter = {&*pointIter, distanceSquared};
             --insertIter;
         }
 
-        const Neighbor& MaxDistanceElement() const override
+        inline const Neighbor& MaxDistanceElement() const
         {
-            return *pContainer->cbegin();
+            return *container.cbegin();
         }
 
     private:
-        unique_ptr<vector<Neighbor>> pContainer;
-        vector<Neighbor>::iterator insertIter;
-        vector<Neighbor>::const_iterator returnIter;
+        neighbors_vector_t container;
+        neighbors_vector_t::iterator insertIter;
+        neighbors_vector_t::const_iterator returnIter;
 };
 
-typedef unordered_map<int, unique_ptr<PointNeighbors>> neighbors_container_t;
+template<class Container>
+using neighbors_container_t = unordered_map<long, PointNeighbors<Container>>;
+
+typedef neighbors_container_t<neighbors_priority_queue_t> neighbors_priority_queue_container_t;
+typedef neighbors_container_t<neighbors_vector_t> neighbors_vector_container_t;
+
 
 #endif // POINTNEIGHBORS_H

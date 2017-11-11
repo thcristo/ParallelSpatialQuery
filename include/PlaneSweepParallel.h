@@ -25,8 +25,8 @@ class NeighborComparer
         }
 };
 
-
-typedef priority_queue<Neighbor, vector<Neighbor>, NeighborComparer> neighbors_priority_queue_t;
+typedef vector<Neighbor> neighbors_vector_t;
+typedef priority_queue<Neighbor, neighbors_vector_t, NeighborComparer> neighbors_priority_queue_t;
 typedef vector<Point> point_vector_t;
 typedef point_vector_t::const_iterator point_vector_iterator_t;
 typedef vector<point_vector_iterator_t> point_vector_index_t;

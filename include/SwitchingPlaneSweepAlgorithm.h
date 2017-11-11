@@ -14,7 +14,8 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
         {
             int numNeighbors = problem.GetNumNeighbors();
 
-            unique_ptr<neighbors_container_t> pNeighborsContainer = this->CreateNeighborsContainer(problem.GetInputDataset(), numNeighbors);
+            unique_ptr<neighbors_vector_container_t> pNeighborsContainer =
+                this->CreateNeighborsContainer<neighbors_vector_t>(problem.GetInputDataset(), numNeighbors);
 
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();
@@ -70,7 +71,7 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
             for (auto inputPointIndex = inputDatasetIndexX.cbegin(); inputPointIndex != inputDatasetIndexX.cend(); ++inputPointIndex)
             {
                 auto inputPointIter = *inputPointIndex;
-                auto& pNeighbors = pNeighborsContainer->at(inputPointIter->id);
+                auto& neighbors = pNeighborsContainer->at(inputPointIter->id);
 
                 /*
                 point_vector_index_iterator_t nextTrainingPointIndex = lower_bound(startSearchPos, trainingDatasetIndex.cend(), inputPointIter->x,
@@ -162,7 +163,7 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                     switch(minDistancePos)
                     {
                         case 0:
-                            AddNeighbor(*prevTrainingPointIndexX, *minDistanceIter, pNeighbors);
+                            AddNeighbor(*prevTrainingPointIndexX, *minDistanceIter, neighbors);
                             if (prevTrainingPointIndexX > trainingDatasetIndexX.cbegin())
                             {
                                 --prevTrainingPointIndexX;
@@ -174,7 +175,7 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                             }
                             break;
                         case 1:
-                            AddNeighbor(*nextTrainingPointIndexX, *minDistanceIter, pNeighbors);
+                            AddNeighbor(*nextTrainingPointIndexX, *minDistanceIter, neighbors);
                             if (nextTrainingPointIndexX < trainingDatasetIndexX.cend())
                             {
                                 ++nextTrainingPointIndexX;
@@ -186,7 +187,7 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                             }
                             break;
                         case 2:
-                            AddNeighbor(*prevTrainingPointIndexY, *minDistanceIter, pNeighbors);
+                            AddNeighbor(*prevTrainingPointIndexY, *minDistanceIter, neighbors);
                             if (prevTrainingPointIndexY > trainingDatasetIndexY.cbegin())
                             {
                                 --prevTrainingPointIndexY;
@@ -198,7 +199,7 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                             }
                             break;
                         case 3:
-                            AddNeighbor(*nextTrainingPointIndexY, *minDistanceIter, pNeighbors);
+                            AddNeighbor(*nextTrainingPointIndexY, *minDistanceIter, neighbors);
                             if (nextTrainingPointIndexY < trainingDatasetIndexY.cend())
                             {
                                 ++nextTrainingPointIndexY;
@@ -218,11 +219,7 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
 
             return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, "switchingplanesweep_serial", problem));
         }
-    protected:
-        unique_ptr<PointNeighbors> CreatePointNeighbors(size_t numNeighbors) const override
-        {
-            return unique_ptr<PointNeighbors>(new PointNeighborsVector(numNeighbors));
-        }
+
     private:
 };
 

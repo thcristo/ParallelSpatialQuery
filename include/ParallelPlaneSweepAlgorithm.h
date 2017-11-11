@@ -5,7 +5,7 @@
 #include "AllKnnResult.h"
 #include "AbstractAllKnnAlgorithm.h"
 #include <chrono>
-
+/*
 class ParallelPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
@@ -15,7 +15,8 @@ class ParallelPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
         {
             int numNeighbors = problem.GetNumNeighbors();
 
-            unique_ptr<neighbors_container_t> pNeighbors = this->CreateNeighborsContainer(problem.GetInputDataset(), numNeighbors);
+            unique_ptr<neighbors_priority_queue_container_t> pNeighborsContainer =
+                this->CreateNeighborsContainer<neighbors_priority_queue_t>(problem.GetInputDataset(), numNeighbors);
 
             auto start = chrono::high_resolution_clock::now();
 
@@ -26,12 +27,8 @@ class ParallelPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
             return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighbors, elapsed, "planesweep_parallel", problem));
         }
 
-    protected:
-        unique_ptr<PointNeighbors> CreatePointNeighbors(size_t numNeighbors) const override
-        {
-            return unique_ptr<PointNeighbors>(new PointNeighborsPriorityQueue(numNeighbors));
-        }
+
     private:
 };
-
+*/
 #endif // PARALLELPLANESWEEPALGORITHM_H
