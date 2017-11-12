@@ -37,7 +37,7 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
             auto finish = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = finish - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, "bruteforce_serial", problem));
+            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, chrono::duration<double>(), "bruteforce_serial", problem));
         }
 
     private:

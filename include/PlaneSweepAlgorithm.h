@@ -12,7 +12,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
 
         unique_ptr<AllKnnResult> Process(const AllKnnProblem& problem) const override
         {
-            int numNeighbors = problem.GetNumNeighbors();
+            size_t numNeighbors = problem.GetNumNeighbors();
 
             unique_ptr<neighbors_priority_queue_container_t> pNeighborsContainer =
                 this->CreateNeighborsContainer<neighbors_priority_queue_t>(problem.GetInputDataset(), numNeighbors);
@@ -44,12 +44,16 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                      return iter1->x < iter2->x;
                  });
 
+            auto finishSorting = chrono::high_resolution_clock::now();
+
             point_vector_index_iterator_t startSearchPos = trainingDatasetIndex.cbegin();
 
             for (auto inputPointIndex = inputDatasetIndex.cbegin(); inputPointIndex != inputDatasetIndex.cend(); ++inputPointIndex)
             {
-                auto inputPointIter = *inputPointIndex;
+                auto& inputPointIter = *inputPointIndex;
                 auto& neighbors = pNeighborsContainer->at(inputPointIter->id);
+                const auto& trainingDatasetIndexBegin = trainingDatasetIndex.cbegin();
+                const auto& trainingDatasetIndexEnd = trainingDatasetIndex.cend();
 
                 /*
                 point_vector_index_iterator_t nextTrainingPointIndex = lower_bound(startSearchPos, trainingDatasetIndex.cend(), inputPointIter->x,
@@ -75,13 +79,12 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                 {
                     if (!lowStop)
                     {
-                        auto prevTrainingPointIter = *prevTrainingPointIndex;
+                        auto& prevTrainingPointIter = *prevTrainingPointIndex;
                         double dx = inputPointIter->x - prevTrainingPointIter->x;
                         double dxSquared = dx*dx;
-                        auto& topNeighbor = neighbors.MaxDistanceElement();
-                        double maxDistance = topNeighbor.distanceSquared;
+                        double maxDistance = neighbors.MaxDistanceElement().distanceSquared;
 
-                        if (dxSquared > maxDistance)
+                        if (dxSquared >= maxDistance)
                         {
                             lowStop = true;
                         }
@@ -89,7 +92,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                         {
                             AddNeighbor(inputPointIter, prevTrainingPointIter, neighbors);
 
-                            if (prevTrainingPointIndex > trainingDatasetIndex.cbegin())
+                            if (prevTrainingPointIndex > trainingDatasetIndexBegin)
                             {
                                 --prevTrainingPointIndex;
                             }
@@ -102,13 +105,12 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
 
                     if (!highStop)
                     {
-                        auto nextTrainingPointIter = *nextTrainingPointIndex;
+                        auto& nextTrainingPointIter = *nextTrainingPointIndex;
                         double dx = nextTrainingPointIter->x - inputPointIter->x;
                         double dxSquared = dx*dx;
-                        auto& topNeighbor = neighbors.MaxDistanceElement();
-                        double maxDistance = topNeighbor.distanceSquared;
+                        double maxDistance = neighbors.MaxDistanceElement().distanceSquared;
 
-                        if (dxSquared > maxDistance)
+                        if (dxSquared >= maxDistance)
                         {
                             highStop = true;
                         }
@@ -116,12 +118,12 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                         {
                             AddNeighbor(inputPointIter, nextTrainingPointIter, neighbors);
 
-                            if (nextTrainingPointIndex < trainingDatasetIndex.cend())
+                            if (nextTrainingPointIndex < trainingDatasetIndexEnd)
                             {
                                 ++nextTrainingPointIndex;
                             }
 
-                            if (nextTrainingPointIndex == trainingDatasetIndex.cend())
+                            if (nextTrainingPointIndex == trainingDatasetIndexEnd)
                             {
                                 highStop = true;
                             }
@@ -132,8 +134,9 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
 
             auto finish = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = finish - start;
+            chrono::duration<double> elapsedSorting = finishSorting - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, "planesweep_serial", problem));
+            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, elapsedSorting, "planesweep_serial", problem));
         }
 
     private:

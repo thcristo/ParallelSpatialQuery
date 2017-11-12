@@ -17,7 +17,7 @@ using namespace std;
 class AllKnnProblem
 {
     public:
-        AllKnnProblem(const string& inputFilename, const string& trainingFilename, int numNeighbors)
+        AllKnnProblem(const string& inputFilename, const string& trainingFilename, size_t numNeighbors)
             : pInputDataset(new point_vector_t), pTrainingDataset(new point_vector_t)
         {
             this->inputFilename = inputFilename;
@@ -41,7 +41,7 @@ class AllKnnProblem
             return *pTrainingDataset;
         }
 
-        int GetNumNeighbors() const
+        size_t GetNumNeighbors() const
         {
             return numNeighbors;
         }
@@ -51,7 +51,7 @@ class AllKnnProblem
     private:
         string inputFilename;
         string trainingFilename;
-        int numNeighbors;
+        size_t numNeighbors;
         unique_ptr<point_vector_t> pInputDataset;
         unique_ptr<point_vector_t> pTrainingDataset;
 

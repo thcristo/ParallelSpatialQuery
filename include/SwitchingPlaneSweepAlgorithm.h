@@ -15,7 +15,7 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
             int numNeighbors = problem.GetNumNeighbors();
 
             unique_ptr<neighbors_vector_container_t> pNeighborsContainer =
-                this->CreateNeighborsContainer<neighbors_vector_t>(problem.GetInputDataset(), numNeighbors);
+                this->CreateNeighborsContainer<neighbors_deque_t>(problem.GetInputDataset(), numNeighbors);
 
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();
@@ -63,6 +63,8 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                  {
                      return iter1->y < iter2->y;
                  });
+
+            auto finishSorting = chrono::high_resolution_clock::now();
 
             point_vector_index_iterator_t startSearchPosX = trainingDatasetIndexX.cbegin();
             array<double, 4> distances;
@@ -216,8 +218,9 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
 
             auto finish = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = finish - start;
+            chrono::duration<double> elapsedSorting = finishSorting - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, "switchingplanesweep_serial", problem));
+            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, elapsedSorting, "switchingplanesweep_serial", problem));
         }
 
     private:

@@ -43,7 +43,7 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             auto finish = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = finish - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, "bruteforce_parallel_tbb", problem));
+            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, chrono::duration<double>(), "bruteforce_parallel_tbb", problem));
         }
 
     private:

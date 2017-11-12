@@ -8,7 +8,7 @@
 class NeighborsEnumerator
 {
     public:
-        virtual bool HasNext() const = 0;
+        virtual bool HasNext() = 0;
         virtual Neighbor Next() = 0;
 };
 
@@ -19,14 +19,15 @@ class PointNeighbors : public NeighborsEnumerator
         PointNeighbors(size_t numNeighbors);
         virtual ~PointNeighbors();
 
-        bool HasNext() const;
+        bool HasNext();
         Neighbor Next();
 
-        void Add(point_vector_t::const_iterator pointIter, const double distanceSquared);
-        const Neighbor& MaxDistanceElement() const;
+        inline void Add(point_vector_t::const_iterator pointIter, const double distanceSquared);
+        inline const Neighbor& MaxDistanceElement() const;
 
     private:
         Container container;
+        size_t numNeighbors;
 };
 
 template<>
@@ -37,13 +38,15 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
         {
         }
 
-        PointNeighbors(neighbors_vector_t defaultNeighbors) : container(defaultNeighbors.cbegin(), defaultNeighbors.cend())
+        PointNeighbors(neighbors_vector_t neighborsVector) : numNeighbors(neighborsVector.size()),
+            container(neighborsVector.cbegin(), neighborsVector.cend()),
+            numAddedNeighbors(0)
         {
         }
 
         virtual ~PointNeighbors() {}
 
-        bool HasNext() const override
+        bool HasNext() override
         {
             return !container.empty();
         }
@@ -62,9 +65,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             if (distanceSquared < lastNeighbor.distanceSquared)
             {
                 container.pop();
-
                 Neighbor newNeighbor = {&*pointIter, distanceSquared};
-
                 container.push(newNeighbor);
             }
         }
@@ -74,25 +75,43 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return container.top();
         }
 
+        inline size_t Size() const
+        {
+            return numAddedNeighbors;
+        }
+
     private:
+        size_t numNeighbors;
         neighbors_priority_queue_t container;
+        size_t numAddedNeighbors;
+
 };
 
 template<>
-class PointNeighbors<neighbors_vector_t> : public NeighborsEnumerator
+class PointNeighbors<neighbors_deque_t> : public NeighborsEnumerator
 {
     public:
-        PointNeighbors(size_t numNeighbors) : container(numNeighbors, {nullptr, numeric_limits<double>::max()})
+        PointNeighbors(size_t numNeighbors) : numNeighbors(numNeighbors)
         {
-            insertIter = container.end() - 1;
-            returnIter = container.cbegin();
         }
 
         virtual ~PointNeighbors() {}
 
-        bool HasNext() const override
+        bool HasNext() override
         {
-            return returnIter < container.cend();
+            if (numAddedNeighbors > 0)
+            {
+                if (!iterationStarted)
+                {
+                    returnIter = container.cbegin();
+                    iterationStarted = true;
+                }
+                return returnIter < container.cend();
+            }
+            else
+            {
+                return false;
+            }
         }
 
         Neighbor Next() override
@@ -104,26 +123,41 @@ class PointNeighbors<neighbors_vector_t> : public NeighborsEnumerator
 
         inline void Add(point_vector_t::const_iterator pointIter, const double distanceSquared)
         {
-            *insertIter = {&*pointIter, distanceSquared};
-            --insertIter;
+            container.push_front({&*pointIter, distanceSquared});
+            ++numAddedNeighbors;
         }
 
-        inline const Neighbor& MaxDistanceElement() const
+        inline const Neighbor* MaxDistanceElement() const
         {
-            return *container.cbegin();
+            if (numAddedNeighbors > 0)
+            {
+                return &container[0];
+            }
+            else
+            {
+                throw ApplicationException("Cannot get max distance element because no neighbors exist in deque.");
+            }
+
+        }
+
+        inline size_t Size() const
+        {
+            return numAddedNeighbors;
         }
 
     private:
-        neighbors_vector_t container;
-        neighbors_vector_t::iterator insertIter;
-        neighbors_vector_t::const_iterator returnIter;
+        size_t numNeighbors;
+        neighbors_deque_t container;
+        bool iterationStarted;
+        neighbors_deque_t::const_iterator returnIter;
+        size_t numAddedNeighbors;
 };
 
 template<class Container>
 using neighbors_container_t = unordered_map<long, PointNeighbors<Container>>;
 
 typedef neighbors_container_t<neighbors_priority_queue_t> neighbors_priority_queue_container_t;
-typedef neighbors_container_t<neighbors_vector_t> neighbors_vector_container_t;
+typedef neighbors_container_t<neighbors_deque_t> neighbors_vector_container_t;
 
 
 #endif // POINTNEIGHBORS_H

@@ -12,17 +12,19 @@ class AllKnnResult
 {
     public:
         AllKnnResult(unique_ptr<neighbors_priority_queue_container_t>& pNeighborsContainer,
-                     const chrono::duration<double>& elapsed,
+                     const chrono::duration<double>& elapsed, const chrono::duration<double>& elapsedSorting,
                      const string& filePrefix, const AllKnnProblem& problem)
-                     : pNeighborsPriorityQueueContainer(move(pNeighborsContainer)), elapsed(elapsed), filePrefix(filePrefix), problem(problem)
+                     : pNeighborsPriorityQueueContainer(move(pNeighborsContainer)), elapsed(elapsed), elapsedSorting(elapsedSorting),
+                        filePrefix(filePrefix), problem(problem)
         {
 
         }
 
         AllKnnResult(unique_ptr<neighbors_vector_container_t>& pNeighborsContainer,
-                     const chrono::duration<double>& elapsed,
+                     const chrono::duration<double>& elapsed, const chrono::duration<double>& elapsedSorting,
                      const string& filePrefix, const AllKnnProblem& problem)
-                     : pNeighborsVectorContainer(move(pNeighborsContainer)), elapsed(elapsed), filePrefix(filePrefix), problem(problem)
+                     : pNeighborsVectorContainer(move(pNeighborsContainer)), elapsed(elapsed), elapsedSorting(elapsedSorting),
+                        filePrefix(filePrefix), problem(problem)
         {
 
         }
@@ -30,6 +32,7 @@ class AllKnnResult
         virtual ~AllKnnResult() {}
 
         const chrono::duration<double>& duration() const { return elapsed; }
+        const chrono::duration<double>& durationSorting() const { return elapsedSorting; }
 
         void SaveToFile() const
         {
@@ -76,6 +79,7 @@ class AllKnnResult
         unique_ptr<neighbors_priority_queue_container_t> pNeighborsPriorityQueueContainer;
         unique_ptr<neighbors_vector_container_t> pNeighborsVectorContainer;
         chrono::duration<double> elapsed;
+        chrono::duration<double> elapsedSorting;
         string filePrefix;
         const AllKnnProblem& problem;
 };
