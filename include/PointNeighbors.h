@@ -39,8 +39,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
         }
 
         PointNeighbors(neighbors_vector_t neighborsVector) : numNeighbors(neighborsVector.size()),
-            container(neighborsVector.cbegin(), neighborsVector.cend()),
-            numAddedNeighbors(0)
+            container(neighborsVector.cbegin(), neighborsVector.cend())
         {
         }
 
@@ -70,21 +69,33 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             }
         }
 
+        inline bool CheckAdd(point_vector_t::const_iterator pointIter, const double distanceSquared, const double dx)
+        {
+            auto& lastNeighbor = container.top();
+            double maxDistance = lastNeighbor.distanceSquared;
+
+            if (distanceSquared < maxDistance)
+            {
+                container.pop();
+                Neighbor newNeighbor = {&*pointIter, distanceSquared};
+                container.push(newNeighbor);
+            }
+            else if (dx*dx >= maxDistance)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         inline const Neighbor& MaxDistanceElement() const
         {
             return container.top();
         }
 
-        inline size_t Size() const
-        {
-            return numAddedNeighbors;
-        }
-
     private:
         size_t numNeighbors;
         neighbors_priority_queue_t container;
-        size_t numAddedNeighbors;
-
 };
 
 template<>
