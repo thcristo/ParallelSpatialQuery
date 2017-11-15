@@ -53,18 +53,19 @@ int main(int argc, char* argv[])
         pResult->SaveToFile();
         pResult.reset();
 */
+/*
         PlaneSweepAlgorithm planeSweep;
         pResult = planeSweep.Process(problem);
         cout << fixed << setprecision(3) << "Plane sweep duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
-/*
+*/
         SwitchingPlaneSweepAlgorithm switchingPlaneSweep;
         pResult = switchingPlaneSweep.Process(problem);
         cout << fixed << setprecision(3) << "Switching plane sweep duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
-*/
+
         return 0;
     }
     catch(exception& ex)

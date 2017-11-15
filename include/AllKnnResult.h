@@ -20,10 +20,10 @@ class AllKnnResult
 
         }
 
-        AllKnnResult(unique_ptr<neighbors_vector_container_t>& pNeighborsContainer,
+        AllKnnResult(unique_ptr<neighbors_deque_container_t>& pNeighborsContainer,
                      const chrono::duration<double>& elapsed, const chrono::duration<double>& elapsedSorting,
                      const string& filePrefix, const AllKnnProblem& problem)
-                     : pNeighborsVectorContainer(move(pNeighborsContainer)), elapsed(elapsed), elapsedSorting(elapsedSorting),
+                     : pNeighborsDequeContainer(move(pNeighborsContainer)), elapsed(elapsed), elapsedSorting(elapsedSorting),
                         filePrefix(filePrefix), problem(problem)
         {
 
@@ -57,15 +57,22 @@ class AllKnnResult
                 {
                     pNeighbors = &pNeighborsPriorityQueueContainer->at(inputPoint->id);
                 }
-                else if (pNeighborsVectorContainer != nullptr)
+                else if (pNeighborsDequeContainer != nullptr)
                 {
-                    pNeighbors = &pNeighborsVectorContainer->at(inputPoint->id);
+                    pNeighbors = &pNeighborsDequeContainer->at(inputPoint->id);
                 }
 
                 while (pNeighbors->HasNext())
                 {
-                   Neighbor neighbor = pNeighbors->Next();
-                   outFile << "\t(" << neighbor.point->id << " " << neighbor.distanceSquared << ")";
+                    Neighbor neighbor = pNeighbors->Next();
+                    if (neighbor.point != nullptr)
+                    {
+                        outFile << "\t(" << neighbor.point->id << " " << neighbor.distanceSquared << ")";
+                    }
+                    else
+                    {
+                        outFile << "\t(" << "NULL" << " " << neighbor.distanceSquared << ")";
+                    }
                 }
 
                 outFile << endl;
@@ -77,7 +84,7 @@ class AllKnnResult
 
     private:
         unique_ptr<neighbors_priority_queue_container_t> pNeighborsPriorityQueueContainer;
-        unique_ptr<neighbors_vector_container_t> pNeighborsVectorContainer;
+        unique_ptr<neighbors_deque_container_t> pNeighborsDequeContainer;
         chrono::duration<double> elapsed;
         chrono::duration<double> elapsedSorting;
         string filePrefix;

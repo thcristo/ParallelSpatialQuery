@@ -14,7 +14,7 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
         {
             int numNeighbors = problem.GetNumNeighbors();
 
-            unique_ptr<neighbors_vector_container_t> pNeighborsContainer =
+            unique_ptr<neighbors_deque_container_t> pNeighborsContainer =
                 this->CreateNeighborsContainer<neighbors_deque_t>(problem.GetInputDataset(), numNeighbors);
 
             auto& inputDataset = problem.GetInputDataset();
@@ -128,7 +128,7 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                         }
                         else
                         {
-                            distances[0] = maxDouble;
+                            distances[1] = maxDouble;
                         }
                         distanceCalculated[1] = true;
                     }
