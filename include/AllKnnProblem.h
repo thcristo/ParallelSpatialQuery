@@ -41,6 +41,38 @@ class AllKnnProblem
             return *pTrainingDataset;
         }
 
+        const point_vector_t& GetInputDatasetSorted()
+        {
+            if (!pInputDatasetSorted)
+            {
+                pInputDatasetSorted.reset(new point_vector_t(GetInputDataset()));
+
+                sort(pInputDatasetSorted->begin(), pInputDatasetSorted->end(),
+                 [](const Point& point1, const Point& point2)
+                 {
+                     return point1.x < point2.x;
+                 });
+            }
+
+            return *pInputDatasetSorted;
+        }
+
+        const point_vector_t& GetTrainingDatasetSorted()
+        {
+            if (!pTrainingDatasetSorted)
+            {
+                pTrainingDatasetSorted.reset(new point_vector_t(GetTrainingDataset()));
+
+                sort(pTrainingDatasetSorted->begin(), pTrainingDatasetSorted->end(),
+                 [](const Point& point1, const Point& point2)
+                 {
+                     return point1.x < point2.x;
+                 });
+            }
+
+            return *pTrainingDatasetSorted;
+        }
+
         size_t GetNumNeighbors() const
         {
             return numNeighbors;
@@ -54,6 +86,8 @@ class AllKnnProblem
         size_t numNeighbors;
         unique_ptr<point_vector_t> pInputDataset;
         unique_ptr<point_vector_t> pTrainingDataset;
+        unique_ptr<point_vector_t> pInputDatasetSorted;
+        unique_ptr<point_vector_t> pTrainingDatasetSorted;
 
         void LoadDataFiles()
         {

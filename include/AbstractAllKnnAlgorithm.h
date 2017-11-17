@@ -12,7 +12,7 @@ class AbstractAllKnnAlgorithm
 {
     public:
         virtual ~AbstractAllKnnAlgorithm() {}
-        virtual unique_ptr<AllKnnResult> Process(const AllKnnProblem& problem) const = 0;
+        virtual unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const = 0;
     protected:
         AbstractAllKnnAlgorithm() {}
 

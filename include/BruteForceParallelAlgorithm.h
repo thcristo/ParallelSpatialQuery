@@ -10,7 +10,7 @@ class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
         BruteForceParallelAlgorithm() {}
         virtual ~BruteForceParallelAlgorithm() {}
 
-        unique_ptr<AllKnnResult> Process(const AllKnnProblem& problem) const override
+        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
         {
             int numNeighbors = problem.GetNumNeighbors();
 

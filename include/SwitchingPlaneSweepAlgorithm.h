@@ -1,6 +1,6 @@
 #ifndef SWITCHINGPLANESWEEPALGORITHM_H
 #define SWITCHINGPLANESWEEPALGORITHM_H
-
+/*
 #include <AbstractAllKnnAlgorithm.h>
 #include <array>
 
@@ -72,13 +72,10 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
 
             for (auto inputPointIndex = inputDatasetIndexX.cbegin(); inputPointIndex != inputDatasetIndexX.cend(); ++inputPointIndex)
             {
-                auto inputPointIter = *inputPointIndex;
+                auto& inputPointIter = *inputPointIndex;
                 auto& neighbors = pNeighborsContainer->at(inputPointIter->id);
 
-                /*
-                point_vector_index_iterator_t nextTrainingPointIndex = lower_bound(startSearchPos, trainingDatasetIndex.cend(), inputPointIter->x,
-                                    [&](const point_vector_iterator_t& iter, const double& value) { return iter->x < value; } );
-                */
+
                 point_vector_index_iterator_t nextTrainingPointIndexX = startSearchPosX;
                 while (nextTrainingPointIndexX < trainingDatasetIndexX.cend() && (*nextTrainingPointIndexX)->x < inputPointIter->x)
                 {
@@ -225,5 +222,5 @@ class SwitchingPlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
 
     private:
 };
-
+*/
 #endif // SWITCHINGPLANESWEEPALGORITHM_H

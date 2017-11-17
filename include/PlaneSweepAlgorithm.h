@@ -10,13 +10,12 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
         PlaneSweepAlgorithm() {}
         virtual ~PlaneSweepAlgorithm() {}
 
-        unique_ptr<AllKnnResult> Process(const AllKnnProblem& problem) const override
+        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
         {
             size_t numNeighbors = problem.GetNumNeighbors();
 
             unique_ptr<neighbors_priority_queue_container_t> pNeighborsContainer =
                 this->CreateNeighborsContainer<neighbors_priority_queue_t>(problem.GetInputDataset(), numNeighbors);
-
 
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();
@@ -54,7 +53,6 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
             {
                 auto& inputPointIter = *inputPointIndex;
                 auto& neighbors = pNeighborsContainer->at(inputPointIter->id);
-
 
                 /*
                 point_vector_index_iterator_t nextTrainingPointIndex = lower_bound(startSearchPos, trainingDatasetIndex.cend(), inputPointIter->x,

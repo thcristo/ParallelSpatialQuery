@@ -10,6 +10,7 @@
 #include "AllKnnProblem.h"
 #include "AllKnnResult.h"
 #include "PlaneSweepAlgorithm.h"
+#include "PlaneSweepCopyAlgorithm.h"
 #include "SwitchingPlaneSweepAlgorithm.h"
 
 int main(int argc, char* argv[])
@@ -32,40 +33,47 @@ int main(int argc, char* argv[])
 
         cout << "Read " << problem.GetInputDataset().size() << " input points and " << problem.GetTrainingDataset().size() << " training points." << endl;
         unique_ptr<AllKnnResult> pResult;
-
 /*
+
         BruteForceAlgorithm bruteForce;
         pResult = bruteForce.Process(problem);
-        cout << fixed << setprecision(3) << "Brute force duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
+        cout << fixed << setprecision(3) << "Brute force duration: " << pResult->duration().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
 
 
         BruteForceParallelAlgorithm bruteForceParallel;
         pResult = bruteForceParallel.Process(problem);
-        cout << fixed << setprecision(3) << "Parallel brute force duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
+        cout << fixed << setprecision(3) << "Parallel brute force duration: " << pResult->duration().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
 
         BruteForceParallelTBBAlgorithm bruteForceParallelTBB;
         pResult = bruteForceParallelTBB.Process(problem);
-        cout << fixed << setprecision(3) << "Parallel brute force TBB duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
+        cout << fixed << setprecision(3) << "Parallel brute force TBB duration: " << pResult->duration().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
 */
-/*
+
         PlaneSweepAlgorithm planeSweep;
         pResult = planeSweep.Process(problem);
         cout << fixed << setprecision(3) << "Plane sweep duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
-*/
+
+        PlaneSweepCopyAlgorithm planeSweepCopy;
+        pResult = planeSweepCopy.Process(problem);
+        cout << fixed << setprecision(3) << "Plane sweep copy duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
+        pResult->SaveToFile();
+        pResult.reset();
+
+/*
         SwitchingPlaneSweepAlgorithm switchingPlaneSweep;
         pResult = switchingPlaneSweep.Process(problem);
         cout << fixed << setprecision(3) << "Switching plane sweep duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
-
+*/
         return 0;
     }
     catch(exception& ex)

@@ -45,6 +45,7 @@
 		<Unit filename="include/BruteForceParallelTBBAlgorithm.h" />
 		<Unit filename="include/ParallelPlaneSweepAlgorithm.h" />
 		<Unit filename="include/PlaneSweepAlgorithm.h" />
+		<Unit filename="include/PlaneSweepCopyAlgorithm.h" />
 		<Unit filename="include/PlaneSweepParallel.h" />
 		<Unit filename="include/PointNeighbors.h" />
 		<Unit filename="include/SwitchingPlaneSweepAlgorithm.h" />

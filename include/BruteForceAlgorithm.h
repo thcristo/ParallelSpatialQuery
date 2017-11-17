@@ -12,7 +12,7 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
         virtual ~BruteForceAlgorithm() {}
 
 
-        unique_ptr<AllKnnResult> Process(const AllKnnProblem& problem) const override
+        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
         {
             int numNeighbors = problem.GetNumNeighbors();
 
