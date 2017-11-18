@@ -20,6 +20,15 @@ class AllKnnResult
 
         }
 
+        AllKnnResult(unique_ptr<pointNeighbors_priority_queue_vector_t>& pNeighborsContainer,
+                     const chrono::duration<double>& elapsed, const chrono::duration<double>& elapsedSorting,
+                     const string& filePrefix, const AllKnnProblem& problem)
+                     : pNeighborsPriorityQueueVector(move(pNeighborsContainer)), elapsed(elapsed), elapsedSorting(elapsedSorting),
+                        filePrefix(filePrefix), problem(problem)
+        {
+
+        }
+
         AllKnnResult(unique_ptr<neighbors_deque_container_t>& pNeighborsContainer,
                      const chrono::duration<double>& elapsed, const chrono::duration<double>& elapsedSorting,
                      const string& filePrefix, const AllKnnProblem& problem)
@@ -53,7 +62,11 @@ class AllKnnResult
                 outFile << inputPoint->id;
 
                 NeighborsEnumerator* pNeighbors = nullptr;
-                if (pNeighborsPriorityQueueContainer != nullptr)
+                if (pNeighborsPriorityQueueVector != nullptr)
+                {
+                    pNeighbors = &pNeighborsPriorityQueueVector->at(inputPoint->id - 1);
+                }
+                else if (pNeighborsPriorityQueueContainer != nullptr)
                 {
                     pNeighbors = &pNeighborsPriorityQueueContainer->at(inputPoint->id);
                 }
@@ -84,6 +97,7 @@ class AllKnnResult
 
     private:
         unique_ptr<neighbors_priority_queue_container_t> pNeighborsPriorityQueueContainer;
+        unique_ptr<pointNeighbors_priority_queue_vector_t> pNeighborsPriorityQueueVector;
         unique_ptr<neighbors_deque_container_t> pNeighborsDequeContainer;
         chrono::duration<double> elapsed;
         chrono::duration<double> elapsedSorting;

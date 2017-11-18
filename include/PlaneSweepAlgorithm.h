@@ -14,8 +14,8 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
         {
             size_t numNeighbors = problem.GetNumNeighbors();
 
-            unique_ptr<neighbors_priority_queue_container_t> pNeighborsContainer =
-                this->CreateNeighborsContainer<neighbors_priority_queue_t>(problem.GetInputDataset(), numNeighbors);
+            auto pNeighborsContainer =
+                this->CreateNeighborsContainer<neighbors_priority_queue_container_t>(problem.GetInputDataset(), numNeighbors);
 
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();

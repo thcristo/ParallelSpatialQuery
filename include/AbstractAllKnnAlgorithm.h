@@ -8,6 +8,48 @@
 #include "AllKnnResult.h"
 #include "PlaneSweepParallel.h"
 
+template<class OuterContainer>
+unique_ptr<OuterContainer> CreateNeighborsContainer(const point_vector_t& inputDataset, size_t numNeighbors)
+{
+
+}
+
+template<>
+unique_ptr<neighbors_priority_queue_container_t> CreateNeighborsContainer<neighbors_priority_queue_container_t>(const point_vector_t& inputDataset, size_t numNeighbors)
+{
+    try
+    {
+        unique_ptr<neighbors_priority_queue_container_t> pContainer(new neighbors_priority_queue_container_t(inputDataset.size()));
+
+        for (auto point = inputDataset.cbegin(); point != inputDataset.cend(); ++point)
+        {
+            pContainer->insert(make_pair(point->id, PointNeighbors<neighbors_priority_queue_t>(numNeighbors)));
+        }
+
+        return pContainer;
+    }
+    catch(bad_alloc)
+    {
+        throw ApplicationException("Cannot allocate memory for neighbors container.");
+    }
+}
+
+template<>
+unique_ptr<pointNeighbors_priority_queue_vector_t> CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(const point_vector_t& inputDataset, size_t numNeighbors)
+{
+    try
+    {
+        unique_ptr<pointNeighbors_priority_queue_vector_t> pContainer(new pointNeighbors_priority_queue_vector_t(inputDataset.size(),
+                                                                    PointNeighbors<neighbors_priority_queue_t>(numNeighbors)));
+
+        return pContainer;
+    }
+    catch(bad_alloc)
+    {
+        throw ApplicationException("Cannot allocate memory for neighbors container.");
+    }
+}
+
 class AbstractAllKnnAlgorithm
 {
     public:
@@ -23,25 +65,10 @@ class AbstractAllKnnAlgorithm
          * \return An unordered map of point Ids to multisets of Neighbors
          *
          */
-        template<class Container>
-        unique_ptr<neighbors_container_t<Container>> CreateNeighborsContainer(const point_vector_t& inputDataset, size_t numNeighbors) const
+        template<class OuterContainer>
+        unique_ptr<OuterContainer> CreateNeighborsContainer(const point_vector_t& inputDataset, size_t numNeighbors) const
         {
-            try
-            {
-                unique_ptr<neighbors_container_t<Container>> pContainer(new neighbors_container_t<Container>(inputDataset.size()));
-
-                for (auto point = inputDataset.cbegin(); point != inputDataset.cend(); ++point)
-                {
-                    pContainer->insert(make_pair(point->id, PointNeighbors<Container>(numNeighbors)));
-                }
-
-                return pContainer;
-            }
-            catch(bad_alloc)
-            {
-                throw ApplicationException("Cannot allocate memory for neighbors container.");
-            }
-
+            return ::CreateNeighborsContainer<OuterContainer>(inputDataset, numNeighbors);
         }
 
         template<class Container>

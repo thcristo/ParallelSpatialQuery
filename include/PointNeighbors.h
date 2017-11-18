@@ -27,6 +27,7 @@ class PointNeighbors : public NeighborsEnumerator
     private:
         Container container;
         size_t numNeighbors;
+        long id;
 };
 
 template<>
@@ -137,8 +138,11 @@ class PointNeighbors<neighbors_deque_t> : public NeighborsEnumerator
 template<class Container>
 using neighbors_container_t = unordered_map<long, PointNeighbors<Container>>;
 
+template<class Container>
+using pointNeighbors_generic_vector_t = vector<PointNeighbors<Container>>;
+
 typedef neighbors_container_t<neighbors_priority_queue_t> neighbors_priority_queue_container_t;
 typedef neighbors_container_t<neighbors_deque_t> neighbors_deque_container_t;
-
+typedef pointNeighbors_generic_vector_t<neighbors_priority_queue_t> pointNeighbors_priority_queue_vector_t;
 
 #endif // POINTNEIGHBORS_H

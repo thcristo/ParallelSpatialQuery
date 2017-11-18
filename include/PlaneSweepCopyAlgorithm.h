@@ -14,8 +14,8 @@ class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm
         {
             size_t numNeighbors = problem.GetNumNeighbors();
 
-            unique_ptr<neighbors_priority_queue_container_t> pNeighborsContainer =
-                this->CreateNeighborsContainer<neighbors_priority_queue_t>(problem.GetInputDataset(), numNeighbors);
+            auto pNeighborsContainer =
+                this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
 
             auto start = chrono::high_resolution_clock::now();
 
@@ -28,11 +28,11 @@ class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm
 
             for (auto inputPointIter = inputDataset.cbegin(); inputPointIter != inputDataset.cend(); ++inputPointIter)
             {
-                auto& neighbors = pNeighborsContainer->at(inputPointIter->id);
+                auto& neighbors = pNeighborsContainer->at(inputPointIter->id-1);
 
                 /*
                 auto nextTrainingPointIter = lower_bound(startSearchPos, trainingDataset.cend(), inputPointIter->x,
-                                    [&](const Point& point, double& value) { return point.x < value; } );
+                                    [&](const Point& point, const double& value) { return point.x < value; } );
                 */
 
                 auto nextTrainingPointIter = startSearchPos;
