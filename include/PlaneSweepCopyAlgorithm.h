@@ -24,11 +24,16 @@ class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm
 
             auto finishSorting = chrono::high_resolution_clock::now();
 
-            auto startSearchPos = trainingDataset.cbegin();
+            auto trainingDatasetBegin = trainingDataset.cbegin();
+            auto trainingDatasetEnd = trainingDataset.cend();
+            auto inputDatasetBegin = inputDataset.cbegin();
+            auto inputDatasetEnd = inputDataset.cend();
 
-            for (auto inputPointIter = inputDataset.cbegin(); inputPointIter != inputDataset.cend(); ++inputPointIter)
+            auto startSearchPos = trainingDatasetBegin;
+
+            for (auto inputPointIter = inputDatasetBegin; inputPointIter < inputDatasetEnd; ++inputPointIter)
             {
-                auto& neighbors = pNeighborsContainer->at(inputPointIter->id-1);
+                auto& neighbors = pNeighborsContainer->at(inputPointIter->id - 1);
 
                 /*
                 auto nextTrainingPointIter = lower_bound(startSearchPos, trainingDataset.cend(), inputPointIter->x,
@@ -36,20 +41,20 @@ class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm
                 */
 
                 auto nextTrainingPointIter = startSearchPos;
-                while (nextTrainingPointIter < trainingDataset.cend() && nextTrainingPointIter->x < inputPointIter->x)
+                while (nextTrainingPointIter < trainingDatasetEnd && nextTrainingPointIter->x < inputPointIter->x)
                 {
                     ++nextTrainingPointIter;
                 }
 
                 startSearchPos = nextTrainingPointIter;
                 auto prevTrainingPointIter = nextTrainingPointIter;
-                if (prevTrainingPointIter > trainingDataset.cbegin())
+                if (prevTrainingPointIter > trainingDatasetBegin)
                 {
                     --prevTrainingPointIter;
                 }
 
                 bool lowStop = prevTrainingPointIter == nextTrainingPointIter;
-                bool highStop = nextTrainingPointIter == trainingDataset.cend();
+                bool highStop = nextTrainingPointIter == trainingDatasetEnd;
 
                 while (!lowStop || !highStop)
                 {
@@ -57,7 +62,7 @@ class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm
                     {
                         if (CheckAddNeighbor(inputPointIter, prevTrainingPointIter, neighbors))
                         {
-                            if (prevTrainingPointIter > trainingDataset.cbegin())
+                            if (prevTrainingPointIter > trainingDatasetBegin)
                             {
                                 --prevTrainingPointIter;
                             }
@@ -76,12 +81,12 @@ class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm
                     {
                         if (CheckAddNeighbor(inputPointIter, nextTrainingPointIter, neighbors))
                         {
-                            if (nextTrainingPointIter < trainingDataset.cend())
+                            if (nextTrainingPointIter < trainingDatasetEnd)
                             {
                                 ++nextTrainingPointIter;
                             }
 
-                            if (nextTrainingPointIter == trainingDataset.cend())
+                            if (nextTrainingPointIter == trainingDatasetEnd)
                             {
                                 highStop = true;
                             }

@@ -15,7 +15,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
             size_t numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
-                this->CreateNeighborsContainer<neighbors_priority_queue_container_t>(problem.GetInputDataset(), numNeighbors);
+                this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
 
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();
@@ -45,14 +45,16 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
 
             auto finishSorting = chrono::high_resolution_clock::now();
 
-            point_vector_index_iterator_t startSearchPos = trainingDatasetIndex.cbegin();
-            const point_vector_index_iterator_t& trainingDatasetIndexBegin = trainingDatasetIndex.cbegin();
-            const point_vector_index_iterator_t& trainingDatasetIndexEnd = trainingDatasetIndex.cend();
+            auto startSearchPos = trainingDatasetIndex.cbegin();
+            auto trainingDatasetIndexBegin = trainingDatasetIndex.cbegin();
+            auto trainingDatasetIndexEnd = trainingDatasetIndex.cend();
+            auto inputDatasetIndexBegin = inputDatasetIndex.cbegin();
+            auto inputDatasetIndexEnd = inputDatasetIndex.cend();
 
-            for (auto inputPointIndex = inputDatasetIndex.cbegin(); inputPointIndex != inputDatasetIndex.cend(); ++inputPointIndex)
+            for (auto inputPointIndex = inputDatasetIndexBegin; inputPointIndex < inputDatasetIndexEnd; ++inputPointIndex)
             {
                 auto& inputPointIter = *inputPointIndex;
-                auto& neighbors = pNeighborsContainer->at(inputPointIter->id);
+                auto& neighbors = pNeighborsContainer->at(inputPointIter->id - 1);
 
                 /*
                 point_vector_index_iterator_t nextTrainingPointIndex = lower_bound(startSearchPos, trainingDatasetIndex.cend(), inputPointIter->x,

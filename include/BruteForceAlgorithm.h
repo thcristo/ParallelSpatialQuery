@@ -17,18 +17,23 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
             int numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
-                this->CreateNeighborsContainer<neighbors_priority_queue_container_t>(problem.GetInputDataset(), numNeighbors);
+                this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
 
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();
 
             auto start = chrono::high_resolution_clock::now();
 
-            for (auto inputPoint = inputDataset.cbegin(); inputPoint != inputDataset.cend(); ++inputPoint)
-            {
-                auto& neighbors = pNeighborsContainer->at(inputPoint->id);
+            auto trainingDatasetBegin = trainingDataset.cbegin();
+            auto trainingDatasetEnd = trainingDataset.cend();
+            auto inputDatasetBegin = inputDataset.cbegin();
+            auto inputDatasetEnd = inputDataset.cend();
 
-                for (auto trainingPoint = trainingDataset.cbegin(); trainingPoint != trainingDataset.cend(); ++trainingPoint)
+            for (auto inputPoint = inputDatasetBegin; inputPoint < inputDatasetEnd; ++inputPoint)
+            {
+                auto& neighbors = pNeighborsContainer->at(inputPoint->id - 1);
+
+                for (auto trainingPoint = trainingDatasetBegin; trainingPoint < trainingDatasetEnd; ++trainingPoint)
                 {
                     AddNeighbor(inputPoint, trainingPoint, neighbors);
                 }

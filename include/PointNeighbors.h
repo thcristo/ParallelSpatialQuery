@@ -69,7 +69,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             }
         }
 
-        inline bool CheckAdd(point_vector_t::const_iterator pointIter, const double distanceSquared, const double dx)
+        inline bool CheckAdd(point_vector_t::const_iterator pointIter, const double& distanceSquared, const double& dx)
         {
             auto& lastNeighbor = container.top();
             double maxDistance = lastNeighbor.distanceSquared;

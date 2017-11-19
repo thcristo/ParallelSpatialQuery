@@ -3,7 +3,6 @@
 #include <exception>
 #include <iomanip>
 #include <chrono>
-#include "ParallelPlaneSweepAlgorithm.h"
 #include "BruteForceAlgorithm.h"
 #include "BruteForceParallelAlgorithm.h"
 #include "BruteForceParallelTBBAlgorithm.h"
@@ -11,7 +10,8 @@
 #include "AllKnnResult.h"
 #include "PlaneSweepAlgorithm.h"
 #include "PlaneSweepCopyAlgorithm.h"
-#include "SwitchingPlaneSweepAlgorithm.h"
+#include "PlaneSweepCopyParallelAlgorithm.h"
+#include "PlaneSweepCopyParallelTBBAlgorithm.h"
 
 int main(int argc, char* argv[])
 {
@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
         cout << fixed << setprecision(3) << "Parallel brute force TBB duration: " << pResult->duration().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
-*/
+
 
         PlaneSweepAlgorithm planeSweep;
         pResult = planeSweep.Process(problem);
@@ -66,14 +66,22 @@ int main(int argc, char* argv[])
         cout << fixed << setprecision(3) << "Plane sweep copy duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
-
-/*
-        SwitchingPlaneSweepAlgorithm switchingPlaneSweep;
-        pResult = switchingPlaneSweep.Process(problem);
-        cout << fixed << setprecision(3) << "Switching plane sweep duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
+        problem.ClearSortedVectors();
+*/
+        PlaneSweepCopyParallelAlgorithm planeSweepCopyParallel;
+        pResult = planeSweepCopyParallel.Process(problem);
+        cout << fixed << setprecision(3) << "Parallel plane sweep copy duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
-*/
+        problem.ClearSortedVectors();
+
+        PlaneSweepCopyParallelTBBAlgorithm planeSweepCopyParallelTBB;
+        pResult = planeSweepCopyParallelTBB.Process(problem);
+        cout << fixed << setprecision(3) << "Parallel plane sweep copy TBB duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
+        pResult->SaveToFile();
+        pResult.reset();
+        problem.ClearSortedVectors();
+
         return 0;
     }
     catch(exception& ex)

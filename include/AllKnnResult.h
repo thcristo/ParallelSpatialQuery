@@ -64,7 +64,7 @@ class AllKnnResult
                 NeighborsEnumerator* pNeighbors = nullptr;
                 if (pNeighborsPriorityQueueVector != nullptr)
                 {
-                    pNeighbors = &pNeighborsPriorityQueueVector->at(inputPoint->id - 1);
+                    pNeighbors = &pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
                 }
                 else if (pNeighborsPriorityQueueContainer != nullptr)
                 {

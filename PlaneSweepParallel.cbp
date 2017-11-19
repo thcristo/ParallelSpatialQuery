@@ -24,7 +24,7 @@
 				<Option compiler="gcc" />
 				<Option parameters="10 E:\Files\eap\de\start\data\small-real-data\NArrpointNNew.txt E:\Files\eap\de\start\data\small-real-data\NArdpointNNew.txt" />
 				<Compiler>
-					<Add option="-O2" />
+					<Add option="-O3" />
 					<Add directory="include" />
 				</Compiler>
 				<Linker>
@@ -43,9 +43,10 @@
 		<Unit filename="include/BruteForceAlgorithm.h" />
 		<Unit filename="include/BruteForceParallelAlgorithm.h" />
 		<Unit filename="include/BruteForceParallelTBBAlgorithm.h" />
-		<Unit filename="include/ParallelPlaneSweepAlgorithm.h" />
 		<Unit filename="include/PlaneSweepAlgorithm.h" />
 		<Unit filename="include/PlaneSweepCopyAlgorithm.h" />
+		<Unit filename="include/PlaneSweepCopyParallelAlgorithm.h" />
+		<Unit filename="include/PlaneSweepCopyParallelTBBAlgorithm.h" />
 		<Unit filename="include/PlaneSweepParallel.h" />
 		<Unit filename="include/PointNeighbors.h" />
 		<Unit filename="include/SwitchingPlaneSweepAlgorithm.h" />

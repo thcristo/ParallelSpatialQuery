@@ -73,6 +73,19 @@ class AllKnnProblem
             return *pTrainingDatasetSorted;
         }
 
+        void ClearSortedVectors()
+        {
+            if (pInputDatasetSorted)
+            {
+                pInputDatasetSorted.reset();
+            }
+
+            if (pTrainingDatasetSorted)
+            {
+                pTrainingDatasetSorted.reset();
+            }
+        }
+
         size_t GetNumNeighbors() const
         {
             return numNeighbors;

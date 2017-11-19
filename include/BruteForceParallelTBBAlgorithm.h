@@ -17,7 +17,7 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             int numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
-                this->CreateNeighborsContainer<neighbors_priority_queue_container_t>(problem.GetInputDataset(), numNeighbors);
+                this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
 
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();
@@ -26,13 +26,21 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
             auto start = chrono::high_resolution_clock::now();
 
-            parallel_for(point_range_t(inputDataset.cbegin(), inputDataset.cend()), [&](point_range_t& range)
-                {
-                    for (auto inputPoint = range.begin(); inputPoint != range.end(); ++inputPoint)
-                    {
-                        auto& neighbors = pNeighborsContainer->at(inputPoint->id);
+            auto trainingDatasetBegin = trainingDataset.cbegin();
+            auto trainingDatasetEnd = trainingDataset.cend();
+            auto inputDatasetBegin = inputDataset.cbegin();
+            auto inputDatasetEnd = inputDataset.cend();
 
-                        for (auto trainingPoint = trainingDataset.cbegin(); trainingPoint != trainingDataset.cend(); ++trainingPoint)
+            parallel_for(point_range_t(inputDatasetBegin, inputDatasetEnd), [&](point_range_t& range)
+                {
+                    auto rangeBegin = range.begin();
+                    auto rangeEnd = range.end();
+
+                    for (auto inputPoint = rangeBegin; inputPoint < rangeEnd; ++inputPoint)
+                    {
+                        auto& neighbors = pNeighborsContainer->at(inputPoint->id - 1);
+
+                        for (auto trainingPoint = trainingDatasetBegin; trainingPoint < trainingDatasetEnd; ++trainingPoint)
                         {
                             AddNeighbor(inputPoint, trainingPoint, neighbors);
                         }
