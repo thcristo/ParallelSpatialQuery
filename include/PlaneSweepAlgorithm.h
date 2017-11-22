@@ -128,6 +128,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
         }
 
     private:
+
 };
 
 #endif // PLANESWEEPALGORITHM_H

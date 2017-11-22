@@ -47,6 +47,7 @@
 		<Unit filename="include/PlaneSweepCopyAlgorithm.h" />
 		<Unit filename="include/PlaneSweepCopyParallelAlgorithm.h" />
 		<Unit filename="include/PlaneSweepCopyParallelTBBAlgorithm.h" />
+		<Unit filename="include/PlaneSweepFullCopyParallelAlgorithm.h" />
 		<Unit filename="include/PlaneSweepParallel.h" />
 		<Unit filename="include/PointNeighbors.h" />
 		<Unit filename="include/SwitchingPlaneSweepAlgorithm.h" />

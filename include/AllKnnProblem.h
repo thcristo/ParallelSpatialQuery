@@ -73,6 +73,16 @@ class AllKnnProblem
             return *pTrainingDatasetSorted;
         }
 
+        const vector<point_vector_t>& GetTrainingDatasetSortedCopy()
+        {
+            if (!pTrainingDatasetSortedCopy)
+            {
+                pTrainingDatasetSortedCopy.reset(new vector<point_vector_t>(8, GetTrainingDatasetSorted()));
+            }
+
+            return *pTrainingDatasetSortedCopy;
+        }
+
         void ClearSortedVectors()
         {
             if (pInputDatasetSorted)
@@ -83,6 +93,11 @@ class AllKnnProblem
             if (pTrainingDatasetSorted)
             {
                 pTrainingDatasetSorted.reset();
+            }
+
+            if (pTrainingDatasetSortedCopy)
+            {
+                pTrainingDatasetSortedCopy.reset();
             }
         }
 
@@ -101,6 +116,8 @@ class AllKnnProblem
         unique_ptr<point_vector_t> pTrainingDataset;
         unique_ptr<point_vector_t> pInputDatasetSorted;
         unique_ptr<point_vector_t> pTrainingDatasetSorted;
+
+        unique_ptr<vector<point_vector_t>> pTrainingDatasetSortedCopy;
 
         void LoadDataFiles()
         {

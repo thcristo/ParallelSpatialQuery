@@ -12,6 +12,7 @@
 #include "PlaneSweepCopyAlgorithm.h"
 #include "PlaneSweepCopyParallelAlgorithm.h"
 #include "PlaneSweepCopyParallelTBBAlgorithm.h"
+#include "PlaneSweepFullCopyParallelAlgorithm.h"
 
 int main(int argc, char* argv[])
 {
@@ -53,7 +54,7 @@ int main(int argc, char* argv[])
         cout << fixed << setprecision(3) << "Parallel brute force TBB duration: " << pResult->duration().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
-
+*/
 
         PlaneSweepAlgorithm planeSweep;
         pResult = planeSweep.Process(problem);
@@ -67,7 +68,7 @@ int main(int argc, char* argv[])
         pResult->SaveToFile();
         pResult.reset();
         problem.ClearSortedVectors();
-*/
+
         PlaneSweepCopyParallelAlgorithm planeSweepCopyParallel;
         pResult = planeSweepCopyParallel.Process(problem);
         cout << fixed << setprecision(3) << "Parallel plane sweep copy duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
@@ -78,6 +79,13 @@ int main(int argc, char* argv[])
         PlaneSweepCopyParallelTBBAlgorithm planeSweepCopyParallelTBB;
         pResult = planeSweepCopyParallelTBB.Process(problem);
         cout << fixed << setprecision(3) << "Parallel plane sweep copy TBB duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
+        pResult->SaveToFile();
+        pResult.reset();
+        problem.ClearSortedVectors();
+
+        PlaneSweepFullCopyParallelAlgorithm planeSweepFullCopyParallel;
+        pResult = planeSweepFullCopyParallel.Process(problem);
+        cout << fixed << setprecision(3) << "Parallel plane sweep full copy duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
         problem.ClearSortedVectors();
