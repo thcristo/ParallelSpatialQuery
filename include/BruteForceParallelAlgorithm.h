@@ -2,12 +2,15 @@
 #define BRUTEFORCEPARALLELALGORITHM_H
 
 #include <AbstractAllKnnAlgorithm.h>
-
+#include <omp.h>
 
 class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
-        BruteForceParallelAlgorithm() {}
+        BruteForceParallelAlgorithm(int numThreads) : numThreads(numThreads)
+        {
+        }
+
         virtual ~BruteForceParallelAlgorithm() {}
 
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
@@ -27,6 +30,11 @@ class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
             auto inputDatasetBegin = inputDataset.cbegin();
             auto inputDatasetEnd = inputDataset.cend();
 
+            if (numThreads > 0)
+            {
+                omp_set_num_threads(numThreads);
+            }
+
             #pragma omp parallel for
             for (auto inputPoint = inputDatasetBegin; inputPoint < inputDatasetEnd; ++inputPoint)
             {
@@ -45,6 +53,7 @@ class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
         }
 
     private:
+        int numThreads;
 };
 
 #endif // BRUTEFORCEPARALLELALGORITHM_H

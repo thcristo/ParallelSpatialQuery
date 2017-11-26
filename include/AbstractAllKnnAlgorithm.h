@@ -110,6 +110,10 @@ class AbstractAllKnnAlgorithm
 
             return dx*dx + dy*dy;
         }
+
+
+    private:
+
 };
 
 #endif // ABSTRACTALLKNNALGORITHM_H

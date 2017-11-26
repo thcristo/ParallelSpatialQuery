@@ -9,7 +9,10 @@ using namespace tbb;
 class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
-        BruteForceParallelTBBAlgorithm() {}
+        BruteForceParallelTBBAlgorithm(int numThreads) : numThreads(numThreads)
+        {
+        }
+
         virtual ~BruteForceParallelTBBAlgorithm() {}
 
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
@@ -30,6 +33,17 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             auto trainingDatasetEnd = trainingDataset.cend();
             auto inputDatasetBegin = inputDataset.cbegin();
             auto inputDatasetEnd = inputDataset.cend();
+
+            task_scheduler_init scheduler(task_scheduler_init::deferred);
+
+            if (numThreads > 0)
+            {
+                scheduler.initialize(numThreads);
+            }
+            else
+            {
+                scheduler.initialize(task_scheduler_init::automatic);
+            }
 
             parallel_for(point_range_t(inputDatasetBegin, inputDatasetEnd), [&](point_range_t& range)
                 {
@@ -55,6 +69,8 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
         }
 
     private:
+        int numThreads;
+
 };
 
 #endif // BRUTEFORCEPARALLELTBBALGORITHM_H

@@ -10,7 +10,10 @@
 class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
-        PlaneSweepCopyParallelAlgorithm() {}
+        PlaneSweepCopyParallelAlgorithm(int numThreads) : numThreads(numThreads)
+        {
+        }
+
         virtual ~PlaneSweepCopyParallelAlgorithm() {}
 
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
@@ -33,6 +36,11 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
             auto inputDatasetEnd = inputDataset.cend();
 
             auto inputDatasetSize = inputDataset.size();
+
+            if (numThreads > 0)
+            {
+                omp_set_num_threads(numThreads);
+            }
 
             #pragma omp parallel
             {
@@ -124,6 +132,7 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
         }
 
     private:
+        int numThreads;
 };
 
 #endif // PLANESWEEPCOPYPARALLELALGORITHM_H

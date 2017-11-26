@@ -10,7 +10,10 @@ using namespace tbb;
 class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
-        PlaneSweepCopyParallelTBBAlgorithm() {}
+        PlaneSweepCopyParallelTBBAlgorithm(int numThreads) : numThreads(numThreads)
+        {
+        }
+
         virtual ~PlaneSweepCopyParallelTBBAlgorithm() {}
 
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
@@ -33,6 +36,17 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             auto trainingDatasetEnd = trainingDataset.cend();
             auto inputDatasetBegin = inputDataset.cbegin();
             auto inputDatasetEnd = inputDataset.cend();
+
+            task_scheduler_init scheduler(task_scheduler_init::deferred);
+
+            if (numThreads > 0)
+            {
+                scheduler.initialize(numThreads);
+            }
+            else
+            {
+                scheduler.initialize(task_scheduler_init::automatic);
+            }
 
             parallel_for(point_range_t(inputDatasetBegin, inputDatasetEnd), [&](point_range_t& range)
                 {
@@ -122,6 +136,8 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
     protected:
 
     private:
+        int numThreads;
+
 };
 
 #endif // PLANESWEEPCOPYPARALLELTBBALGORITHM_H
