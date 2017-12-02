@@ -14,6 +14,7 @@
 #include "PlaneSweepCopyParallelAlgorithm.h"
 #include "PlaneSweepCopyParallelTBBAlgorithm.h"
 #include "PlaneSweepFullCopyParallelAlgorithm.h"
+#include "PlaneSweepStripesParallelAlgorithm.h"
 
 int main(int argc, char* argv[])
 {
@@ -97,14 +98,14 @@ int main(int argc, char* argv[])
         pResult->SaveToFile();
         pResult.reset();
         problem.ClearSortedVectors();
-/*
-        PlaneSweepFullCopyParallelAlgorithm planeSweepFullCopyParallel(numThreads);
-        pResult = planeSweepFullCopyParallel.Process(problem);
-        cout << fixed << setprecision(3) << "Parallel plane sweep full copy duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
+
+        PlaneSweepStripesParallelAlgorithm planeSweepStripesParallel(numThreads);
+        pResult = planeSweepStripesParallel.Process(problem);
+        cout << fixed << setprecision(3) << "Parallel plane sweep with stripes duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
         problem.ClearSortedVectors();
-*/
+
         return 0;
     }
     catch(exception& ex)

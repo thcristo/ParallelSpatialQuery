@@ -72,7 +72,7 @@ class AbstractAllKnnAlgorithm
         }
 
         template<class Container>
-        inline void AddNeighbor(point_vector_t::const_iterator inputPoint, point_vector_t::const_iterator trainingPoint,
+        inline void AddNeighbor(point_vector_iterator_t inputPoint, point_vector_iterator_t trainingPoint,
                                  PointNeighbors<Container>& neighbors) const
         {
             double dsq = CalcDistanceSquared(inputPoint, trainingPoint);
@@ -80,7 +80,7 @@ class AbstractAllKnnAlgorithm
         }
 
         template<class Container>
-        inline bool CheckAddNeighbor(point_vector_t::const_iterator inputPoint, point_vector_t::const_iterator trainingPoint,
+        inline bool CheckAddNeighbor(point_vector_iterator_t inputPoint, point_vector_iterator_t trainingPoint,
                                  PointNeighbors<Container>& neighbors) const
         {
             double dx = 0.0;
@@ -89,13 +89,13 @@ class AbstractAllKnnAlgorithm
         }
 
         template<class Container>
-        inline void AddNeighbor(point_vector_t::const_iterator trainingPoint, double distanceSquared,
+        inline void AddNeighbor(point_vector_iterator_t trainingPoint, double distanceSquared,
                                  PointNeighbors<Container>& neighbors) const
         {
             neighbors.Add(trainingPoint, distanceSquared);
         }
 
-        inline double CalcDistanceSquared(point_vector_t::const_iterator p1, point_vector_t::const_iterator p2) const
+        inline double CalcDistanceSquared(point_vector_iterator_t p1, point_vector_iterator_t p2) const
         {
             double dx = p2->x - p1->x;
             double dy = p2->y - p1->y;
@@ -103,7 +103,7 @@ class AbstractAllKnnAlgorithm
             return dx*dx + dy*dy;
         }
 
-        inline double CalcDistanceSquared(point_vector_t::const_iterator p1, point_vector_t::const_iterator p2, double& dx) const
+        inline double CalcDistanceSquared(point_vector_iterator_t p1, point_vector_iterator_t p2, double& dx) const
         {
             dx = p2->x - p1->x;
             double dy = p2->y - p1->y;

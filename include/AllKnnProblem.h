@@ -13,17 +13,17 @@
 
 using namespace std;
 
-struct StripBoundaries
+struct StripeBoundaries
 {
     double minY;
     double maxY;
 };
 
-struct StripData
+struct StripeData
 {
-    const point_vector_vector_t& InputDatasetStrip;
-    const point_vector_vector_t& TrainingDatasetStrip;
-    const vector<StripBoundaries>& StripBoundaries;
+    const point_vector_vector_t& InputDatasetStripe;
+    const point_vector_vector_t& TrainingDatasetStripe;
+    const vector<StripeBoundaries>& StripeBoundaries;
 };
 
 class AllKnnProblem
@@ -95,21 +95,21 @@ class AllKnnProblem
             return *pTrainingDatasetSortedCopy;
         }
 
-        StripData GetStripData(int numStrips)
+        StripeData GetStripeData(int numStripes)
         {
-            if (!pInputDatasetStrip)
+            if (!pInputDatasetStripe)
             {
-                pInputDatasetStrip.reset(new point_vector_vector_t(numStrips));
+                pInputDatasetStripe.reset(new point_vector_vector_t(numStripes));
             }
 
-            if (!pTrainingDatasetStrip)
+            if (!pTrainingDatasetStripe)
             {
-                pTrainingDatasetStrip.reset(new point_vector_vector_t(numStrips));
+                pTrainingDatasetStripe.reset(new point_vector_vector_t(numStripes));
             }
 
-            if (!pStripBoundaries)
+            if (!pStripeBoundaries)
             {
-                pStripBoundaries.reset(new vector<StripBoundaries>(numStrips));
+                pStripeBoundaries.reset(new vector<StripeBoundaries>(numStripes));
             }
 
             point_vector_t inputDatasetSortedY(GetInputDataset());
@@ -127,21 +127,21 @@ class AllKnnProblem
                  return point1.y < point2.y;
              });
 
-            size_t inputDatasetStripSize = inputDatasetSortedY.size()/numStrips;
+            size_t inputDatasetStripeSize = inputDatasetSortedY.size()/numStripes;
             auto trainingIterStart = trainingDatasetSortedY.cbegin();
 
-            for (int i=0; i < numStrips; ++i)
+            for (int i=0; i < numStripes; ++i)
             {
-                auto inputIterStart = inputDatasetSortedY.cbegin() + i*inputDatasetStripSize;
-                auto inputIterEnd = (i == numStrips - 1 ? inputDatasetSortedY.cend() : inputIterStart + inputDatasetStripSize);
+                auto inputIterStart = inputDatasetSortedY.cbegin() + i*inputDatasetStripeSize;
+                auto inputIterEnd = (i == numStripes - 1 ? inputDatasetSortedY.cend() : inputIterStart + inputDatasetStripeSize);
 
-                auto trainingIterEnd = (i == numStrips - 1 ? trainingDatasetSortedY.cend() :
+                auto trainingIterEnd = (i == numStripes - 1 ? trainingDatasetSortedY.cend() :
                      upper_bound(trainingIterStart, trainingDatasetSortedY.cend(), prev(inputIterEnd)->y,
                                                           [](const double& value, const Point& point) { return value < point.y; } ));
 
-                pInputDatasetStrip->push_back(point_vector_t(inputIterStart, inputIterEnd));
+                pInputDatasetStripe->push_back(point_vector_t(inputIterStart, inputIterEnd));
 
-                sort(pInputDatasetStrip->back().begin(), pInputDatasetStrip->back().end(),
+                sort(pInputDatasetStripe->back().begin(), pInputDatasetStripe->back().end(),
                      [](const Point& point1, const Point& point2)
                      {
                          return point1.x < point2.x;
@@ -149,9 +149,9 @@ class AllKnnProblem
 
                 if (trainingIterStart != trainingDatasetSortedY.cend())
                 {
-                    pTrainingDatasetStrip->push_back(point_vector_t(trainingIterStart, trainingIterEnd));
+                    pTrainingDatasetStripe->push_back(point_vector_t(trainingIterStart, trainingIterEnd));
 
-                    sort(pTrainingDatasetStrip->back().begin(), pTrainingDatasetStrip->back().end(),
+                    sort(pTrainingDatasetStripe->back().begin(), pTrainingDatasetStripe->back().end(),
                      [](const Point& point1, const Point& point2)
                      {
                          return point1.x < point2.x;
@@ -159,14 +159,14 @@ class AllKnnProblem
                 }
                 else
                 {
-                    pTrainingDatasetStrip->push_back(point_vector_t());
+                    pTrainingDatasetStripe->push_back(point_vector_t());
                 }
 
-                pStripBoundaries->push_back({inputIterStart->y, prev(inputIterEnd)->y});
+                pStripeBoundaries->push_back({inputIterStart->y, prev(inputIterEnd)->y});
                 trainingIterStart = trainingIterEnd;
             }
 
-            return {*pInputDatasetStrip, *pTrainingDatasetStrip, *pStripBoundaries};
+            return {*pInputDatasetStripe, *pTrainingDatasetStripe, *pStripeBoundaries};
         }
 
         void ClearSortedVectors()
@@ -186,19 +186,19 @@ class AllKnnProblem
                 pTrainingDatasetSortedCopy.reset();
             }
 
-            if (pInputDatasetStrip)
+            if (pInputDatasetStripe)
             {
-                pInputDatasetStrip.reset();
+                pInputDatasetStripe.reset();
             }
 
-            if (pTrainingDatasetStrip)
+            if (pTrainingDatasetStripe)
             {
-                pTrainingDatasetStrip.reset();
+                pTrainingDatasetStripe.reset();
             }
 
-            if (pStripBoundaries)
+            if (pStripeBoundaries)
             {
-                pStripBoundaries.reset();
+                pStripeBoundaries.reset();
             }
         }
 
@@ -218,9 +218,9 @@ class AllKnnProblem
         unique_ptr<point_vector_t> pInputDatasetSorted;
         unique_ptr<point_vector_t> pTrainingDatasetSorted;
         unique_ptr<point_vector_vector_t> pTrainingDatasetSortedCopy;
-        unique_ptr<point_vector_vector_t> pInputDatasetStrip;
-        unique_ptr<point_vector_vector_t> pTrainingDatasetStrip;
-        unique_ptr<vector<StripBoundaries>> pStripBoundaries;
+        unique_ptr<point_vector_vector_t> pInputDatasetStripe;
+        unique_ptr<point_vector_vector_t> pTrainingDatasetStripe;
+        unique_ptr<vector<StripeBoundaries>> pStripeBoundaries;
 
         void LoadDataFiles()
         {
