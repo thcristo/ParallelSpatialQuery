@@ -99,17 +99,17 @@ class AllKnnProblem
         {
             if (!pInputDatasetStripe)
             {
-                pInputDatasetStripe.reset(new point_vector_vector_t(numStripes));
+                pInputDatasetStripe.reset(new point_vector_vector_t());
             }
 
             if (!pTrainingDatasetStripe)
             {
-                pTrainingDatasetStripe.reset(new point_vector_vector_t(numStripes));
+                pTrainingDatasetStripe.reset(new point_vector_vector_t());
             }
 
             if (!pStripeBoundaries)
             {
-                pStripeBoundaries.reset(new vector<StripeBoundaries>(numStripes));
+                pStripeBoundaries.reset(new vector<StripeBoundaries>());
             }
 
             point_vector_t inputDatasetSortedY(GetInputDataset());
