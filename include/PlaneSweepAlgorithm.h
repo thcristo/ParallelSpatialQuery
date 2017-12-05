@@ -1,7 +1,7 @@
 #ifndef PLANESWEEPALGORITHM_H
 #define PLANESWEEPALGORITHM_H
 
-#include <AbstractAllKnnAlgorithm.h>
+#include "AbstractAllKnnAlgorithm.h"
 #include <cmath>
 
 class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
@@ -124,7 +124,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
             chrono::duration<double> elapsed = finish - start;
             chrono::duration<double> elapsedSorting = finishSorting - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, elapsedSorting, "planesweep_serial", problem));
+            return unique_ptr<AllKnnResult>(new AllKnnResult(problem, "planesweep_serial", pNeighborsContainer, elapsed, elapsedSorting));
         }
 
     private:

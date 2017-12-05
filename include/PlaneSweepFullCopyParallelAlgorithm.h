@@ -1,7 +1,7 @@
 #ifndef PLANESWEEPFULLCOPYPARALLELALGORITHM_H
 #define PLANESWEEPFULLCOPYPARALLELALGORITHM_H
 
-#include <AbstractAllKnnAlgorithm.h>
+#include "AbstractAllKnnAlgorithm.h"
 
 
 class PlaneSweepFullCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
@@ -22,11 +22,12 @@ class PlaneSweepFullCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
 
             auto start = chrono::high_resolution_clock::now();
 
-            auto& inputDataset = problem.GetInputDatasetSorted();
+            auto pResult = unique_ptr<AllKnnResultSorted>(new AllKnnResultSorted(problem, "planesweep_full_copy_parallel"));
+
+            auto& inputDataset = pResult->GetInputDatasetSorted();
+            auto& trainingDatasetCopy = pResult->GetTrainingDatasetSortedCopy();
 
             auto finishSorting = chrono::high_resolution_clock::now();
-
-            auto& trainingDatasetCopy = problem.GetTrainingDatasetSortedCopy();
 
             vector<point_vector_t::const_iterator> trainingDatasetBeginCopy;
             vector<point_vector_t::const_iterator> trainingDatasetEndCopy;
@@ -134,10 +135,11 @@ class PlaneSweepFullCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
             chrono::duration<double> elapsed = finish - start;
             chrono::duration<double> elapsedSorting = finishSorting - start;
 
-            stringstream ss;
-            ss << "planesweep_full_copy_parallel_" << numThreads;
+            pResult->setDuration(elapsed);
+            pResult->setDurationSorting(elapsedSorting);
+            pResult->setNeighborsContainer(pNeighborsContainer);
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, elapsedSorting, ss.str(), problem));
+            return pResult;
         }
     protected:
 

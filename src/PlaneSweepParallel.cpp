@@ -48,60 +48,55 @@ int main(int argc, char* argv[])
         cout << "Read " << problem.GetInputDataset().size() << " input points and " << problem.GetTrainingDataset().size() << " training points." << endl;
         unique_ptr<AllKnnResult> pResult;
 
-/*
+
         BruteForceAlgorithm bruteForce;
         pResult = bruteForce.Process(problem);
-        cout << fixed << setprecision(3) << "Brute force duration: " << pResult->duration().count() << " seconds" << endl;
+        cout << fixed << setprecision(3) << "Brute force duration: " << pResult->getDuration().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
-*/
 
         BruteForceParallelAlgorithm bruteForceParallel(numThreads);
         pResult = bruteForceParallel.Process(problem);
-        cout << fixed << setprecision(3) << "Parallel brute force duration: " << pResult->duration().count() << " seconds" << endl;
+        cout << fixed << setprecision(3) << "Parallel brute force duration: " << pResult->getDuration().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
 
         BruteForceParallelTBBAlgorithm bruteForceParallelTBB(numThreads);
         pResult = bruteForceParallelTBB.Process(problem);
-        cout << fixed << setprecision(3) << "Parallel brute force TBB duration: " << pResult->duration().count() << " seconds" << endl;
+        cout << fixed << setprecision(3) << "Parallel brute force TBB duration: " << pResult->getDuration().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
 
 
         PlaneSweepAlgorithm planeSweep;
         pResult = planeSweep.Process(problem);
-        cout << fixed << setprecision(3) << "Plane sweep duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
+        cout << fixed << setprecision(3) << "Plane sweep duration: " << pResult->getDuration().count() << " sorting " << pResult->getDurationSorting().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
 
         PlaneSweepCopyAlgorithm planeSweepCopy;
         pResult = planeSweepCopy.Process(problem);
-        cout << fixed << setprecision(3) << "Plane sweep copy duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
+        cout << fixed << setprecision(3) << "Plane sweep copy duration: " << pResult->getDuration().count() << " sorting " << pResult->getDurationSorting().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
-        problem.ClearSortedVectors();
 
         PlaneSweepCopyParallelAlgorithm planeSweepCopyParallel(numThreads);
         pResult = planeSweepCopyParallel.Process(problem);
-        cout << fixed << setprecision(3) << "Parallel plane sweep copy duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
+        cout << fixed << setprecision(3) << "Parallel plane sweep copy duration: " << pResult->getDuration().count() << " sorting " << pResult->getDurationSorting().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
-        problem.ClearSortedVectors();
 
         PlaneSweepCopyParallelTBBAlgorithm planeSweepCopyParallelTBB(numThreads);
         pResult = planeSweepCopyParallelTBB.Process(problem);
-        cout << fixed << setprecision(3) << "Parallel plane sweep copy TBB duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
+        cout << fixed << setprecision(3) << "Parallel plane sweep copy TBB duration: " << pResult->getDuration().count() << " sorting " << pResult->getDurationSorting().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
-        problem.ClearSortedVectors();
 
         PlaneSweepStripesParallelAlgorithm planeSweepStripesParallel(numThreads);
         pResult = planeSweepStripesParallel.Process(problem);
-        cout << fixed << setprecision(3) << "Parallel plane sweep with stripes duration: " << pResult->duration().count() << " sorting " << pResult->durationSorting().count() << " seconds" << endl;
+        cout << fixed << setprecision(3) << "Parallel plane sweep with stripes duration: " << pResult->getDuration().count() << " sorting " << pResult->getDurationSorting().count() << " seconds" << endl;
         pResult->SaveToFile();
         pResult.reset();
-        problem.ClearSortedVectors();
 
         return 0;
     }

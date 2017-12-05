@@ -25,8 +25,10 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
 
             auto start = chrono::high_resolution_clock::now();
 
-            auto& inputDataset = problem.GetInputDatasetSorted();
-            auto& trainingDataset = problem.GetTrainingDatasetSorted();
+            auto pResult = unique_ptr<AllKnnResultSorted>(new AllKnnResultSorted(problem, "planesweep_copy_parallel"));
+
+            auto& inputDataset = pResult->GetInputDatasetSorted();
+            auto& trainingDataset = pResult->GetTrainingDatasetSorted();
 
             auto finishSorting = chrono::high_resolution_clock::now();
 
@@ -128,7 +130,11 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
             chrono::duration<double> elapsed = finish - start;
             chrono::duration<double> elapsedSorting = finishSorting - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, elapsedSorting, "planesweep_copy_parallel", problem));
+            pResult->setDuration(elapsed);
+            pResult->setDurationSorting(elapsedSorting);
+            pResult->setNeighborsContainer(pNeighborsContainer);
+
+            return pResult;
         }
 
     private:

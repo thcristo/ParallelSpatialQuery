@@ -1,7 +1,7 @@
 #ifndef BRUTEFORCEPARALLELALGORITHM_H
 #define BRUTEFORCEPARALLELALGORITHM_H
 
-#include <AbstractAllKnnAlgorithm.h>
+#include "AbstractAllKnnAlgorithm.h"
 #include <omp.h>
 
 class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
@@ -49,7 +49,7 @@ class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
             auto finish = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = finish - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, chrono::duration<double>(), "bruteforce_parallel", problem));
+            return unique_ptr<AllKnnResult>(new AllKnnResult(problem, "bruteforce_parallel", pNeighborsContainer, elapsed, chrono::duration<double>()));
         }
 
     private:

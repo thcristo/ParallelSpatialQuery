@@ -11,37 +11,44 @@
 class AllKnnResult
 {
     public:
-        AllKnnResult(unique_ptr<neighbors_priority_queue_container_t>& pNeighborsContainer,
-                     const chrono::duration<double>& elapsed, const chrono::duration<double>& elapsedSorting,
-                     const string& filePrefix, const AllKnnProblem& problem)
-                     : pNeighborsPriorityQueueContainer(move(pNeighborsContainer)), elapsed(elapsed), elapsedSorting(elapsedSorting),
-                        filePrefix(filePrefix), problem(problem)
+        AllKnnResult(const AllKnnProblem& problem, const string& filePrefix)
+                     : problem(problem), filePrefix(filePrefix)
         {
-
         }
 
-        AllKnnResult(unique_ptr<pointNeighbors_priority_queue_vector_t>& pNeighborsContainer,
-                     const chrono::duration<double>& elapsed, const chrono::duration<double>& elapsedSorting,
-                     const string& filePrefix, const AllKnnProblem& problem)
-                     : pNeighborsPriorityQueueVector(move(pNeighborsContainer)), elapsed(elapsed), elapsedSorting(elapsedSorting),
-                        filePrefix(filePrefix), problem(problem)
+        AllKnnResult(const AllKnnProblem& problem, const string& filePrefix,
+                     unique_ptr<pointNeighbors_priority_queue_vector_t>& pNeighborsContainer,
+                     const chrono::duration<double>& elapsed, const chrono::duration<double>& elapsedSorting)
+                     :  problem(problem), filePrefix(filePrefix),
+                        pNeighborsPriorityQueueVector(move(pNeighborsContainer)), elapsed(elapsed), elapsedSorting(elapsedSorting)
         {
-
-        }
-
-        AllKnnResult(unique_ptr<neighbors_deque_container_t>& pNeighborsContainer,
-                     const chrono::duration<double>& elapsed, const chrono::duration<double>& elapsedSorting,
-                     const string& filePrefix, const AllKnnProblem& problem)
-                     : pNeighborsDequeContainer(move(pNeighborsContainer)), elapsed(elapsed), elapsedSorting(elapsedSorting),
-                        filePrefix(filePrefix), problem(problem)
-        {
-
         }
 
         virtual ~AllKnnResult() {}
 
-        const chrono::duration<double>& duration() const { return elapsed; }
-        const chrono::duration<double>& durationSorting() const { return elapsedSorting; }
+        const chrono::duration<double>& getDuration() const { return elapsed; }
+
+        void setDuration(chrono::duration<double> value)
+        {
+            elapsed = value;
+        }
+
+        const chrono::duration<double>& getDurationSorting() const { return elapsedSorting; }
+
+        void setDurationSorting(chrono::duration<double> value)
+        {
+            elapsedSorting = value;
+        }
+
+        void setNeighborsContainer(unique_ptr<neighbors_priority_queue_container_t>& pNeighborsContainer)
+        {
+            pNeighborsPriorityQueueContainer = move(pNeighborsContainer);
+        }
+
+        void setNeighborsContainer(unique_ptr<pointNeighbors_priority_queue_vector_t>& pNeighborsContainer)
+        {
+            pNeighborsPriorityQueueVector = move(pNeighborsContainer);
+        }
 
         void SaveToFile() const
         {
@@ -70,10 +77,6 @@ class AllKnnResult
                 {
                     pNeighbors = &pNeighborsPriorityQueueContainer->at(inputPoint->id);
                 }
-                else if (pNeighborsDequeContainer != nullptr)
-                {
-                    pNeighbors = &pNeighborsDequeContainer->at(inputPoint->id);
-                }
 
                 while (pNeighbors->HasNext())
                 {
@@ -94,15 +97,14 @@ class AllKnnResult
             outFile.close();
         }
     protected:
+        const AllKnnProblem& problem;
 
     private:
+        string filePrefix;
         unique_ptr<neighbors_priority_queue_container_t> pNeighborsPriorityQueueContainer;
         unique_ptr<pointNeighbors_priority_queue_vector_t> pNeighborsPriorityQueueVector;
-        unique_ptr<neighbors_deque_container_t> pNeighborsDequeContainer;
         chrono::duration<double> elapsed;
         chrono::duration<double> elapsedSorting;
-        string filePrefix;
-        const AllKnnProblem& problem;
 };
 
 #endif // AllKnnRESULT_H

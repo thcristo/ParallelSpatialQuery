@@ -1,7 +1,7 @@
 #ifndef BRUTEFORCEPARALLELTBBALGORITHM_H
 #define BRUTEFORCEPARALLELTBBALGORITHM_H
 
-#include <AbstractAllKnnAlgorithm.h>
+#include "AbstractAllKnnAlgorithm.h"
 #include <tbb/tbb.h>
 
 using namespace tbb;
@@ -65,7 +65,7 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             auto finish = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = finish - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, chrono::duration<double>(), "bruteforce_parallel_tbb", problem));
+            return unique_ptr<AllKnnResult>(new AllKnnResult(problem, "bruteforce_parallel_tbb", pNeighborsContainer, elapsed, chrono::duration<double>()));
         }
 
     private:

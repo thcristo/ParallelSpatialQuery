@@ -39,6 +39,8 @@
 		<Unit filename="include/AbstractAllKnnAlgorithm.h" />
 		<Unit filename="include/AllKnnProblem.h" />
 		<Unit filename="include/AllKnnResult.h" />
+		<Unit filename="include/AllKnnResultSorted.h" />
+		<Unit filename="include/AllKnnResultStripes.h" />
 		<Unit filename="include/ApplicationException.h" />
 		<Unit filename="include/BruteForceAlgorithm.h" />
 		<Unit filename="include/BruteForceParallelAlgorithm.h" />
@@ -51,7 +53,6 @@
 		<Unit filename="include/PlaneSweepParallel.h" />
 		<Unit filename="include/PlaneSweepStripesParallelAlgorithm.h" />
 		<Unit filename="include/PointNeighbors.h" />
-		<Unit filename="include/SwitchingPlaneSweepAlgorithm.h" />
 		<Unit filename="src/PlaneSweepParallel.cpp" />
 		<Extensions>
 			<code_completion />

@@ -1,7 +1,7 @@
 #ifndef BRUTEFORCEALGORITHM_H
 #define BRUTEFORCEALGORITHM_H
 
-#include <AbstractAllKnnAlgorithm.h>
+#include "AbstractAllKnnAlgorithm.h"
 #include <chrono>
 
 class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
@@ -42,7 +42,7 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
             auto finish = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = finish - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, chrono::duration<double>(), "bruteforce_serial", problem));
+            return unique_ptr<AllKnnResult>(new AllKnnResult(problem, "bruteforce_serial", pNeighborsContainer, elapsed, chrono::duration<double>()));
         }
 
     private:

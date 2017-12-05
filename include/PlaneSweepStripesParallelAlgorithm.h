@@ -1,8 +1,8 @@
 #ifndef PLANESWEEPSTRIPESPARALLELALGORITHM_H
 #define PLANESWEEPSTRIPESPARALLELALGORITHM_H
 
-#include <AbstractAllKnnAlgorithm.h>
-
+#include "AbstractAllKnnAlgorithm.h"
+#include "AllKnnResultStripes.h"
 
 class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 {
@@ -28,7 +28,9 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 
             auto start = chrono::high_resolution_clock::now();
 
-            auto stripeData = problem.GetStripeData(numStripes);
+            auto pResult = unique_ptr<AllKnnResultStripes>(new AllKnnResultStripes(problem, "planesweep_stripes_parallel"));
+
+            auto stripeData = pResult->GetStripeData(numStripes);
 
             auto finishSorting = chrono::high_resolution_clock::now();
 
@@ -92,7 +94,11 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
             chrono::duration<double> elapsed = finish - start;
             chrono::duration<double> elapsedSorting = finishSorting - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(pNeighborsContainer, elapsed, elapsedSorting, "planesweep_stripes_parallel", problem));
+            pResult->setDuration(elapsed);
+            pResult->setDurationSorting(elapsedSorting);
+            pResult->setNeighborsContainer(pNeighborsContainer);
+
+            return pResult;
         }
     protected:
 
