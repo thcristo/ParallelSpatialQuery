@@ -14,10 +14,15 @@
 #include "PlaneSweepCopyParallelAlgorithm.h"
 #include "PlaneSweepCopyParallelTBBAlgorithm.h"
 #include "PlaneSweepFullCopyParallelAlgorithm.h"
+#include "PlaneSweepStripesAlgorithm.h"
 #include "PlaneSweepStripesParallelAlgorithm.h"
+#include "PlaneSweepStripesParallelTBBAlgorithm.h"
+
+typedef unique_ptr<AbstractAllKnnAlgorithm> algorithm_ptr_t;
 
 int main(int argc, char* argv[])
 {
+    double accuracy = 1.0E-15;
 
     if (argc < 4)
     {
@@ -26,13 +31,15 @@ int main(int argc, char* argv[])
         cout << "Argument 2: The file of the input dataset,\n";
         cout << "Argument 3: The file of the training dataset,\n";
         cout << "Argument 4: The number of threads (optional)\n";
+        cout << "Argument 5: The accuracy to use for comparing results (optional)\n";
+        cout << "Argument 6: The number of stripes for serial plane sweep (optional)\n";
         return 1;
     }
 
     try
     {
         int numNeighbors = atoi(argv[1]);
-        int numThreads = 0;
+        int numThreads = 0, numStripes = omp_get_max_threads();
 
         if (argc >= 5)
         {
@@ -43,60 +50,75 @@ int main(int argc, char* argv[])
             }
         }
 
+        if (argc >= 6)
+        {
+            double d = atof(argv[5]);
+            if (d > 0.0)
+            {
+                accuracy = d;
+            }
+        }
+
+        if (argc >= 7)
+        {
+            int s = atoi(argv[6]);
+            if (s > 0)
+            {
+                numStripes = s;
+            }
+        }
+
         AllKnnProblem problem(argv[2], argv[3], numNeighbors);
-
+        unique_ptr<AllKnnResult> pResultReference, pResult;
+        unique_ptr<vector<long>> pDiff;
         cout << "Read " << problem.GetInputDataset().size() << " input points and " << problem.GetTrainingDataset().size() << " training points." << endl;
-        unique_ptr<AllKnnResult> pResult;
 
+        PlaneSweepAlgorithm algoReference;
+        pResultReference = algoReference.Process(problem);
+        cout << fixed << setprecision(3) << algoReference.GetTitle() << " duration: " << pResultReference->getDuration().count() << " seconds" << endl;
+        pResultReference->SaveToFile();
 
-        BruteForceAlgorithm bruteForce;
-        pResult = bruteForce.Process(problem);
-        cout << fixed << setprecision(3) << "Brute force duration: " << pResult->getDuration().count() << " seconds" << endl;
-        pResult->SaveToFile();
-        pResult.reset();
+        vector<algorithm_ptr_t> algorithms;
 
-        BruteForceParallelAlgorithm bruteForceParallel(numThreads);
-        pResult = bruteForceParallel.Process(problem);
-        cout << fixed << setprecision(3) << "Parallel brute force duration: " << pResult->getDuration().count() << " seconds" << endl;
-        pResult->SaveToFile();
-        pResult.reset();
+        //algorithms.push_back(algorithm_ptr_t(new BruteForceParallelAlgorithm(numThreads)));
+        //algorithms.push_back(algorithm_ptr_t(new BruteForceParallelTBBAlgorithm(numThreads)));
+        //algorithms.push_back(algorithm_ptr_t(new PlaneSweepAlgorithm()));
+        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyAlgorithm()));
+        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads)));
+        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads)));
+        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesAlgorithm(numStripes)));
+        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numThreads)));
+        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numThreads)));
 
-        BruteForceParallelTBBAlgorithm bruteForceParallelTBB(numThreads);
-        pResult = bruteForceParallelTBB.Process(problem);
-        cout << fixed << setprecision(3) << "Parallel brute force TBB duration: " << pResult->getDuration().count() << " seconds" << endl;
-        pResult->SaveToFile();
-        pResult.reset();
+        for (auto algo = algorithms.cbegin(); algo < algorithms.cend(); ++algo)
+        {
+            pResult = (*algo)->Process(problem);
+            cout << fixed << setprecision(3) << (*algo)->GetTitle() << " duration: " << pResult->getDuration().count()
+                << " sorting " << pResult->getDurationSorting().count() << " seconds" ;
+            pResult->SaveToFile();
+            pDiff = pResult->FindDifferences(*pResultReference, accuracy);
+            cout << " " << pDiff->size() << " differences. ";
 
+            if (pDiff->size() > 0)
+            {
+                cout << "First 5 different point ids: ";
+                for (size_t i = 0; i < 5; ++i)
+                {
+                    if (pDiff->size() >= i+1)
+                    {
+                        cout << pDiff->at(i) << " ";
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            cout << endl;
 
-        PlaneSweepAlgorithm planeSweep;
-        pResult = planeSweep.Process(problem);
-        cout << fixed << setprecision(3) << "Plane sweep duration: " << pResult->getDuration().count() << " sorting " << pResult->getDurationSorting().count() << " seconds" << endl;
-        pResult->SaveToFile();
-        pResult.reset();
-
-        PlaneSweepCopyAlgorithm planeSweepCopy;
-        pResult = planeSweepCopy.Process(problem);
-        cout << fixed << setprecision(3) << "Plane sweep copy duration: " << pResult->getDuration().count() << " sorting " << pResult->getDurationSorting().count() << " seconds" << endl;
-        pResult->SaveToFile();
-        pResult.reset();
-
-        PlaneSweepCopyParallelAlgorithm planeSweepCopyParallel(numThreads);
-        pResult = planeSweepCopyParallel.Process(problem);
-        cout << fixed << setprecision(3) << "Parallel plane sweep copy duration: " << pResult->getDuration().count() << " sorting " << pResult->getDurationSorting().count() << " seconds" << endl;
-        pResult->SaveToFile();
-        pResult.reset();
-
-        PlaneSweepCopyParallelTBBAlgorithm planeSweepCopyParallelTBB(numThreads);
-        pResult = planeSweepCopyParallelTBB.Process(problem);
-        cout << fixed << setprecision(3) << "Parallel plane sweep copy TBB duration: " << pResult->getDuration().count() << " sorting " << pResult->getDurationSorting().count() << " seconds" << endl;
-        pResult->SaveToFile();
-        pResult.reset();
-
-        PlaneSweepStripesParallelAlgorithm planeSweepStripesParallel(numThreads);
-        pResult = planeSweepStripesParallel.Process(problem);
-        cout << fixed << setprecision(3) << "Parallel plane sweep with stripes duration: " << pResult->getDuration().count() << " sorting " << pResult->getDurationSorting().count() << " seconds" << endl;
-        pResult->SaveToFile();
-        pResult.reset();
+            pResult.reset();
+            pDiff.reset();
+        }
 
         return 0;
     }

@@ -11,6 +11,10 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
 
         virtual ~BruteForceAlgorithm() {}
 
+        string GetTitle() const
+        {
+            return "Brute force";
+        }
 
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
         {

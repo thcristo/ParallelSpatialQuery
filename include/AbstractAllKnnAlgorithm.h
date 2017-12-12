@@ -55,6 +55,7 @@ class AbstractAllKnnAlgorithm
     public:
         virtual ~AbstractAllKnnAlgorithm() {}
         virtual unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const = 0;
+        virtual string GetTitle() const = 0;
     protected:
         AbstractAllKnnAlgorithm() {}
 

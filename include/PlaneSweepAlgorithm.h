@@ -10,6 +10,11 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
         PlaneSweepAlgorithm() {}
         virtual ~PlaneSweepAlgorithm() {}
 
+        string GetTitle() const
+        {
+            return "Plane sweep";
+        }
+
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
         {
             size_t numNeighbors = problem.GetNumNeighbors();

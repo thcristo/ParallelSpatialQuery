@@ -45,19 +45,26 @@ class AllKnnResultStripes : public AllKnnResult
                  return point1.y < point2.y;
              });
 
-            size_t inputDatasetStripeSize = inputDatasetSortedY.size()/numStripes;
+            size_t inputDatasetStripeSize = inputDatasetSortedY.size()/numStripes + 1;
+            auto inputDatasetSortedYEnd = inputDatasetSortedY.cend();
+            auto trainingDatasetSortedYEnd = trainingDatasetSortedY.cend();
+
+            auto inputIterStart = inputDatasetSortedY.cbegin();
+            auto inputIterEnd = inputIterStart + inputDatasetStripeSize;
             auto trainingIterStart = trainingDatasetSortedY.cbegin();
 
-            for (int i=0; i < numStripes; ++i)
-            {
-                auto inputIterStart = inputDatasetSortedY.cbegin() + i*inputDatasetStripeSize;
-                auto inputIterEnd = (i == numStripes - 1 ? inputDatasetSortedY.cend() : inputIterStart + inputDatasetStripeSize);
+            bool exit = false;
 
-                auto trainingIterEnd = (i == numStripes - 1 ? trainingDatasetSortedY.cend() :
-                     upper_bound(trainingIterStart, trainingDatasetSortedY.cend(), prev(inputIterEnd)->y,
-                                                          [](const double& value, const Point& point) { return value < point.y; } ));
+            do
+            {
+                while (inputIterEnd < inputDatasetSortedYEnd && prev(inputIterEnd)->y == inputIterEnd->y)
+                {
+                    ++inputIterEnd;
+                }
 
                 pInputDatasetStripe->push_back(point_vector_t(inputIterStart, inputIterEnd));
+
+                double minY = inputIterStart->y <= trainingIterStart->y ? inputIterStart->y : trainingIterStart->y;
 
                 sort(pInputDatasetStripe->back().begin(), pInputDatasetStripe->back().end(),
                      [](const Point& point1, const Point& point2)
@@ -65,24 +72,53 @@ class AllKnnResultStripes : public AllKnnResult
                          return point1.x < point2.x;
                      });
 
-                if (trainingIterStart != trainingDatasetSortedY.cend())
+                double maxY = minY;
+
+                if (trainingIterStart < trainingDatasetSortedYEnd)
                 {
+                    auto trainingIterEnd = inputIterEnd == inputDatasetSortedYEnd ? trainingDatasetSortedYEnd :
+                                            upper_bound(trainingIterStart, trainingDatasetSortedYEnd, prev(inputIterEnd)->y,
+                                                          [](const double& value, const Point& point) { return value < point.y; } );
+
                     pTrainingDatasetStripe->push_back(point_vector_t(trainingIterStart, trainingIterEnd));
+
+                    maxY = prev(trainingIterEnd)->y >= prev(inputIterEnd)->y ? prev(trainingIterEnd)->y : prev(inputIterEnd)->y;
 
                     sort(pTrainingDatasetStripe->back().begin(), pTrainingDatasetStripe->back().end(),
                      [](const Point& point1, const Point& point2)
                      {
                          return point1.x < point2.x;
                      });
+
+                     trainingIterStart = trainingIterEnd;
                 }
                 else
                 {
                     pTrainingDatasetStripe->push_back(point_vector_t());
+
+                    maxY = prev(inputIterEnd)->y;
                 }
 
-                pStripeBoundaries->push_back({inputIterStart->y, prev(inputIterEnd)->y});
-                trainingIterStart = trainingIterEnd;
-            }
+                pStripeBoundaries->push_back({minY, maxY});
+
+                if (inputIterEnd < inputDatasetSortedYEnd)
+                {
+                    inputIterStart = inputIterEnd;
+                    if ((size_t)distance(inputIterStart, inputDatasetSortedYEnd) >= inputDatasetStripeSize)
+                    {
+                        inputIterEnd = inputIterStart + inputDatasetStripeSize;
+                    }
+                    else
+                    {
+                        inputIterEnd = inputDatasetSortedYEnd;
+                    }
+                }
+                else
+                {
+                    exit = true;
+                }
+
+            } while (!exit);
 
             return {*pInputDatasetStripe, *pTrainingDatasetStripe, *pStripeBoundaries};
         }

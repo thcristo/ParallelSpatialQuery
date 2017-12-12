@@ -10,6 +10,7 @@ class NeighborsEnumerator
     public:
         virtual bool HasNext() = 0;
         virtual Neighbor Next() = 0;
+        virtual void AddAllRemoved(const vector<Neighbor>& neighbors) = 0;
 };
 
 template<class Container>
@@ -22,7 +23,7 @@ class PointNeighbors : public NeighborsEnumerator
         bool HasNext();
         Neighbor Next();
 
-        inline void Add(point_vector_t::const_iterator pointIter, const double distanceSquared);
+        void AddAllRemoved(const vector<Neighbor>& neighbors);
 
     private:
         Container container;
@@ -66,6 +67,14 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
                 container.pop();
                 Neighbor newNeighbor = {&*pointIter, distanceSquared};
                 container.push(newNeighbor);
+            }
+        }
+
+        void AddAllRemoved(const vector<Neighbor>& neighbors)
+        {
+            for (int i = neighbors.size() - 1; i >= 0; --i)
+            {
+                container.push(neighbors[i]);
             }
         }
 

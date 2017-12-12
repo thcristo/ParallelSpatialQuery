@@ -1,20 +1,21 @@
-#ifndef PLANESWEEPSTRIPESPARALLELALGORITHM_H
-#define PLANESWEEPSTRIPESPARALLELALGORITHM_H
+#ifndef PLANESWEEPSTRIPESPARALLELTBBALGORITHM_H
+#define PLANESWEEPSTRIPESPARALLELTBBALGORITHM_H
 
 #include "AbstractAllKnnAlgorithm.h"
-#include "AllKnnResultStripes.h"
 
-class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
+
+class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
-        PlaneSweepStripesParallelAlgorithm(int numThreads) : numThreads(numThreads)
+        PlaneSweepStripesParallelTBBAlgorithm(int numThreads) : numThreads(numThreads)
         {
         }
-        virtual ~PlaneSweepStripesParallelAlgorithm() {}
+
+        virtual ~PlaneSweepStripesParallelTBBAlgorithm() {}
 
         string GetTitle() const
         {
-            return "Plane sweep stripes parallel";
+            return "Plane sweep stripes parallel TBB";
         }
 
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
@@ -24,16 +25,20 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
             auto pNeighborsContainer =
                 this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
 
+            task_scheduler_init scheduler(task_scheduler_init::deferred);
+
             int numStripes = omp_get_max_threads();
+
             if (numThreads > 0)
             {
-                omp_set_num_threads(numThreads);
                 numStripes = numThreads;
             }
 
+            scheduler.initialize(numStripes);
+
             auto start = chrono::high_resolution_clock::now();
 
-            auto pResult = unique_ptr<AllKnnResultStripes>(new AllKnnResultStripes(problem, "planesweep_stripes_parallel"));
+            auto pResult = unique_ptr<AllKnnResultStripes>(new AllKnnResultStripes(problem, "planesweep_stripes_parallel_TBB"));
 
             auto stripeData = pResult->GetStripeData(numStripes);
 
@@ -41,61 +46,61 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 
             auto finishSorting = chrono::high_resolution_clock::now();
 
-            #pragma omp parallel for
-            for (int iStripeInput = 0; iStripeInput < numStripes; ++iStripeInput)
-            {
-                auto& inputDataset = stripeData.InputDatasetStripe[iStripeInput];
-                auto inputDatasetBegin = inputDataset.cbegin();
-                auto inputDatasetEnd = inputDataset.cend();
-
-                for (auto inputPointIter = inputDatasetBegin; inputPointIter < inputDatasetEnd; ++inputPointIter)
+            parallel_for(blocked_range<int>(0, numStripes), [&](blocked_range<int>& range)
                 {
-                    int iStripeTraining = iStripeInput;
-                    auto& neighbors = pNeighborsContainer->at(inputPointIter->id - 1);
+                    int iStripeInput = range.begin();
+                    auto& inputDataset = stripeData.InputDatasetStripe[iStripeInput];
+                    auto inputDatasetBegin = inputDataset.cbegin();
+                    auto inputDatasetEnd = inputDataset.cend();
 
-                    PlaneSweepStripe(inputPointIter, stripeData, iStripeTraining, neighbors);
-
-                    int iStripeTrainingPrev = iStripeTraining - 1;
-                    int iStripeTrainingNext = iStripeTraining + 1;
-                    bool lowStripeEnd = iStripeTrainingPrev < 0;
-                    bool highStripeEnd = iStripeTrainingNext >= numStripes;
-
-                    while (!lowStripeEnd || !highStripeEnd)
+                    for (auto inputPointIter = inputDatasetBegin; inputPointIter < inputDatasetEnd; ++inputPointIter)
                     {
-                        if (!lowStripeEnd)
-                        {
-                            double dyLow = inputPointIter->y - stripeData.StripeBoundaries[iStripeTrainingPrev].maxY;
-                            double dySquaredLow = dyLow*dyLow;
-                            if (dySquaredLow < neighbors.MaxDistanceElement().distanceSquared)
-                            {
-                                PlaneSweepStripe(inputPointIter, stripeData, iStripeTrainingPrev, neighbors);
-                                --iStripeTrainingPrev;
-                                lowStripeEnd = iStripeTrainingPrev < 0;
-                            }
-                            else
-                            {
-                                lowStripeEnd = true;
-                            }
-                        }
+                        int iStripeTraining = iStripeInput;
+                        auto& neighbors = pNeighborsContainer->at(inputPointIter->id - 1);
 
-                        if (!highStripeEnd)
+                        PlaneSweepStripe(inputPointIter, stripeData, iStripeTraining, neighbors);
+
+                        int iStripeTrainingPrev = iStripeTraining - 1;
+                        int iStripeTrainingNext = iStripeTraining + 1;
+                        bool lowStripeEnd = iStripeTrainingPrev < 0;
+                        bool highStripeEnd = iStripeTrainingNext >= numStripes;
+
+                        while (!lowStripeEnd || !highStripeEnd)
                         {
-                            double dyHigh = stripeData.StripeBoundaries[iStripeTrainingNext].minY - inputPointIter->y;
-                            double dySquaredHigh = dyHigh*dyHigh;
-                            if (dySquaredHigh < neighbors.MaxDistanceElement().distanceSquared)
+                            if (!lowStripeEnd)
                             {
-                                PlaneSweepStripe(inputPointIter, stripeData, iStripeTrainingNext, neighbors);
-                                ++iStripeTrainingNext;
-                                highStripeEnd = iStripeTrainingNext >= numStripes;
+                                double dyLow = inputPointIter->y - stripeData.StripeBoundaries[iStripeTrainingPrev].maxY;
+                                double dySquaredLow = dyLow*dyLow;
+                                if (dySquaredLow < neighbors.MaxDistanceElement().distanceSquared)
+                                {
+                                    PlaneSweepStripe(inputPointIter, stripeData, iStripeTrainingPrev, neighbors);
+                                    --iStripeTrainingPrev;
+                                    lowStripeEnd = iStripeTrainingPrev < 0;
+                                }
+                                else
+                                {
+                                    lowStripeEnd = true;
+                                }
                             }
-                            else
+
+                            if (!highStripeEnd)
                             {
-                                highStripeEnd = true;
+                                double dyHigh = stripeData.StripeBoundaries[iStripeTrainingNext].minY - inputPointIter->y;
+                                double dySquaredHigh = dyHigh*dyHigh;
+                                if (dySquaredHigh < neighbors.MaxDistanceElement().distanceSquared)
+                                {
+                                    PlaneSweepStripe(inputPointIter, stripeData, iStripeTrainingNext, neighbors);
+                                    ++iStripeTrainingNext;
+                                    highStripeEnd = iStripeTrainingNext >= numStripes;
+                                }
+                                else
+                                {
+                                    highStripeEnd = true;
+                                }
                             }
                         }
                     }
-                }
-            }
+                });
 
             auto finish = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = finish - start;
@@ -176,4 +181,4 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
         }
 };
 
-#endif // PLANESWEEPSTRIPESPARALLELALGORITHM_H
+#endif // PLANESWEEPSTRIPESPARALLELTBBALGORITHM_H

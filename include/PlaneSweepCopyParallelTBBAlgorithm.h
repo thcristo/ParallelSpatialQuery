@@ -16,6 +16,11 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
         virtual ~PlaneSweepCopyParallelTBBAlgorithm() {}
 
+        string GetTitle() const
+        {
+            return "Plane sweep copy parallel TBB";
+        }
+
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
         {
             size_t numNeighbors = problem.GetNumNeighbors();

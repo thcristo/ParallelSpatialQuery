@@ -4,6 +4,7 @@
 #include <memory>
 #include <chrono>
 #include <fstream>
+#include <cmath>
 #include "PlaneSweepParallel.h"
 #include "AllKnnProblem.h"
 #include "PointNeighbors.h"
@@ -78,9 +79,13 @@ class AllKnnResult
                     pNeighbors = &pNeighborsPriorityQueueContainer->at(inputPoint->id);
                 }
 
+                vector<Neighbor> removedNeighbors;
+
                 while (pNeighbors->HasNext())
                 {
                     Neighbor neighbor = pNeighbors->Next();
+                    removedNeighbors.push_back(neighbor);
+
                     if (neighbor.point != nullptr)
                     {
                         outFile << "\t(" << neighbor.point->id << " " << neighbor.distanceSquared << ")";
@@ -92,9 +97,80 @@ class AllKnnResult
                 }
 
                 outFile << endl;
+
+                pNeighbors->AddAllRemoved(removedNeighbors);
             }
 
             outFile.close();
+        }
+
+        unique_ptr<vector<long>> FindDifferences(const AllKnnResult& result, double accuracy)
+        {
+            auto differences = unique_ptr<vector<long>>(new vector<long>());
+
+            auto& inputDataset = problem.GetInputDataset();
+
+            for (auto inputPoint = inputDataset.cbegin(); inputPoint != inputDataset.cend(); ++inputPoint)
+            {
+                NeighborsEnumerator* pNeighbors = nullptr;
+                if (pNeighborsPriorityQueueVector != nullptr)
+                {
+                    pNeighbors = &pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
+                }
+                else if (pNeighborsPriorityQueueContainer != nullptr)
+                {
+                    pNeighbors = &pNeighborsPriorityQueueContainer->at(inputPoint->id);
+                }
+
+                NeighborsEnumerator* pNeighborsReference = nullptr;
+                if (result.pNeighborsPriorityQueueVector != nullptr)
+                {
+                    pNeighborsReference = &result.pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
+                }
+                else if (result.pNeighborsPriorityQueueContainer != nullptr)
+                {
+                    pNeighborsReference = &result.pNeighborsPriorityQueueContainer->at(inputPoint->id);
+                }
+
+                vector<Neighbor> removedNeighbors;
+                vector<Neighbor> removedNeighborsReference;
+
+                while (pNeighbors->HasNext())
+                {
+                    Neighbor neighbor = pNeighbors->Next();
+                    removedNeighbors.push_back(neighbor);
+
+                    if (pNeighborsReference->HasNext())
+                    {
+                        Neighbor neighborReference = pNeighborsReference->Next();
+                        removedNeighborsReference.push_back(neighborReference);
+
+                        double diff = neighbor.distanceSquared - neighborReference.distanceSquared;
+
+                        if (abs(diff) > accuracy)
+                        {
+                            differences->push_back(inputPoint->id);
+                            break;
+                        }
+
+                    }
+                    else
+                    {
+                        differences->push_back(inputPoint->id);
+                        break;
+                    }
+                }
+
+                if (!pNeighbors->HasNext() && pNeighborsReference->HasNext())
+                {
+                    differences->push_back(inputPoint->id);
+                }
+
+                pNeighbors->AddAllRemoved(removedNeighbors);
+                pNeighborsReference->AddAllRemoved(removedNeighborsReference);
+            }
+
+            return differences;
         }
     protected:
         const AllKnnProblem& problem;

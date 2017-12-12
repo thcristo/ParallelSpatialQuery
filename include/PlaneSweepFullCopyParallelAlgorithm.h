@@ -11,6 +11,11 @@ class PlaneSweepFullCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
         {
         }
 
+        string GetTitle() const
+        {
+            return "Plane sweep full copy parallel";
+        }
+
         virtual ~PlaneSweepFullCopyParallelAlgorithm() {}
 
                 unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override

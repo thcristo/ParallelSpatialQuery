@@ -1,20 +1,21 @@
-#ifndef PLANESWEEPSTRIPESPARALLELALGORITHM_H
-#define PLANESWEEPSTRIPESPARALLELALGORITHM_H
+#ifndef PLANESWEEPSTRIPESALGORITHM_H
+#define PLANESWEEPSTRIPESALGORITHM_H
 
 #include "AbstractAllKnnAlgorithm.h"
 #include "AllKnnResultStripes.h"
 
-class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
+class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
-        PlaneSweepStripesParallelAlgorithm(int numThreads) : numThreads(numThreads)
+        PlaneSweepStripesAlgorithm(int numStripes) : numStripes(numStripes)
         {
         }
-        virtual ~PlaneSweepStripesParallelAlgorithm() {}
+
+        virtual ~PlaneSweepStripesAlgorithm() {}
 
         string GetTitle() const
         {
-            return "Plane sweep stripes parallel";
+            return "Plane sweep stripes";
         }
 
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
@@ -24,25 +25,23 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
             auto pNeighborsContainer =
                 this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
 
-            int numStripes = omp_get_max_threads();
-            if (numThreads > 0)
-            {
-                omp_set_num_threads(numThreads);
-                numStripes = numThreads;
-            }
-
             auto start = chrono::high_resolution_clock::now();
 
-            auto pResult = unique_ptr<AllKnnResultStripes>(new AllKnnResultStripes(problem, "planesweep_stripes_parallel"));
+            auto pResult = unique_ptr<AllKnnResultStripes>(new AllKnnResultStripes(problem, "planesweep_stripes"));
 
-            auto stripeData = pResult->GetStripeData(numStripes);
+            int numStripesLocal = omp_get_max_threads();
 
-            numStripes = stripeData.InputDatasetStripe.size();
+            if (numStripes > 0)
+            {
+                numStripesLocal = numStripes;
+            }
+
+            auto stripeData = pResult->GetStripeData(numStripesLocal);
+            numStripesLocal = stripeData.InputDatasetStripe.size();
 
             auto finishSorting = chrono::high_resolution_clock::now();
 
-            #pragma omp parallel for
-            for (int iStripeInput = 0; iStripeInput < numStripes; ++iStripeInput)
+            for (int iStripeInput = 0; iStripeInput < numStripesLocal; ++iStripeInput)
             {
                 auto& inputDataset = stripeData.InputDatasetStripe[iStripeInput];
                 auto inputDatasetBegin = inputDataset.cbegin();
@@ -58,7 +57,7 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
                     int iStripeTrainingPrev = iStripeTraining - 1;
                     int iStripeTrainingNext = iStripeTraining + 1;
                     bool lowStripeEnd = iStripeTrainingPrev < 0;
-                    bool highStripeEnd = iStripeTrainingNext >= numStripes;
+                    bool highStripeEnd = iStripeTrainingNext >= numStripesLocal;
 
                     while (!lowStripeEnd || !highStripeEnd)
                     {
@@ -86,7 +85,7 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
                             {
                                 PlaneSweepStripe(inputPointIter, stripeData, iStripeTrainingNext, neighbors);
                                 ++iStripeTrainingNext;
-                                highStripeEnd = iStripeTrainingNext >= numStripes;
+                                highStripeEnd = iStripeTrainingNext >= numStripesLocal;
                             }
                             else
                             {
@@ -107,10 +106,11 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 
             return pResult;
         }
+
     protected:
 
     private:
-        int numThreads;
+        int numStripes;
 
         void PlaneSweepStripe(point_vector_iterator_t inputPointIter, StripeData stripeData, int iStripeTraining,
                               PointNeighbors<neighbors_priority_queue_t>& neighbors) const
@@ -176,4 +176,4 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
         }
 };
 
-#endif // PLANESWEEPSTRIPESPARALLELALGORITHM_H
+#endif // PLANESWEEPSTRIPESALGORITHM_H

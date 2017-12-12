@@ -15,6 +15,11 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
         virtual ~BruteForceParallelTBBAlgorithm() {}
 
+        string GetTitle() const
+        {
+            return "Brute force parallel TBB";
+        }
+
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
         {
             int numNeighbors = problem.GetNumNeighbors();
