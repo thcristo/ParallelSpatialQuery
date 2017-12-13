@@ -73,16 +73,16 @@ int main(int argc, char* argv[])
         unique_ptr<vector<long>> pDiff;
         cout << "Read " << problem.GetInputDataset().size() << " input points and " << problem.GetTrainingDataset().size() << " training points." << endl;
 
-        PlaneSweepAlgorithm algoReference;
+        BruteForceAlgorithm algoReference;
         pResultReference = algoReference.Process(problem);
         cout << fixed << setprecision(3) << algoReference.GetTitle() << " duration: " << pResultReference->getDuration().count() << " seconds" << endl;
         pResultReference->SaveToFile();
 
         vector<algorithm_ptr_t> algorithms;
 
-        //algorithms.push_back(algorithm_ptr_t(new BruteForceParallelAlgorithm(numThreads)));
-        //algorithms.push_back(algorithm_ptr_t(new BruteForceParallelTBBAlgorithm(numThreads)));
-        //algorithms.push_back(algorithm_ptr_t(new PlaneSweepAlgorithm()));
+        algorithms.push_back(algorithm_ptr_t(new BruteForceParallelAlgorithm(numThreads)));
+        algorithms.push_back(algorithm_ptr_t(new BruteForceParallelTBBAlgorithm(numThreads)));
+        algorithms.push_back(algorithm_ptr_t(new PlaneSweepAlgorithm()));
         algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyAlgorithm()));
         algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads)));
         algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads)));
