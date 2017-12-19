@@ -13,7 +13,6 @@
 #include "PlaneSweepCopyAlgorithm.h"
 #include "PlaneSweepCopyParallelAlgorithm.h"
 #include "PlaneSweepCopyParallelTBBAlgorithm.h"
-#include "PlaneSweepFullCopyParallelAlgorithm.h"
 #include "PlaneSweepStripesAlgorithm.h"
 #include "PlaneSweepStripesParallelAlgorithm.h"
 #include "PlaneSweepStripesParallelTBBAlgorithm.h"
@@ -23,6 +22,8 @@ typedef unique_ptr<AbstractAllKnnAlgorithm> algorithm_ptr_t;
 int main(int argc, char* argv[])
 {
     double accuracy = 1.0E-15;
+    bool saveToFile = true;
+    bool findDifferences = true;
 
     if (argc < 4)
     {
@@ -33,6 +34,8 @@ int main(int argc, char* argv[])
         cout << "Argument 4: The number of threads (optional)\n";
         cout << "Argument 5: The accuracy to use for comparing results (optional)\n";
         cout << "Argument 6: The number of stripes for serial plane sweep (optional)\n";
+        cout << "Argument 7: Save results of each algorithm to a text file (0/1, optional)\n";
+        cout << "Argument 8: Compare results of each algorithm with results of the first algorithm (0/1, optional)\n";
         return 1;
     }
 
@@ -68,15 +71,28 @@ int main(int argc, char* argv[])
             }
         }
 
+        if (argc >= 8)
+        {
+            int save = atoi(argv[7]);
+            if (save == 0)
+            {
+                saveToFile = false;
+            }
+        }
+
+        if (argc >= 9)
+        {
+            int compare = atoi(argv[8]);
+            if (compare == 0)
+            {
+                findDifferences = false;
+            }
+        }
+
         AllKnnProblem problem(argv[2], argv[3], numNeighbors);
         unique_ptr<AllKnnResult> pResultReference, pResult;
         unique_ptr<vector<long>> pDiff;
         cout << "Read " << problem.GetInputDataset().size() << " input points and " << problem.GetTrainingDataset().size() << " training points." << endl;
-
-        BruteForceAlgorithm algoReference;
-        pResultReference = algoReference.Process(problem);
-        cout << fixed << setprecision(3) << algoReference.GetTitle() << " duration: " << pResultReference->getDuration().count() << " seconds" << endl;
-        pResultReference->SaveToFile();
 
         vector<algorithm_ptr_t> algorithms;
 
@@ -84,40 +100,62 @@ int main(int argc, char* argv[])
         algorithms.push_back(algorithm_ptr_t(new BruteForceParallelTBBAlgorithm(numThreads)));
         algorithms.push_back(algorithm_ptr_t(new PlaneSweepAlgorithm()));
         algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyAlgorithm()));
-        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads)));
-        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads)));
+        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads, false)));
+        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads, true)));
+        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads, false)));
+        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads, true)));
         algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesAlgorithm(numStripes)));
-        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numThreads)));
-        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numThreads)));
+        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numThreads, false)));
+        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numThreads, true)));
+        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numThreads, false)));
+        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numThreads, true)));
 
         for (auto algo = algorithms.cbegin(); algo < algorithms.cend(); ++algo)
         {
             pResult = (*algo)->Process(problem);
             cout << fixed << setprecision(3) << (*algo)->GetTitle() << " duration: " << pResult->getDuration().count()
                 << " sorting " << pResult->getDurationSorting().count() << " seconds" ;
-            pResult->SaveToFile();
-            pDiff = pResult->FindDifferences(*pResultReference, accuracy);
-            cout << " " << pDiff->size() << " differences. ";
 
-            if (pDiff->size() > 0)
+            if (saveToFile)
             {
-                cout << "First 5 different point ids: ";
-                for (size_t i = 0; i < 5; ++i)
+                pResult->SaveToFile();
+            }
+
+            if (findDifferences && algo != algorithms.cbegin())
+            {
+                pDiff = pResult->FindDifferences(*pResultReference, accuracy);
+                cout << " " << pDiff->size() << " differences. ";
+                if (pDiff->size() > 0)
                 {
-                    if (pDiff->size() >= i+1)
+                    cout << "First 5 different point ids: ";
+                    for (size_t i = 0; i < 5; ++i)
                     {
-                        cout << pDiff->at(i) << " ";
-                    }
-                    else
-                    {
-                        break;
+                        if (pDiff->size() >= i+1)
+                        {
+                            cout << pDiff->at(i) << " ";
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
                 }
+                pDiff.reset();
             }
+
             cout << endl;
 
+            if (findDifferences && algo == algorithms.cbegin())
+            {
+                pResultReference = move(pResult);
+            }
+
             pResult.reset();
-            pDiff.reset();
+        }
+
+        if (pResultReference)
+        {
+            pResultReference.reset();
         }
 
         return 0;

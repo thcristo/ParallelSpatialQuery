@@ -2,12 +2,20 @@
 #define ALLKNNRESULTSTRIPES_H
 
 #include "AllKnnResult.h"
+#include <tbb/tbb.h>
+
+using namespace tbb;
 
 
 class AllKnnResultStripes : public AllKnnResult
 {
     public:
         AllKnnResultStripes(const AllKnnProblem& problem, const string& filePrefix) : AllKnnResult(problem, filePrefix)
+        {
+        }
+
+        AllKnnResultStripes(const AllKnnProblem& problem, const string& filePrefix, bool parallelSort) : AllKnnResult(problem, filePrefix),
+            parallelSort(parallelSort)
         {
         }
 
@@ -27,23 +35,41 @@ class AllKnnResultStripes : public AllKnnResult
 
             if (!pStripeBoundaries)
             {
-                pStripeBoundaries.reset(new vector<StripeBoundaries>());
+                pStripeBoundaries.reset(new vector<StripeBoundaries_t>());
             }
 
             point_vector_t inputDatasetSortedY(problem.GetInputDataset());
             point_vector_t trainingDatasetSortedY(problem.GetTrainingDataset());
 
-            sort(inputDatasetSortedY.begin(), inputDatasetSortedY.end(),
-             [](const Point& point1, const Point& point2)
-             {
-                 return point1.y < point2.y;
-             });
+            if (parallelSort)
+            {
+                parallel_sort(inputDatasetSortedY.begin(), inputDatasetSortedY.end(),
+                     [](const Point& point1, const Point& point2)
+                     {
+                         return point1.y < point2.y;
+                     });
 
-            sort(trainingDatasetSortedY.begin(), trainingDatasetSortedY.end(),
-             [](const Point& point1, const Point& point2)
-             {
-                 return point1.y < point2.y;
-             });
+                parallel_sort(trainingDatasetSortedY.begin(), trainingDatasetSortedY.end(),
+                     [](const Point& point1, const Point& point2)
+                     {
+                         return point1.y < point2.y;
+                     });
+            }
+            else
+            {
+                sort(inputDatasetSortedY.begin(), inputDatasetSortedY.end(),
+                     [](const Point& point1, const Point& point2)
+                     {
+                         return point1.y < point2.y;
+                     });
+
+                sort(trainingDatasetSortedY.begin(), trainingDatasetSortedY.end(),
+                     [](const Point& point1, const Point& point2)
+                     {
+                         return point1.y < point2.y;
+                     });
+            }
+
 
             size_t inputDatasetStripeSize = inputDatasetSortedY.size()/numStripes + 1;
             auto inputDatasetSortedYEnd = inputDatasetSortedY.cend();
@@ -66,11 +92,22 @@ class AllKnnResultStripes : public AllKnnResult
 
                 double minY = inputIterStart->y <= trainingIterStart->y ? inputIterStart->y : trainingIterStart->y;
 
-                sort(pInputDatasetStripe->back().begin(), pInputDatasetStripe->back().end(),
-                     [](const Point& point1, const Point& point2)
-                     {
-                         return point1.x < point2.x;
-                     });
+                if (parallelSort)
+                {
+                    parallel_sort(pInputDatasetStripe->back().begin(), pInputDatasetStripe->back().end(),
+                         [](const Point& point1, const Point& point2)
+                         {
+                             return point1.x < point2.x;
+                         });
+                }
+                else
+                {
+                    sort(pInputDatasetStripe->back().begin(), pInputDatasetStripe->back().end(),
+                         [](const Point& point1, const Point& point2)
+                         {
+                             return point1.x < point2.x;
+                         });
+                }
 
                 double maxY = minY;
 
@@ -84,13 +121,24 @@ class AllKnnResultStripes : public AllKnnResult
 
                     maxY = prev(trainingIterEnd)->y >= prev(inputIterEnd)->y ? prev(trainingIterEnd)->y : prev(inputIterEnd)->y;
 
-                    sort(pTrainingDatasetStripe->back().begin(), pTrainingDatasetStripe->back().end(),
-                     [](const Point& point1, const Point& point2)
-                     {
-                         return point1.x < point2.x;
-                     });
+                    if (parallelSort)
+                    {
+                        parallel_sort(pTrainingDatasetStripe->back().begin(), pTrainingDatasetStripe->back().end(),
+                         [](const Point& point1, const Point& point2)
+                         {
+                             return point1.x < point2.x;
+                         });
+                    }
+                    else
+                    {
+                        sort(pTrainingDatasetStripe->back().begin(), pTrainingDatasetStripe->back().end(),
+                         [](const Point& point1, const Point& point2)
+                         {
+                             return point1.x < point2.x;
+                         });
+                    }
 
-                     trainingIterStart = trainingIterEnd;
+                    trainingIterStart = trainingIterEnd;
                 }
                 else
                 {
@@ -128,7 +176,8 @@ class AllKnnResultStripes : public AllKnnResult
     private:
         unique_ptr<point_vector_vector_t> pInputDatasetStripe;
         unique_ptr<point_vector_vector_t> pTrainingDatasetStripe;
-        unique_ptr<vector<StripeBoundaries>> pStripeBoundaries;
+        unique_ptr<vector<StripeBoundaries_t>> pStripeBoundaries;
+        bool parallelSort;
 };
 
 #endif // ALLKNNRESULTSTRIPES_H

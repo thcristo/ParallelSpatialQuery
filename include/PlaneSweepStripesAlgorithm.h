@@ -18,6 +18,11 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
             return "Plane sweep stripes";
         }
 
+        string GetPrefix() const
+        {
+            return "planesweep_stripes";
+        }
+
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
         {
             size_t numNeighbors = problem.GetNumNeighbors();
@@ -25,16 +30,16 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
             auto pNeighborsContainer =
                 this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
 
-            auto start = chrono::high_resolution_clock::now();
-
-            auto pResult = unique_ptr<AllKnnResultStripes>(new AllKnnResultStripes(problem, "planesweep_stripes"));
-
             int numStripesLocal = omp_get_max_threads();
 
             if (numStripes > 0)
             {
                 numStripesLocal = numStripes;
             }
+
+            auto start = chrono::high_resolution_clock::now();
+
+            auto pResult = unique_ptr<AllKnnResultStripes>(new AllKnnResultStripes(problem, GetPrefix()));
 
             auto stripeData = pResult->GetStripeData(numStripesLocal);
             numStripesLocal = stripeData.InputDatasetStripe.size();

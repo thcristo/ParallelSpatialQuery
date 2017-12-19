@@ -10,7 +10,7 @@ using namespace tbb;
 class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
-        PlaneSweepCopyParallelTBBAlgorithm(int numThreads) : numThreads(numThreads)
+        PlaneSweepCopyParallelTBBAlgorithm(int numThreads, bool parallelSort) : numThreads(numThreads), parallelSort(parallelSort)
         {
         }
 
@@ -18,7 +18,12 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
         string GetTitle() const
         {
-            return "Plane sweep copy parallel TBB";
+            return parallelSort ? "Plane sweep copy parallel TBB (parallel sorting)" : "Plane sweep copy parallel TBB";
+        }
+
+        string GetPrefix() const
+        {
+            return parallelSort ? "planesweep_copy_parallel_TBB_psort" : "planesweep_copy_parallel_TBB";
         }
 
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
@@ -30,20 +35,6 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
             typedef blocked_range<point_vector_t::const_iterator> point_range_t;
 
-            auto start = chrono::high_resolution_clock::now();
-
-            auto pResult = unique_ptr<AllKnnResultSorted>(new AllKnnResultSorted(problem, "planesweep_copy_parallel_TBB"));
-
-            auto& inputDataset = pResult->GetInputDatasetSorted();
-            auto& trainingDataset = pResult->GetTrainingDatasetSorted();
-
-            auto finishSorting = chrono::high_resolution_clock::now();
-
-            auto trainingDatasetBegin = trainingDataset.cbegin();
-            auto trainingDatasetEnd = trainingDataset.cend();
-            auto inputDatasetBegin = inputDataset.cbegin();
-            auto inputDatasetEnd = inputDataset.cend();
-
             task_scheduler_init scheduler(task_scheduler_init::deferred);
 
             if (numThreads > 0)
@@ -54,6 +45,20 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             {
                 scheduler.initialize(task_scheduler_init::automatic);
             }
+
+            auto start = chrono::high_resolution_clock::now();
+
+            auto pResult = unique_ptr<AllKnnResultSorted>(new AllKnnResultSorted(problem, GetPrefix(), parallelSort));
+
+            auto& inputDataset = pResult->GetInputDatasetSorted();
+            auto& trainingDataset = pResult->GetTrainingDatasetSorted();
+
+            auto finishSorting = chrono::high_resolution_clock::now();
+
+            auto trainingDatasetBegin = trainingDataset.cbegin();
+            auto trainingDatasetEnd = trainingDataset.cend();
+            auto inputDatasetBegin = inputDataset.cbegin();
+            auto inputDatasetEnd = inputDataset.cend();
 
             parallel_for(point_range_t(inputDatasetBegin, inputDatasetEnd), [&](point_range_t& range)
                 {
@@ -148,6 +153,7 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
     private:
         int numThreads;
+        bool parallelSort;
 
 };
 

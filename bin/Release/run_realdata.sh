@@ -1,0 +1,1 @@
+./PlaneSweepParallel 10 /e/Files/eap/de/start/data/small-real-data/NArrpointNNew.txt /e/Files/eap/de/start/data/small-real-data/NArdpointNNew.txt

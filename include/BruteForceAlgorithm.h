@@ -16,6 +16,11 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
             return "Brute force";
         }
 
+        string GetPrefix() const
+        {
+            return "bruteforce_serial";
+        }
+
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
         {
             int numNeighbors = problem.GetNumNeighbors();
@@ -46,7 +51,7 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
             auto finish = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = finish - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(problem, "bruteforce_serial", pNeighborsContainer, elapsed, chrono::duration<double>()));
+            return unique_ptr<AllKnnResult>(new AllKnnResult(problem, GetPrefix(), pNeighborsContainer, elapsed, chrono::duration<double>()));
         }
 
     private:

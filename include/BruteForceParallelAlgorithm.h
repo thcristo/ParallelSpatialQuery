@@ -18,6 +18,11 @@ class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
             return "Brute force parallel";
         }
 
+        string GetPrefix() const
+        {
+            return "bruteforce_parallel";
+        }
+
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
         {
             int numNeighbors = problem.GetNumNeighbors();
@@ -28,17 +33,17 @@ class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();
 
+            if (numThreads > 0)
+            {
+                omp_set_num_threads(numThreads);
+            }
+
             auto start = chrono::high_resolution_clock::now();
 
             auto trainingDatasetBegin = trainingDataset.cbegin();
             auto trainingDatasetEnd = trainingDataset.cend();
             auto inputDatasetBegin = inputDataset.cbegin();
             auto inputDatasetEnd = inputDataset.cend();
-
-            if (numThreads > 0)
-            {
-                omp_set_num_threads(numThreads);
-            }
 
             #pragma omp parallel for
             for (auto inputPoint = inputDatasetBegin; inputPoint < inputDatasetEnd; ++inputPoint)
@@ -54,7 +59,7 @@ class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
             auto finish = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = finish - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(problem, "bruteforce_parallel", pNeighborsContainer, elapsed, chrono::duration<double>()));
+            return unique_ptr<AllKnnResult>(new AllKnnResult(problem, GetPrefix(), pNeighborsContainer, elapsed, chrono::duration<double>()));
         }
 
     private:

@@ -13,7 +13,7 @@
 
 using namespace std;
 
-struct StripeBoundaries
+struct StripeBoundaries_t
 {
     double minY;
     double maxY;
@@ -23,7 +23,7 @@ struct StripeData
 {
     const point_vector_vector_t& InputDatasetStripe;
     const point_vector_vector_t& TrainingDatasetStripe;
-    const vector<StripeBoundaries>& StripeBoundaries;
+    const vector<StripeBoundaries_t>& StripeBoundaries;
 };
 
 class AllKnnProblem

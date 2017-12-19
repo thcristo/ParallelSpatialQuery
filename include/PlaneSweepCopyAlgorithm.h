@@ -16,6 +16,11 @@ class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm
             return "Plane sweep copy";
         }
 
+        string GetPrefix() const
+        {
+            return "planesweep_copy_serial";
+        }
+
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
         {
             size_t numNeighbors = problem.GetNumNeighbors();
@@ -25,7 +30,7 @@ class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm
 
             auto start = chrono::high_resolution_clock::now();
 
-            auto pResult = unique_ptr<AllKnnResultSorted>(new AllKnnResultSorted(problem, "planesweep_copy_serial"));
+            auto pResult = unique_ptr<AllKnnResultSorted>(new AllKnnResultSorted(problem, GetPrefix()));
 
             auto& inputDataset = pResult->GetInputDatasetSorted();
             auto& trainingDataset = pResult->GetTrainingDatasetSorted();

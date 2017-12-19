@@ -10,7 +10,7 @@
 class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
-        PlaneSweepCopyParallelAlgorithm(int numThreads) : numThreads(numThreads)
+        PlaneSweepCopyParallelAlgorithm(int numThreads, bool parallelSort) : numThreads(numThreads), parallelSort(parallelSort)
         {
         }
 
@@ -18,7 +18,12 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
 
         string GetTitle() const
         {
-            return "Plane sweep copy parallel";
+            return parallelSort ? "Plane sweep copy parallel (parallel sorting)" : "Plane sweep copy parallel";
+        }
+
+        string GetPrefix() const
+        {
+            return parallelSort ? "planesweep_copy_parallel_psort" : "planesweep_copy_parallel";
         }
 
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
@@ -28,9 +33,14 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
             auto pNeighborsContainer =
                 this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
 
+            if (numThreads > 0)
+            {
+                omp_set_num_threads(numThreads);
+            }
+
             auto start = chrono::high_resolution_clock::now();
 
-            auto pResult = unique_ptr<AllKnnResultSorted>(new AllKnnResultSorted(problem, "planesweep_copy_parallel"));
+            auto pResult = unique_ptr<AllKnnResultSorted>(new AllKnnResultSorted(problem, GetPrefix(), parallelSort));
 
             auto& inputDataset = pResult->GetInputDatasetSorted();
             auto& trainingDataset = pResult->GetTrainingDatasetSorted();
@@ -43,11 +53,6 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
             auto inputDatasetEnd = inputDataset.cend();
 
             auto inputDatasetSize = inputDataset.size();
-
-            if (numThreads > 0)
-            {
-                omp_set_num_threads(numThreads);
-            }
 
             #pragma omp parallel
             {
@@ -144,6 +149,7 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
 
     private:
         int numThreads;
+        bool parallelSort;
 };
 
 #endif // PLANESWEEPCOPYPARALLELALGORITHM_H

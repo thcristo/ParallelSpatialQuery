@@ -15,6 +15,11 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
             return "Plane sweep";
         }
 
+        string GetPrefix() const
+        {
+            return "planesweep_serial";
+        }
+
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
         {
             size_t numNeighbors = problem.GetNumNeighbors();
@@ -129,7 +134,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
             chrono::duration<double> elapsed = finish - start;
             chrono::duration<double> elapsedSorting = finishSorting - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(problem, "planesweep_serial", pNeighborsContainer, elapsed, elapsedSorting));
+            return unique_ptr<AllKnnResult>(new AllKnnResult(problem, GetPrefix(), pNeighborsContainer, elapsed, elapsedSorting));
         }
 
     private:

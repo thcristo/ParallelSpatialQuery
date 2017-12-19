@@ -7,14 +7,20 @@
 class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
-        PlaneSweepStripesParallelAlgorithm(int numThreads) : numThreads(numThreads)
+        PlaneSweepStripesParallelAlgorithm(int numThreads, bool parallelSort) : numThreads(numThreads), parallelSort(parallelSort)
         {
         }
+
         virtual ~PlaneSweepStripesParallelAlgorithm() {}
 
         string GetTitle() const
         {
-            return "Plane sweep stripes parallel";
+            return parallelSort ? "Plane sweep stripes parallel (parallel sorting)" : "Plane sweep stripes parallel";
+        }
+
+        string GetPrefix() const
+        {
+            return parallelSort ? "planesweep_stripes_parallel_psort" : "planesweep_stripes_parallel";
         }
 
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
@@ -33,7 +39,7 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 
             auto start = chrono::high_resolution_clock::now();
 
-            auto pResult = unique_ptr<AllKnnResultStripes>(new AllKnnResultStripes(problem, "planesweep_stripes_parallel"));
+            auto pResult = unique_ptr<AllKnnResultStripes>(new AllKnnResultStripes(problem, GetPrefix(), parallelSort));
 
             auto stripeData = pResult->GetStripeData(numStripes);
 
@@ -111,6 +117,7 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 
     private:
         int numThreads;
+        bool parallelSort;
 
         void PlaneSweepStripe(point_vector_iterator_t inputPointIter, StripeData stripeData, int iStripeTraining,
                               PointNeighbors<neighbors_priority_queue_t>& neighbors) const
