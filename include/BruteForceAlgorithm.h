@@ -21,7 +21,7 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
             return "bruteforce_serial";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
+        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
             int numNeighbors = problem.GetNumNeighbors();
 

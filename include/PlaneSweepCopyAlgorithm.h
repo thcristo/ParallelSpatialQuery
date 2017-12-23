@@ -21,7 +21,7 @@ class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm
             return "planesweep_copy_serial";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
+        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
             size_t numNeighbors = problem.GetNumNeighbors();
 

@@ -1,1 +1,1 @@
-PlaneSweepParallel 10 E:\Files\eap\de\start\data\syntheticdata\1000KZipf1NNew.txt E:\Files\eap\de\start\data\syntheticdata\1000KZipf2NNew.txt 100 1.0E-15 100
+PlaneSweepParallel 10 E:\Files\eap\de\start\data\syntheticdata\1000KZipf1NNew.txt E:\Files\eap\de\start\data\syntheticdata\1000KZipf2NNew.txt 0 1.0E-15 200 0 0 00000010100101

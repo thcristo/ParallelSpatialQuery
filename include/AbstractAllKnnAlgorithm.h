@@ -54,7 +54,7 @@ class AbstractAllKnnAlgorithm
 {
     public:
         virtual ~AbstractAllKnnAlgorithm() {}
-        virtual unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const = 0;
+        virtual unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) = 0;
         virtual string GetTitle() const = 0;
     protected:
         AbstractAllKnnAlgorithm() {}
@@ -80,6 +80,7 @@ class AbstractAllKnnAlgorithm
             neighbors.Add(trainingPoint, dsq);
         }
 
+
         template<class Container>
         inline bool CheckAddNeighbor(point_vector_iterator_t inputPoint, point_vector_iterator_t trainingPoint,
                                  PointNeighbors<Container>& neighbors) const
@@ -88,6 +89,37 @@ class AbstractAllKnnAlgorithm
             double dsq = CalcDistanceSquared(inputPoint, trainingPoint, dx);
             return neighbors.CheckAdd(trainingPoint, dsq, dx);
         }
+
+
+        /*
+        template<class Container>
+        inline bool CheckAddNeighbor(point_vector_iterator_t inputPoint, point_vector_iterator_t trainingPoint,
+                                 PointNeighbors<Container>& neighbors) const
+        {
+            double dx = trainingPoint->x - inputPoint->x;
+            double dxSquared = dx*dx;
+
+            auto& lastNeighbor = neighbors.MaxDistanceElement();
+            double maxDistance = lastNeighbor.distanceSquared;
+
+            if (dxSquared >= maxDistance)
+            {
+                return false;
+            }
+            else
+            {
+                double dy = trainingPoint->y - inputPoint->y;
+                double dsq = dxSquared + dy*dy;
+
+                if (dsq < maxDistance)
+                {
+                    neighbors.AddNoCheck(trainingPoint, dsq);
+                }
+            }
+
+            return true;
+        }
+        */
 
         template<class Container>
         inline void AddNeighbor(point_vector_iterator_t trainingPoint, double distanceSquared,

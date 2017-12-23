@@ -26,7 +26,7 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             return parallelSort ? "planesweep_copy_parallel_TBB_psort" : "planesweep_copy_parallel_TBB";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
+        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
             size_t numNeighbors = problem.GetNumNeighbors();
 
@@ -65,18 +65,20 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
                     auto rangeBegin = range.begin();
                     auto rangeEnd = range.end();
 
+                    /*
                     auto startSearchPos = lower_bound(trainingDatasetBegin, trainingDatasetEnd, rangeBegin->x,
                                             [&](const Point& point, const double& value) { return point.x < value; } );
-
+                    */
                     for (auto inputPointIter = rangeBegin; inputPointIter < rangeEnd; ++inputPointIter)
                     {
                         auto& neighbors = pNeighborsContainer->at(inputPointIter->id - 1);
 
-                        /*
-                        auto nextTrainingPointIter = lower_bound(startSearchPos, trainingDataset.cend(), inputPointIter->x,
-                                            [&](const Point& point, const double& value) { return point.x < value; } );
-                        */
 
+                        auto nextTrainingPointIter = lower_bound(trainingDatasetBegin, trainingDatasetEnd, inputPointIter->x,
+                                            [&](const Point& point, const double& value) { return point.x < value; } );
+
+
+                        /*
                         auto nextTrainingPointIter = startSearchPos;
                         while (nextTrainingPointIter < trainingDatasetEnd && nextTrainingPointIter->x < inputPointIter->x)
                         {
@@ -84,6 +86,8 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
                         }
 
                         startSearchPos = nextTrainingPointIter;
+                        */
+
                         auto prevTrainingPointIter = nextTrainingPointIter;
                         if (prevTrainingPointIter > trainingDatasetBegin)
                         {

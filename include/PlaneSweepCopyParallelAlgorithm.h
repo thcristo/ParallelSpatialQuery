@@ -26,7 +26,7 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
             return parallelSort ? "planesweep_copy_parallel_psort" : "planesweep_copy_parallel";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
+        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
             size_t numNeighbors = problem.GetNumNeighbors();
 
@@ -52,10 +52,11 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
             auto inputDatasetBegin = inputDataset.cbegin();
             auto inputDatasetEnd = inputDataset.cend();
 
-            auto inputDatasetSize = inputDataset.size();
+            //auto inputDatasetSize = inputDataset.size();
 
-            #pragma omp parallel
-            {
+            //#pragma omp parallel
+            //{
+                /*
                 int iThread = omp_get_thread_num();
                 int numThreads = omp_get_num_threads();
                 auto partitionSize = inputDatasetSize/numThreads;
@@ -63,17 +64,18 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
                 auto partitionStart = inputDatasetBegin + iThread*partitionSize;
                 auto startSearchPos = lower_bound(trainingDatasetBegin, trainingDatasetEnd, partitionStart->x,
                                         [&](const Point& point, const double& value) { return point.x < value; } );
-
-                #pragma omp for
+                */
+                #pragma omp parallel for schedule(dynamic)
                 for (auto inputPointIter = inputDatasetBegin; inputPointIter < inputDatasetEnd; ++inputPointIter)
                 {
                     auto& neighbors = pNeighborsContainer->at(inputPointIter->id - 1);
 
-                    /*
+
                     auto nextTrainingPointIter = lower_bound(trainingDatasetBegin, trainingDatasetEnd, inputPointIter->x,
                                         [&](const Point& point, const double& value) { return point.x < value; } );
-                    */
 
+
+                    /*
                     auto nextTrainingPointIter = startSearchPos;
                     while (nextTrainingPointIter < trainingDatasetEnd && nextTrainingPointIter->x < inputPointIter->x)
                     {
@@ -81,7 +83,7 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
                     }
 
                     startSearchPos = nextTrainingPointIter;
-
+                    */
                     auto prevTrainingPointIter = nextTrainingPointIter;
                     if (prevTrainingPointIter > trainingDatasetBegin)
                     {
@@ -133,7 +135,7 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
                         }
                     }
                 }
-            }
+            //}
 
 
             auto finish = chrono::high_resolution_clock::now();

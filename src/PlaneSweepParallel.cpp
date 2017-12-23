@@ -17,6 +17,8 @@
 #include "PlaneSweepStripesParallelAlgorithm.h"
 #include "PlaneSweepStripesParallelTBBAlgorithm.h"
 
+#define NUM_ALGORITHMS 14
+
 typedef unique_ptr<AbstractAllKnnAlgorithm> algorithm_ptr_t;
 
 int main(int argc, char* argv[])
@@ -24,6 +26,7 @@ int main(int argc, char* argv[])
     double accuracy = 1.0E-15;
     bool saveToFile = true;
     bool findDifferences = true;
+    string enableAlgo(NUM_ALGORITHMS, '1');
 
     if (argc < 4)
     {
@@ -33,9 +36,10 @@ int main(int argc, char* argv[])
         cout << "Argument 3: The file of the training dataset,\n";
         cout << "Argument 4: The number of threads (optional)\n";
         cout << "Argument 5: The accuracy to use for comparing results (optional)\n";
-        cout << "Argument 6: The number of stripes for serial plane sweep (optional)\n";
+        cout << "Argument 6: The number of stripes (optional)\n";
         cout << "Argument 7: Save results of each algorithm to a text file (0/1, optional)\n";
         cout << "Argument 8: Compare results of each algorithm with results of the first algorithm (0/1, optional)\n";
+        cout << "Argument 9: Enable/Disable algorithms (bitstream, e.g. 01100110011110, optional)\n";
         return 1;
     }
 
@@ -89,6 +93,19 @@ int main(int argc, char* argv[])
             }
         }
 
+        if (argc >= 10)
+        {
+            string bs = argv[9];
+            if (bs.length() > 0)
+            {
+                if (bs.length() < NUM_ALGORITHMS)
+                {
+                    bs.append(NUM_ALGORITHMS - bs.length(), '0');
+                }
+                enableAlgo = bs;
+            }
+        }
+
         AllKnnProblem problem(argv[2], argv[3], numNeighbors);
         unique_ptr<AllKnnResult> pResultReference, pResult;
         unique_ptr<vector<long>> pDiff;
@@ -96,24 +113,62 @@ int main(int argc, char* argv[])
 
         vector<algorithm_ptr_t> algorithms;
 
-        algorithms.push_back(algorithm_ptr_t(new BruteForceParallelAlgorithm(numThreads)));
-        algorithms.push_back(algorithm_ptr_t(new BruteForceParallelTBBAlgorithm(numThreads)));
-        algorithms.push_back(algorithm_ptr_t(new PlaneSweepAlgorithm()));
-        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyAlgorithm()));
-        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads, false)));
-        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads, true)));
-        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads, false)));
-        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads, true)));
-        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesAlgorithm(numStripes)));
-        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numThreads, false)));
-        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numThreads, true)));
-        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numThreads, false)));
-        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numThreads, true)));
-
-        for (auto algo = algorithms.cbegin(); algo < algorithms.cend(); ++algo)
+        for (int i=0; i < NUM_ALGORITHMS; ++i)
         {
-            pResult = (*algo)->Process(problem);
-            cout << fixed << setprecision(3) << (*algo)->GetTitle() << " duration: " << pResult->getDuration().count()
+            if (enableAlgo[i] == '1')
+            {
+                switch(i)
+                {
+                    case 0:
+                        algorithms.push_back(algorithm_ptr_t(new BruteForceAlgorithm));
+                        break;
+                    case 1:
+                        algorithms.push_back(algorithm_ptr_t(new BruteForceParallelAlgorithm(numThreads)));
+                        break;
+                    case 2:
+                        algorithms.push_back(algorithm_ptr_t(new BruteForceParallelTBBAlgorithm(numThreads)));
+                        break;
+                    case 3:
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepAlgorithm()));
+                        break;
+                    case 4:
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyAlgorithm()));
+                        break;
+                    case 5:
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads, false)));
+                        break;
+                    case 6:
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads, true)));
+                        break;
+                    case 7:
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads, false)));
+                        break;
+                    case 8:
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads, true)));
+                        break;
+                    case 9:
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesAlgorithm(numStripes)));
+                        break;
+                    case 10:
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, false)));
+                        break;
+                    case 11:
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true)));
+                        break;
+                    case 12:
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, false)));
+                        break;
+                    case 13:
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true)));
+                        break;
+                }
+            }
+        }
+
+        for (size_t iAlgo = 0; iAlgo < algorithms.size(); ++iAlgo)
+        {
+            pResult = algorithms[iAlgo]->Process(problem);
+            cout << fixed << setprecision(3) << algorithms[iAlgo]->GetTitle() << " duration: " << pResult->getDuration().count()
                 << " sorting " << pResult->getDurationSorting().count() << " seconds" ;
 
             if (saveToFile)
@@ -121,7 +176,7 @@ int main(int argc, char* argv[])
                 pResult->SaveToFile();
             }
 
-            if (findDifferences && algo != algorithms.cbegin())
+            if (findDifferences && iAlgo > 0)
             {
                 pDiff = pResult->FindDifferences(*pResultReference, accuracy);
                 cout << " " << pDiff->size() << " differences. ";
@@ -145,7 +200,7 @@ int main(int argc, char* argv[])
 
             cout << endl;
 
-            if (findDifferences && algo == algorithms.cbegin())
+            if (findDifferences && iAlgo == 0)
             {
                 pResultReference = move(pResult);
             }

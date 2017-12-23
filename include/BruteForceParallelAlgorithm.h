@@ -23,7 +23,7 @@ class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
             return "bruteforce_parallel";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
+        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
             int numNeighbors = problem.GetNumNeighbors();
 
@@ -45,7 +45,7 @@ class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
             auto inputDatasetBegin = inputDataset.cbegin();
             auto inputDatasetEnd = inputDataset.cend();
 
-            #pragma omp parallel for
+            #pragma omp parallel for schedule(dynamic)
             for (auto inputPoint = inputDatasetBegin; inputPoint < inputDatasetEnd; ++inputPoint)
             {
                 auto& neighbors = pNeighborsContainer->at(inputPoint->id - 1);

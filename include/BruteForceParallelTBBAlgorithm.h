@@ -25,7 +25,7 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             return "bruteforce_parallel_tbb";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
+        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
             int numNeighbors = problem.GetNumNeighbors();
 

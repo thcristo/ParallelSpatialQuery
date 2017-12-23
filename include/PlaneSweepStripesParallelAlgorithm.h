@@ -7,7 +7,8 @@
 class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
-        PlaneSweepStripesParallelAlgorithm(int numThreads, bool parallelSort) : numThreads(numThreads), parallelSort(parallelSort)
+        PlaneSweepStripesParallelAlgorithm(int numStripes, int numThreads, bool parallelSort) : numStripes(numStripes),
+            numThreads(numThreads), parallelSort(parallelSort)
         {
         }
 
@@ -23,18 +24,16 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
             return parallelSort ? "planesweep_stripes_parallel_psort" : "planesweep_stripes_parallel";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) const override
+        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
             size_t numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
                 this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
 
-            int numStripes = omp_get_max_threads();
             if (numThreads > 0)
             {
                 omp_set_num_threads(numThreads);
-                numStripes = numThreads;
             }
 
             auto start = chrono::high_resolution_clock::now();
@@ -47,7 +46,7 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 
             auto finishSorting = chrono::high_resolution_clock::now();
 
-            #pragma omp parallel for
+            #pragma omp parallel for schedule(dynamic)
             for (int iStripeInput = 0; iStripeInput < numStripes; ++iStripeInput)
             {
                 auto& inputDataset = stripeData.InputDatasetStripe[iStripeInput];
@@ -116,6 +115,7 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
     protected:
 
     private:
+        int numStripes;
         int numThreads;
         bool parallelSort;
 

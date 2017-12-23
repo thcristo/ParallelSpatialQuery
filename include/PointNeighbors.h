@@ -97,6 +97,13 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return true;
         }
 
+        inline void AddNoCheck(point_vector_t::const_iterator pointIter, const double& distanceSquared)
+        {
+            container.pop();
+            Neighbor newNeighbor = {&*pointIter, distanceSquared};
+            container.push(newNeighbor);
+        }
+
         inline const Neighbor& MaxDistanceElement() const
         {
             return container.top();
