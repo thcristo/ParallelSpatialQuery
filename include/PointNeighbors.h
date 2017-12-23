@@ -5,6 +5,10 @@
 #include <unordered_map>
 #include "PlaneSweepParallel.h"
 
+#include <tbb/tbb.h>
+
+using namespace tbb;
+
 class NeighborsEnumerator
 {
     public:
@@ -44,6 +48,12 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
         {
         }
 
+        /*
+        PointNeighbors(size_t numNeighbors) : numNeighbors(numNeighbors)
+        {
+        }
+        */
+
         virtual ~PointNeighbors() {}
 
         bool HasNext() override
@@ -78,6 +88,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             }
         }
 
+
         inline bool CheckAdd(point_vector_t::const_iterator pointIter, const double& distanceSquared, const double& dx)
         {
             auto& lastNeighbor = container.top();
@@ -96,6 +107,37 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
 
             return true;
         }
+
+
+        /*
+        inline bool CheckAdd(point_vector_t::const_iterator pointIter, const double& distanceSquared, const double& dx)
+        {
+
+            if (container.size() < numNeighbors)
+            {
+                Neighbor newNeighbor = {&*pointIter, distanceSquared};
+                container.push(newNeighbor);
+            }
+            else
+            {
+                auto& lastNeighbor = container.top();
+                double maxDistance = lastNeighbor.distanceSquared;
+
+                if (distanceSquared < maxDistance)
+                {
+                    container.pop();
+                    Neighbor newNeighbor = {&*pointIter, distanceSquared};
+                    container.push(newNeighbor);
+                }
+                else if (dx*dx >= maxDistance)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        */
 
         inline void AddNoCheck(point_vector_t::const_iterator pointIter, const double& distanceSquared)
         {
@@ -155,10 +197,10 @@ template<class Container>
 using neighbors_container_t = unordered_map<long, PointNeighbors<Container>>;
 
 template<class Container>
-using pointNeighbors_generic_vector_t = vector<PointNeighbors<Container>>;
+using pointNeighbors_generic_vector_t = vector<PointNeighbors<Container>, cache_aligned_allocator<PointNeighbors<Container>>>;
 
-typedef neighbors_container_t<neighbors_priority_queue_t> neighbors_priority_queue_container_t;
-typedef neighbors_container_t<neighbors_deque_t> neighbors_deque_container_t;
+//typedef neighbors_container_t<neighbors_priority_queue_t> neighbors_priority_queue_container_t;
+//typedef neighbors_container_t<neighbors_deque_t> neighbors_deque_container_t;
 typedef pointNeighbors_generic_vector_t<neighbors_priority_queue_t> pointNeighbors_priority_queue_vector_t;
 
 #endif // POINTNEIGHBORS_H

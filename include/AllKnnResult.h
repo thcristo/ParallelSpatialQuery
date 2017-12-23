@@ -41,11 +41,12 @@ class AllKnnResult
             elapsedSorting = value;
         }
 
+        /*
         void setNeighborsContainer(unique_ptr<neighbors_priority_queue_container_t>& pNeighborsContainer)
         {
             pNeighborsPriorityQueueContainer = move(pNeighborsContainer);
         }
-
+        */
         void setNeighborsContainer(unique_ptr<pointNeighbors_priority_queue_vector_t>& pNeighborsContainer)
         {
             pNeighborsPriorityQueueVector = move(pNeighborsContainer);
@@ -69,6 +70,7 @@ class AllKnnResult
             {
                 outFile << inputPoint->id;
 
+                /*
                 NeighborsEnumerator* pNeighbors = nullptr;
                 if (pNeighborsPriorityQueueVector != nullptr)
                 {
@@ -78,6 +80,9 @@ class AllKnnResult
                 {
                     pNeighbors = &pNeighborsPriorityQueueContainer->at(inputPoint->id);
                 }
+                */
+
+                NeighborsEnumerator* pNeighbors = &pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
 
                 vector<Neighbor> removedNeighbors;
 
@@ -112,6 +117,7 @@ class AllKnnResult
 
             for (auto inputPoint = inputDataset.cbegin(); inputPoint != inputDataset.cend(); ++inputPoint)
             {
+                /*
                 NeighborsEnumerator* pNeighbors = nullptr;
                 if (pNeighborsPriorityQueueVector != nullptr)
                 {
@@ -121,7 +127,11 @@ class AllKnnResult
                 {
                     pNeighbors = &pNeighborsPriorityQueueContainer->at(inputPoint->id);
                 }
+                */
 
+                NeighborsEnumerator* pNeighbors = &pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
+
+                /*
                 NeighborsEnumerator* pNeighborsReference = nullptr;
                 if (result.pNeighborsPriorityQueueVector != nullptr)
                 {
@@ -131,6 +141,8 @@ class AllKnnResult
                 {
                     pNeighborsReference = &result.pNeighborsPriorityQueueContainer->at(inputPoint->id);
                 }
+                */
+                NeighborsEnumerator* pNeighborsReference = &result.pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
 
                 vector<Neighbor> removedNeighbors;
                 vector<Neighbor> removedNeighborsReference;
@@ -177,7 +189,7 @@ class AllKnnResult
 
     private:
         string filePrefix;
-        unique_ptr<neighbors_priority_queue_container_t> pNeighborsPriorityQueueContainer;
+        //unique_ptr<neighbors_priority_queue_container_t> pNeighborsPriorityQueueContainer;
         unique_ptr<pointNeighbors_priority_queue_vector_t> pNeighborsPriorityQueueVector;
         chrono::duration<double> elapsed;
         chrono::duration<double> elapsedSorting;

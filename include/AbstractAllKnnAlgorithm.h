@@ -8,12 +8,18 @@
 #include "AllKnnResult.h"
 #include "PlaneSweepParallel.h"
 
+#include <tbb/tbb.h>
+
+using namespace tbb;
+
+
 template<class OuterContainer>
 unique_ptr<OuterContainer> CreateNeighborsContainer(const point_vector_t& inputDataset, size_t numNeighbors)
 {
 
 }
 
+/*
 template<>
 unique_ptr<neighbors_priority_queue_container_t> CreateNeighborsContainer<neighbors_priority_queue_container_t>(const point_vector_t& inputDataset, size_t numNeighbors)
 {
@@ -33,6 +39,7 @@ unique_ptr<neighbors_priority_queue_container_t> CreateNeighborsContainer<neighb
         throw ApplicationException("Cannot allocate memory for neighbors container.");
     }
 }
+*/
 
 template<>
 unique_ptr<pointNeighbors_priority_queue_vector_t> CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(const point_vector_t& inputDataset, size_t numNeighbors)
@@ -40,7 +47,8 @@ unique_ptr<pointNeighbors_priority_queue_vector_t> CreateNeighborsContainer<poin
     try
     {
         unique_ptr<pointNeighbors_priority_queue_vector_t> pContainer(new pointNeighbors_priority_queue_vector_t(inputDataset.size(),
-                                                                    PointNeighbors<neighbors_priority_queue_t>(numNeighbors)));
+                                                                    PointNeighbors<neighbors_priority_queue_t>(numNeighbors),
+                                                                    cache_aligned_allocator<PointNeighbors<neighbors_priority_queue_t>>()));
 
         return pContainer;
     }
