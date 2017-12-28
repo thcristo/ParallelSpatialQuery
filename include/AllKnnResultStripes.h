@@ -177,7 +177,7 @@ class AllKnnResultStripes : public AllKnnResult
         unique_ptr<point_vector_vector_t> pInputDatasetStripe;
         unique_ptr<point_vector_vector_t> pTrainingDatasetStripe;
         unique_ptr<vector<StripeBoundaries_t>> pStripeBoundaries;
-        bool parallelSort;
+        bool parallelSort = false;
 };
 
 #endif // ALLKNNRESULTSTRIPES_H

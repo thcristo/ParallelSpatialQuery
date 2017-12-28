@@ -156,8 +156,8 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
     protected:
 
     private:
-        int numThreads;
-        bool parallelSort;
+        int numThreads = 0;
+        bool parallelSort = false;
 
 };
 

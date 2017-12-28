@@ -63,7 +63,7 @@ class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
         }
 
     private:
-        int numThreads;
+        int numThreads = 0;
 };
 
 #endif // BRUTEFORCEPARALLELALGORITHM_H

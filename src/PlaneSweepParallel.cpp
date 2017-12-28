@@ -169,7 +169,11 @@ int main(int argc, char* argv[])
         {
             pResult = algorithms[iAlgo]->Process(problem);
             cout << fixed << setprecision(3) << algorithms[iAlgo]->GetTitle() << " duration: " << pResult->getDuration().count()
-                << " sorting " << pResult->getDurationSorting().count() << " seconds" ;
+                << " sorting " << pResult->getDurationSorting().count() << " seconds,"
+                << " totalAdd: " << pResult->getTotalHeapAdditions()
+                <<  " minAdd: " << pResult->getMinHeapAdditions()
+                << " maxAdd: " << pResult->getMaxHeapAdditions()
+                << " avgAdd: " << pResult->getAvgHeapAdditions();
 
             if (saveToFile)
             {

@@ -62,7 +62,7 @@ class AllKnnProblem
     private:
         string inputFilename;
         string trainingFilename;
-        size_t numNeighbors;
+        size_t numNeighbors = 0;
         unique_ptr<point_vector_t> pInputDataset;
         unique_ptr<point_vector_t> pTrainingDataset;
 

@@ -126,9 +126,9 @@ class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
     protected:
 
     private:
-        int numStripes;
-        int numThreads;
-        bool parallelSort;
+        int numStripes = 0;
+        int numThreads = 0;
+        bool parallelSort = false;
 
         void PlaneSweepStripe(point_vector_iterator_t inputPointIter, StripeData stripeData, int iStripeTraining,
                               PointNeighbors<neighbors_priority_queue_t>& neighbors) const

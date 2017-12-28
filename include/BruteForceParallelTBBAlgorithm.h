@@ -79,7 +79,7 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
         }
 
     private:
-        int numThreads;
+        int numThreads = 0;
 
 };
 

@@ -115,9 +115,9 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
     protected:
 
     private:
-        int numStripes;
-        int numThreads;
-        bool parallelSort;
+        int numStripes = 0;
+        int numThreads = 0;
+        bool parallelSort = false;
 
         void PlaneSweepStripe(point_vector_iterator_t inputPointIter, StripeData stripeData, int iStripeTraining,
                               PointNeighbors<neighbors_priority_queue_t>& neighbors) const
@@ -141,6 +141,45 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 
             while (!lowStop || !highStop)
             {
+                /*
+                if (!lowStop && !highStop)
+                {
+                    auto continuations = CheckAddNeighbors(inputPointIter, prevTrainingPointIter, nextTrainingPointIter, neighbors);
+                    if (continuations[0])
+                    {
+                        if (prevTrainingPointIter > trainingDatasetBegin)
+                        {
+                            --prevTrainingPointIter;
+                        }
+                        else
+                        {
+                            lowStop = true;
+                        }
+                    }
+                    else
+                    {
+                        lowStop = true;
+                    }
+
+                    if (continuations[1])
+                    {
+                        if (nextTrainingPointIter < trainingDatasetEnd)
+                        {
+                            ++nextTrainingPointIter;
+                        }
+
+                        if (nextTrainingPointIter == trainingDatasetEnd)
+                        {
+                            highStop = true;
+                        }
+                    }
+                    else
+                    {
+                        highStop = true;
+                    }
+                }
+                */
+
                 if (!lowStop)
                 {
                     if (CheckAddNeighbor(inputPointIter, prevTrainingPointIter, neighbors))
@@ -179,6 +218,7 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
                         highStop = true;
                     }
                 }
+
             }
         }
 };

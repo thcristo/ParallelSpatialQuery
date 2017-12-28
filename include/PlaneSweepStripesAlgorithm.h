@@ -115,7 +115,7 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
     protected:
 
     private:
-        int numStripes;
+        int numStripes = 0;
 
         void PlaneSweepStripe(point_vector_iterator_t inputPointIter, StripeData stripeData, int iStripeTraining,
                               PointNeighbors<neighbors_priority_queue_t>& neighbors) const

@@ -15,6 +15,7 @@ class NeighborsEnumerator
         virtual bool HasNext() = 0;
         virtual Neighbor Next() = 0;
         virtual void AddAllRemoved(const vector<Neighbor>& neighbors) = 0;
+        virtual size_t GetNumAdditions() = 0;
 };
 
 template<class Container>
@@ -68,7 +69,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return neighbor;
         }
 
-        inline void Add(point_vector_t::const_iterator pointIter, const double distanceSquared)
+        inline void Add(point_vector_iterator_t pointIter, const double distanceSquared)
         {
             auto& lastNeighbor = container.top();
 
@@ -77,6 +78,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
                 container.pop();
                 Neighbor newNeighbor = {&*pointIter, distanceSquared};
                 container.push(newNeighbor);
+                ++numAdditions;
             }
         }
 
@@ -88,8 +90,12 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             }
         }
 
+        size_t GetNumAdditions()
+        {
+            return numAdditions;
+        }
 
-        inline bool CheckAdd(point_vector_t::const_iterator pointIter, const double& distanceSquared, const double& dx)
+        inline bool CheckAdd(point_vector_iterator_t pointIter, const double& distanceSquared, const double& dx)
         {
             auto& lastNeighbor = container.top();
             double maxDistance = lastNeighbor.distanceSquared;
@@ -99,6 +105,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
                 container.pop();
                 Neighbor newNeighbor = {&*pointIter, distanceSquared};
                 container.push(newNeighbor);
+                ++numAdditions;
             }
             else if (dx*dx >= maxDistance)
             {
@@ -108,9 +115,35 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return true;
         }
 
+        /*
+        inline array<bool,2> CheckAdd(const array<point_vector_iterator_t,2>& pointIter, const array<double,2>& distanceSquared, const array<double,2>& dx)
+        {
+            array<bool, 2> continuations = {true, true};
+
+            for (int i=0; i < 2; ++i)
+            {
+                auto& lastNeighbor = container.top();
+                double maxDistance = lastNeighbor.distanceSquared;
+
+                if (distanceSquared[i] < maxDistance)
+                {
+                    container.pop();
+                    Neighbor newNeighbor = {&*pointIter[i], distanceSquared[i]};
+                    container.push(newNeighbor);
+                    ++numAdditions;
+                }
+                else if (dx[i]*dx[i] >= maxDistance)
+                {
+                    continuations[i] = false;
+                }
+            }
+
+            return continuations;
+        }
+        */
 
         /*
-        inline bool CheckAdd(point_vector_t::const_iterator pointIter, const double& distanceSquared, const double& dx)
+        inline bool CheckAdd(point_vector_iterator_t pointIter, const double& distanceSquared, const double& dx)
         {
 
             if (container.size() < numNeighbors)
@@ -128,6 +161,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
                     container.pop();
                     Neighbor newNeighbor = {&*pointIter, distanceSquared};
                     container.push(newNeighbor);
+                    ++numAdditions;
                 }
                 else if (dx*dx >= maxDistance)
                 {
@@ -139,11 +173,12 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
         }
         */
 
-        inline void AddNoCheck(point_vector_t::const_iterator pointIter, const double& distanceSquared)
+        inline void AddNoCheck(point_vector_iterator_t pointIter, const double& distanceSquared)
         {
             container.pop();
             Neighbor newNeighbor = {&*pointIter, distanceSquared};
             container.push(newNeighbor);
+            ++numAdditions;
         }
 
         inline const Neighbor& MaxDistanceElement() const
@@ -152,10 +187,12 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
         }
 
     private:
-        size_t numNeighbors;
+        size_t numNeighbors = 0;
         neighbors_priority_queue_t container;
+        size_t numAdditions = 0;
 };
 
+/*
 template<>
 class PointNeighbors<neighbors_deque_t> : public NeighborsEnumerator
 {
@@ -193,8 +230,10 @@ class PointNeighbors<neighbors_deque_t> : public NeighborsEnumerator
         size_t insertPos;
 };
 
+
 template<class Container>
 using neighbors_container_t = unordered_map<long, PointNeighbors<Container>>;
+*/
 
 template<class Container>
 using pointNeighbors_generic_vector_t = vector<PointNeighbors<Container>, cache_aligned_allocator<PointNeighbors<Container>>>;

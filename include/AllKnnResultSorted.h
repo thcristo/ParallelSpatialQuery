@@ -80,7 +80,7 @@ class AllKnnResultSorted : public AllKnnResult
     private:
         unique_ptr<point_vector_t> pInputDatasetSorted;
         unique_ptr<point_vector_t> pTrainingDatasetSorted;
-        bool parallelSort;
+        bool parallelSort = false;
 };
 
 #endif // ALLKNNRESULTSORTED_H

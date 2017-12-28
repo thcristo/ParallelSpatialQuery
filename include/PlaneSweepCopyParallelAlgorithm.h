@@ -150,8 +150,8 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
         }
 
     private:
-        int numThreads;
-        bool parallelSort;
+        int numThreads = 0;
+        bool parallelSort = false;
 };
 
 #endif // PLANESWEEPCOPYPARALLELALGORITHM_H

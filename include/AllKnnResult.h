@@ -23,6 +23,7 @@ class AllKnnResult
                      :  problem(problem), filePrefix(filePrefix),
                         pNeighborsPriorityQueueVector(move(pNeighborsContainer)), elapsed(elapsed), elapsedSorting(elapsedSorting)
         {
+            CalcHeapStats();
         }
 
         virtual ~AllKnnResult() {}
@@ -50,6 +51,27 @@ class AllKnnResult
         void setNeighborsContainer(unique_ptr<pointNeighbors_priority_queue_vector_t>& pNeighborsContainer)
         {
             pNeighborsPriorityQueueVector = move(pNeighborsContainer);
+            CalcHeapStats();
+        }
+
+        size_t getMinHeapAdditions()
+        {
+            return minHeapAdditions;
+        }
+
+        size_t getMaxHeapAdditions()
+        {
+            return maxHeapAdditions;
+        }
+
+        double getAvgHeapAdditions()
+        {
+            return avgHeapAdditions;
+        }
+
+        size_t getTotalHeapAdditions()
+        {
+            return totalHeapAdditions;
         }
 
         void SaveToFile() const
@@ -193,6 +215,36 @@ class AllKnnResult
         unique_ptr<pointNeighbors_priority_queue_vector_t> pNeighborsPriorityQueueVector;
         chrono::duration<double> elapsed;
         chrono::duration<double> elapsedSorting;
+        size_t minHeapAdditions = 0;
+        size_t maxHeapAdditions = 0;
+        double avgHeapAdditions = 0.0;
+        size_t totalHeapAdditions = 0.0;
+
+        void CalcHeapStats()
+        {
+            minHeapAdditions = numeric_limits<size_t>::max();
+            maxHeapAdditions = 0;
+            totalHeapAdditions = 0;
+
+            size_t numInputPoints = pNeighborsPriorityQueueVector->size();
+
+            for (size_t i=0; i < numInputPoints;  ++i)
+            {
+                auto& neighbors = pNeighborsPriorityQueueVector->at(i);
+                auto additions = neighbors.GetNumAdditions();
+                if (additions < minHeapAdditions)
+                {
+                        minHeapAdditions = additions;
+                }
+                if (additions > maxHeapAdditions)
+                {
+                        maxHeapAdditions = additions;
+                }
+                totalHeapAdditions += additions;
+            }
+
+            avgHeapAdditions = (1.0*totalHeapAdditions)/numInputPoints;
+        }
 };
 
 #endif // AllKnnRESULT_H
