@@ -98,6 +98,15 @@ class AbstractAllKnnAlgorithm
             return neighbors.CheckAdd(trainingPoint, dsq, dx);
         }
 
+        template<class Container>
+        inline bool CheckAddNeighbor(point_vector_iterator_t inputPoint, point_vector_iterator_t trainingPoint,
+                                 PointNeighbors<Container>& neighbors, const double& mindy) const
+        {
+            double dx = 0.0;
+            double dsq = CalcDistanceSquared(inputPoint, trainingPoint, dx);
+            return neighbors.CheckAdd(trainingPoint, dsq, dx, mindy);
+        }
+
         /*
         template<class Container>
         inline array<bool, 2> CheckAddNeighbors(point_vector_iterator_t inputPoint, point_vector_iterator_t trainingPointPrev,

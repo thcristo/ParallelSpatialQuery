@@ -57,7 +57,7 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
                     int iStripeTraining = iStripeInput;
                     auto& neighbors = pNeighborsContainer->at(inputPointIter->id - 1);
 
-                    PlaneSweepStripe(inputPointIter, stripeData, iStripeTraining, neighbors);
+                    PlaneSweepStripe(inputPointIter, stripeData, iStripeTraining, neighbors, 0.0);
 
                     int iStripeTrainingPrev = iStripeTraining - 1;
                     int iStripeTrainingNext = iStripeTraining + 1;
@@ -72,7 +72,7 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
                             double dySquaredLow = dyLow*dyLow;
                             if (dySquaredLow < neighbors.MaxDistanceElement().distanceSquared)
                             {
-                                PlaneSweepStripe(inputPointIter, stripeData, iStripeTrainingPrev, neighbors);
+                                PlaneSweepStripe(inputPointIter, stripeData, iStripeTrainingPrev, neighbors, dySquaredLow);
                                 --iStripeTrainingPrev;
                                 lowStripeEnd = iStripeTrainingPrev < 0;
                             }
@@ -88,7 +88,7 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
                             double dySquaredHigh = dyHigh*dyHigh;
                             if (dySquaredHigh < neighbors.MaxDistanceElement().distanceSquared)
                             {
-                                PlaneSweepStripe(inputPointIter, stripeData, iStripeTrainingNext, neighbors);
+                                PlaneSweepStripe(inputPointIter, stripeData, iStripeTrainingNext, neighbors, dySquaredHigh);
                                 ++iStripeTrainingNext;
                                 highStripeEnd = iStripeTrainingNext >= numStripesLocal;
                             }
@@ -118,7 +118,7 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
         int numStripes = 0;
 
         void PlaneSweepStripe(point_vector_iterator_t inputPointIter, StripeData stripeData, int iStripeTraining,
-                              PointNeighbors<neighbors_priority_queue_t>& neighbors) const
+                              PointNeighbors<neighbors_priority_queue_t>& neighbors, double mindy) const
         {
             auto& trainingDataset = stripeData.TrainingDatasetStripe[iStripeTraining];
 
@@ -141,7 +141,7 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
             {
                 if (!lowStop)
                 {
-                    if (CheckAddNeighbor(inputPointIter, prevTrainingPointIter, neighbors))
+                    if (CheckAddNeighbor(inputPointIter, prevTrainingPointIter, neighbors, mindy))
                     {
                         if (prevTrainingPointIter > trainingDatasetBegin)
                         {
@@ -160,7 +160,7 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
 
                 if (!highStop)
                 {
-                    if (CheckAddNeighbor(inputPointIter, nextTrainingPointIter, neighbors))
+                    if (CheckAddNeighbor(inputPointIter, nextTrainingPointIter, neighbors, mindy))
                     {
                         if (nextTrainingPointIter < trainingDatasetEnd)
                         {

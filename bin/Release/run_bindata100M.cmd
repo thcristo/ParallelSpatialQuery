@@ -1,0 +1,1 @@
+PlaneSweepParallel 10 E:\Files\eap\de\start\data\large\input100M.bin E:\Files\eap\de\start\data\large\training100M.bin 0 1.0E-15 2000 0 0 00000000000101

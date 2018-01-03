@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="10 E:\Files\eap\de\start\data\small-real-data\NArrpointNNew.txt E:\Files\eap\de\start\data\small-real-data\NArdpointNNew.txt 0 1.0E-15 200 0 0 00000010100101" />
+				<Option parameters="10 E:\Files\eap\de\start\data\large\testdata.bin  E:\Files\eap\de\start\data\large\testdata.bin 0 1.0E-15 200 0 0 00000010100101" />
 				<Compiler>
 					<Add option="-std=c++11" />
 					<Add option="-g" />
@@ -72,6 +72,7 @@
 		<Unit filename="include/BruteForceAlgorithm.h" />
 		<Unit filename="include/BruteForceParallelAlgorithm.h" />
 		<Unit filename="include/BruteForceParallelTBBAlgorithm.h" />
+		<Unit filename="include/DatasetStream.h" />
 		<Unit filename="include/PlaneSweepAlgorithm.h" />
 		<Unit filename="include/PlaneSweepCopyAlgorithm.h" />
 		<Unit filename="include/PlaneSweepCopyParallelAlgorithm.h" />

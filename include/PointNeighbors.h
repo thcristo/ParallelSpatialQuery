@@ -115,6 +115,26 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return true;
         }
 
+        inline bool CheckAdd(point_vector_iterator_t pointIter, const double& distanceSquared, const double& dx, const double& mindy)
+        {
+            auto& lastNeighbor = container.top();
+            double maxDistance = lastNeighbor.distanceSquared;
+
+            if (distanceSquared < maxDistance)
+            {
+                container.pop();
+                Neighbor newNeighbor = {&*pointIter, distanceSquared};
+                container.push(newNeighbor);
+                ++numAdditions;
+            }
+            else if (dx*dx + mindy*mindy >= maxDistance)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         /*
         inline array<bool,2> CheckAdd(const array<point_vector_iterator_t,2>& pointIter, const array<double,2>& distanceSquared, const array<double,2>& dx)
         {

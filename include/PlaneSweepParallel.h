@@ -5,17 +5,22 @@
 #include <queue>
 #include <vector>
 #include <deque>
+#include <fstream>
 
-typedef struct{
+using namespace std;
+
+struct Point {
     long id;
     double x;
     double y;
-} Point;
+};
 
-typedef struct{
+struct Neighbor {
     const Point* point;
     double distanceSquared;
-} Neighbor;
+};
+
+
 
 class NeighborComparer
 {
@@ -25,6 +30,13 @@ class NeighborComparer
             return n1.distanceSquared < n2.distanceSquared;
         }
 };
+
+
+bool endsWith(const std::string& str, const std::string& suffix)
+{
+    return str.size() >= suffix.size() &&
+           str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
 
 typedef vector<Neighbor> neighbors_vector_t;
 typedef deque<Neighbor> neighbors_deque_t;

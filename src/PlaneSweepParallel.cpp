@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <chrono>
 #include <omp.h>
+#include <fstream>
 #include "BruteForceAlgorithm.h"
 #include "BruteForceParallelAlgorithm.h"
 #include "BruteForceParallelTBBAlgorithm.h"
@@ -19,7 +20,17 @@
 
 #define NUM_ALGORITHMS 14
 
+using namespace std;
+
 typedef unique_ptr<AbstractAllKnnAlgorithm> algorithm_ptr_t;
+
+template <class charT, charT decimalSeparator, charT thousandsSeparator>
+class punct_facet: public numpunct<charT> {
+protected:
+    charT do_decimal_point() const { return decimalSeparator; }
+    charT do_thousands_sep() const { return thousandsSeparator; }
+    string do_grouping() const { return "\03"; }
+};
 
 int main(int argc, char* argv[])
 {
@@ -106,10 +117,13 @@ int main(int argc, char* argv[])
             }
         }
 
+        cout.imbue(std::locale(cout.getloc(), new punct_facet<char, ',', '.'>));
+
         AllKnnProblem problem(argv[2], argv[3], numNeighbors);
         unique_ptr<AllKnnResult> pResultReference, pResult;
         unique_ptr<vector<long>> pDiff;
-        cout << "Read " << problem.GetInputDataset().size() << " input points and " << problem.GetTrainingDataset().size() << " training points." << endl;
+        cout << "Read " << problem.GetInputDataset().size() << " input points and " << problem.GetTrainingDataset().size()
+            << " training points " << "in " << problem.getLoadingTime().count() << " seconds" << endl;
 
         vector<algorithm_ptr_t> algorithms;
 
@@ -165,6 +179,17 @@ int main(int argc, char* argv[])
             }
         }
 
+        auto now = chrono::system_clock::now();
+        auto in_time_t = chrono::system_clock::to_time_t(now);
+        stringstream ss;
+        ss <<  "results_" << put_time(localtime(&in_time_t), "%Y%m%d%H%M%S") << ".csv";
+
+        ofstream outFile(ss.str(), ios_base::out);
+        outFile.imbue(locale(outFile.getloc(), new punct_facet<char, ',', '.'>));
+
+        outFile << "Algorithm;Total Duration;Sorting Duration;Total Heap Additions;Min. Heap Additions;Max. Heap Additions;Avg. Heap Additions;Differences;First 5 different point ids" << endl;
+        outFile.flush();
+
         for (size_t iAlgo = 0; iAlgo < algorithms.size(); ++iAlgo)
         {
             pResult = algorithms[iAlgo]->Process(problem);
@@ -175,6 +200,13 @@ int main(int argc, char* argv[])
                 << " maxAdd: " << pResult->getMaxHeapAdditions()
                 << " avgAdd: " << pResult->getAvgHeapAdditions();
 
+            outFile << fixed << setprecision(3) << algorithms[iAlgo]->GetTitle() << ";" << pResult->getDuration().count()
+                << ";" << pResult->getDurationSorting().count()
+                << ";" << pResult->getTotalHeapAdditions()
+                << ";" << pResult->getMinHeapAdditions()
+                << ";" << pResult->getMaxHeapAdditions()
+                << ";" << pResult->getAvgHeapAdditions();
+
             if (saveToFile)
             {
                 pResult->SaveToFile();
@@ -184,14 +216,19 @@ int main(int argc, char* argv[])
             {
                 pDiff = pResult->FindDifferences(*pResultReference, accuracy);
                 cout << " " << pDiff->size() << " differences. ";
+                outFile << ";" << pDiff->size();
+
                 if (pDiff->size() > 0)
                 {
                     cout << "First 5 different point ids: ";
+                    outFile << ";";
+
                     for (size_t i = 0; i < 5; ++i)
                     {
                         if (pDiff->size() >= i+1)
                         {
                             cout << pDiff->at(i) << " ";
+                            outFile << pDiff->at(i) << " ";
                         }
                         else
                         {
@@ -199,10 +236,20 @@ int main(int argc, char* argv[])
                         }
                     }
                 }
+                else
+                {
+                    outFile << ";";
+                }
                 pDiff.reset();
+            }
+            else
+            {
+                outFile << ";;";
             }
 
             cout << endl;
+            outFile << endl;
+            outFile.flush();
 
             if (findDifferences && iAlgo == 0)
             {
@@ -211,6 +258,8 @@ int main(int argc, char* argv[])
 
             pResult.reset();
         }
+
+        outFile.close();
 
         if (pResultReference)
         {

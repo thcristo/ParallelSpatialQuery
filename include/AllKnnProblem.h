@@ -8,8 +8,11 @@
 #include <iostream>
 #include <sstream>
 #include <memory>
+#include <chrono>
+#include <iterator>
 #include "ApplicationException.h"
 #include "PlaneSweepParallel.h"
+#include "DatasetStream.h"
 
 using namespace std;
 
@@ -25,6 +28,15 @@ struct StripeData
     const point_vector_vector_t& TrainingDatasetStripe;
     const vector<StripeBoundaries_t>& StripeBoundaries;
 };
+
+istream& operator >>(istream& i, Point& p)
+{
+    i >> p.id;
+    i >> p.x;
+    i >> p.y;
+
+    return i;
+}
 
 class AllKnnProblem
 {
@@ -57,6 +69,8 @@ class AllKnnProblem
             return numNeighbors;
         }
 
+        const chrono::duration<double>& getLoadingTime() const { return loadingTime; }
+
     protected:
 
     private:
@@ -65,10 +79,54 @@ class AllKnnProblem
         size_t numNeighbors = 0;
         unique_ptr<point_vector_t> pInputDataset;
         unique_ptr<point_vector_t> pTrainingDataset;
-
+        chrono::duration<double> loadingTime;
 
         void LoadDataFiles()
         {
+            auto start = chrono::high_resolution_clock::now();
+
+            LoadFile(inputFilename, *pInputDataset);
+            LoadFile(trainingFilename, *pTrainingDataset);
+
+            auto finish = chrono::high_resolution_clock::now();
+            loadingTime = finish - start;
+        }
+
+        void LoadFile(const string& filename, point_vector_t& dataset)
+        {
+            if (endsWith(filename, ".bin"))
+            {
+                LoadBinaryFile(filename, dataset);
+            }
+            else
+            {
+                LoadTextFile(filename, dataset);
+            }
+        }
+
+        void LoadBinaryFile(const string& filename, point_vector_t& dataset)
+        {
+            fstream fs(filename, ios::in | ios::binary);
+            size_t numPoints = 0;
+            fs.read(reinterpret_cast<char*>(&numPoints), streamsize(sizeof(size_t)));
+            dataset.reserve(numPoints);
+
+            for (size_t i=0; i < numPoints && !fs.eof(); ++i)
+            {
+                Point p;
+                fs.read(reinterpret_cast<char*>(&p), streamsize(sizeof(Point)));
+                dataset.push_back(p);
+            }
+            //copy(istream_iterator<Point>(fs), istream_iterator<Point>(), back_inserter(dataset));
+
+        }
+
+        void LoadTextFile(const string& filename, point_vector_t& dataset)
+        {
+            fstream fs(filename, ios::in);
+            copy(istream_iterator<Point>(fs), istream_iterator<Point>(), back_inserter(dataset));
+
+            /*
             size_t numInputLines = 0;
             ifstream inputFile(inputFilename, ios_base::in);
             if (inputFile.is_open())
@@ -111,9 +169,10 @@ class AllKnnProblem
 
             LoadPoints(inputFilename, inputFile, *pInputDataset);
             LoadPoints(trainingFilename, trainingFile, *pTrainingDataset);
-
+            */
         }
 
+        /*
         void LoadPoints(const string& filename, ifstream& file, point_vector_t& points)
         {
             long linenum = 0;
@@ -142,6 +201,7 @@ class AllKnnProblem
                 }
             }
         }
+        */
 
 };
 
