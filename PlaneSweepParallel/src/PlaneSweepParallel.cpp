@@ -25,8 +25,8 @@
 
 using namespace std;
 
-template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT>
-using algorithm_ptr_t = unique_ptr<AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT>>;
+template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT>
+using algorithm_ptr_t = unique_ptr<AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>>;
 
 
 
@@ -39,14 +39,14 @@ protected:
 };
 
 typedef AllKnnProblem<point_vector_t> AllKnnProblemMem;
-typedef AllKnnResult<AllKnnProblemMem, pointNeighbors_priority_queue_vector_t, point_vector_t, vector<long>> AllKnnResultMem;
-typedef AllKnnResultSorted<AllKnnProblemMem, pointNeighbors_priority_queue_vector_t, point_vector_t, vector<long>> AllKnnResultSortedMem;
-typedef algorithm_ptr_t<AllKnnProblemMem, AllKnnResultMem, point_vector_t, point_vector_iterator_t> algorithm_ptr_mem_t;
+typedef AllKnnResult<AllKnnProblemMem, pointNeighbors_priority_queue_vector_t, point_vector_t, vector<long>, point_vector_iterator_t> AllKnnResultMem;
+typedef AllKnnResultSorted<AllKnnProblemMem, pointNeighbors_priority_queue_vector_t, point_vector_t, vector<long>, point_vector_iterator_t> AllKnnResultSortedMem;
+typedef algorithm_ptr_t<AllKnnProblemMem, AllKnnResultMem, point_vector_t, point_vector_iterator_t, pointNeighbors_priority_queue_vector_t> algorithm_ptr_mem_t;
 typedef StripeData<point_vector_vector_t, vector<StripeBoundaries_t>> StripeDataMem;
-typedef AllKnnResultStripes<AllKnnProblemMem, pointNeighbors_priority_queue_vector_t, point_vector_t, vector<long>, point_vector_vector_t, vector<StripeBoundaries_t>> AllKnnResultStripesMem;
+typedef AllKnnResultStripes<AllKnnProblemMem, pointNeighbors_priority_queue_vector_t, point_vector_t, vector<long>, point_vector_iterator_t, point_vector_vector_t, vector<StripeBoundaries_t>> AllKnnResultStripesMem;
 
-template<class ProblemT, class ResultBaseT, class PointVectorT, class PointVectorIteratorT, class PointIdVectorT>
-void RunAlgorithms(ProblemT& problem, vector<algorithm_ptr_t<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT>>& algorithms,
+template<class ProblemT, class ResultBaseT, class PointVectorT, class PointVectorIteratorT, class PointIdVectorT, class NeighborsContainerT>
+void RunAlgorithms(ProblemT& problem, vector<algorithm_ptr_t<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>>& algorithms,
                    ofstream& outFile, bool saveToFile, bool findDifferences, double accuracy)
 {
     unique_ptr<ResultBaseT> pResultReference, pResult;
@@ -328,7 +328,7 @@ int main(int argc, char* argv[])
                 }
             }
 
-            RunAlgorithms<AllKnnProblemMem, AllKnnResultMem, point_vector_t, point_vector_iterator_t, vector<long>>(problem, algorithms, outFile, saveToFile, findDifferences, accuracy);
+            RunAlgorithms<AllKnnProblemMem, AllKnnResultMem, point_vector_t, point_vector_iterator_t, vector<long>, pointNeighbors_priority_queue_vector_t>(problem, algorithms, outFile, saveToFile, findDifferences, accuracy);
         }
 
         outFile.close();

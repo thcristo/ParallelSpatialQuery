@@ -8,7 +8,7 @@
 //#include "PlaneSweepParallel.h"
 #include "PointNeighbors.h"
 
-template<class ProblemT, class NeighborsContainerT, class PointVectorT, class PointIdVectorT>
+template<class ProblemT, class NeighborsContainerT, class PointVectorT, class PointIdVectorT, class PointVectorIteratorT>
 class AllKnnResult
 {
     public:
@@ -104,16 +104,18 @@ class AllKnnResult
                 }
                 */
 
-                NeighborsEnumerator* pNeighbors = &pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
+                NeighborsEnumerator<PointVectorIteratorT>* pNeighbors = &pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
 
-                vector<Neighbor> removedNeighbors;
+                vector<Neighbor<PointVectorIteratorT>> removedNeighbors;
+
+                auto emptyIter = PointVectorIteratorT();
 
                 while (pNeighbors->HasNext())
                 {
-                    Neighbor neighbor = pNeighbors->Next();
+                    Neighbor<PointVectorIteratorT> neighbor = pNeighbors->Next();
                     removedNeighbors.push_back(neighbor);
 
-                    if (neighbor.point != nullptr)
+                    if (neighbor.point != emptyIter)
                     {
                         outFile << "\t(" << neighbor.point->id << " " << neighbor.distanceSquared << ")";
                     }
@@ -131,7 +133,7 @@ class AllKnnResult
             outFile.close();
         }
 
-        unique_ptr<PointIdVectorT> FindDifferences(const AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, PointIdVectorT>& result,
+        unique_ptr<PointIdVectorT> FindDifferences(const AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, PointIdVectorT, PointVectorIteratorT>& result,
                                                    double accuracy)
         {
             auto differences = unique_ptr<PointIdVectorT>(new PointIdVectorT());
@@ -152,7 +154,7 @@ class AllKnnResult
                 }
                 */
 
-                NeighborsEnumerator* pNeighbors = &pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
+                NeighborsEnumerator<PointVectorIteratorT>* pNeighbors = &pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
 
                 /*
                 NeighborsEnumerator* pNeighborsReference = nullptr;
@@ -165,19 +167,19 @@ class AllKnnResult
                     pNeighborsReference = &result.pNeighborsPriorityQueueContainer->at(inputPoint->id);
                 }
                 */
-                NeighborsEnumerator* pNeighborsReference = &result.pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
+                NeighborsEnumerator<PointVectorIteratorT>* pNeighborsReference = &result.pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
 
-                vector<Neighbor> removedNeighbors;
-                vector<Neighbor> removedNeighborsReference;
+                vector<Neighbor<PointVectorIteratorT>> removedNeighbors;
+                vector<Neighbor<PointVectorIteratorT>> removedNeighborsReference;
 
                 while (pNeighbors->HasNext())
                 {
-                    Neighbor neighbor = pNeighbors->Next();
+                    Neighbor<PointVectorIteratorT> neighbor = pNeighbors->Next();
                     removedNeighbors.push_back(neighbor);
 
                     if (pNeighborsReference->HasNext())
                     {
-                        Neighbor neighborReference = pNeighborsReference->Next();
+                        Neighbor<PointVectorIteratorT> neighborReference = pNeighborsReference->Next();
                         removedNeighborsReference.push_back(neighborReference);
 
                         double diff = neighbor.distanceSquared - neighborReference.distanceSquared;
@@ -187,7 +189,6 @@ class AllKnnResult
                             differences->push_back(inputPoint->id);
                             break;
                         }
-
                     }
                     else
                     {

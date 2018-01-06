@@ -5,7 +5,7 @@
 #include <cmath>
 
 template<class ProblemT, class ResultT, class ResultBaseT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT>
-class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT>
+class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>
 {
     public:
         PlaneSweepCopyAlgorithm() {}
@@ -26,7 +26,7 @@ class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultB
             size_t numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
-                this->template CreateNeighborsContainer<NeighborsContainerT>(problem.GetInputDataset(), numNeighbors);
+                this->CreateNeighborsContainer(problem.GetInputDataset(), numNeighbors);
 
             auto start = chrono::high_resolution_clock::now();
 

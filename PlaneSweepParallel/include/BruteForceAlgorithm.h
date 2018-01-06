@@ -5,7 +5,7 @@
 #include <chrono>
 
 template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT>
-class BruteForceAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT>
+class BruteForceAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>
 {
     public:
         BruteForceAlgorithm() {}
@@ -27,7 +27,7 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, Po
             int numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
-                this->template CreateNeighborsContainer<NeighborsContainerT>(problem.GetInputDataset(), numNeighbors);
+                this->CreateNeighborsContainer(problem.GetInputDataset(), numNeighbors);
 
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();

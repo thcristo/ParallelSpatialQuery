@@ -7,7 +7,7 @@
 using namespace tbb;
 
 template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT>
-class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT>
+class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>
 {
     public:
         BruteForceParallelTBBAlgorithm(int numThreads) : numThreads(numThreads)
@@ -31,7 +31,7 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, 
             int numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
-                this->template CreateNeighborsContainer<NeighborsContainerT>(problem.GetInputDataset(), numNeighbors);
+                this->CreateNeighborsContainer(problem.GetInputDataset(), numNeighbors);
 
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();

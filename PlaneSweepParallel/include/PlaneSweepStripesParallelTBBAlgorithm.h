@@ -4,7 +4,7 @@
 #include "AbstractAllKnnAlgorithm.h"
 
 template<class ProblemT, class ResultT, class ResultBaseT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT, class StripeDataT>
-class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT>
+class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>
 {
     public:
         PlaneSweepStripesParallelTBBAlgorithm(int numStripes, int numThreads, bool parallelSort) : numStripes(numStripes),
@@ -29,7 +29,7 @@ class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm<Pro
             size_t numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
-                this->template CreateNeighborsContainer<NeighborsContainerT>(problem.GetInputDataset(), numNeighbors);
+                this->CreateNeighborsContainer(problem.GetInputDataset(), numNeighbors);
 
             task_scheduler_init scheduler(task_scheduler_init::deferred);
 
@@ -131,7 +131,7 @@ class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm<Pro
         bool parallelSort = false;
 
         void PlaneSweepStripe(PointVectorIteratorT inputPointIter, StripeDataT stripeData, int iStripeTraining,
-                              PointNeighbors<neighbors_priority_queue_t>& neighbors, double mindy) const
+                              PointNeighbors<neighbors_priority_queue_t<PointVectorIteratorT>, PointVectorIteratorT>& neighbors, double mindy) const
         {
             auto& trainingDataset = stripeData.TrainingDatasetStripe[iStripeTraining];
 

@@ -203,6 +203,11 @@ class AllKnnProblem
             }
         }
         */
+        bool endsWith(const string& str, const string& suffix)
+        {
+            return str.size() >= suffix.size() &&
+                   str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+        }
 
 };
 

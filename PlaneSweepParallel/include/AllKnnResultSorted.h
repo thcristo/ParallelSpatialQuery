@@ -6,19 +6,19 @@
 
 using namespace tbb;
 
-template<class ProblemT, class NeighborsContainerT, class PointVectorT, class DiffContainerT>
-class AllKnnResultSorted : public AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, DiffContainerT>
+template<class ProblemT, class NeighborsContainerT, class PointVectorT, class PointIdVectorT, class PointVectorIteratorT>
+class AllKnnResultSorted : public AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, PointIdVectorT, PointVectorIteratorT>
 {
-    using AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, DiffContainerT>::problem;
+    using AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, PointIdVectorT, PointVectorIteratorT>::problem;
 
     public:
         AllKnnResultSorted(const ProblemT& problem, const string& filePrefix)
-            : AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, DiffContainerT>(problem, filePrefix)
+            : AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, PointIdVectorT, PointVectorIteratorT>(problem, filePrefix)
         {
         }
 
         AllKnnResultSorted(const ProblemT& problem, const string& filePrefix, bool parallelSort)
-            : AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, DiffContainerT>(problem, filePrefix),
+            : AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, PointIdVectorT, PointVectorIteratorT>(problem, filePrefix),
                     parallelSort(parallelSort)
         {
         }

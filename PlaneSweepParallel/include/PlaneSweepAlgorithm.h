@@ -5,7 +5,7 @@
 #include <cmath>
 
 template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT, class PointVectorIndexT>
-class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT>
+class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>
 {
     public:
         PlaneSweepAlgorithm() {}
@@ -26,7 +26,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, Po
             size_t numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
-                this->template CreateNeighborsContainer<NeighborsContainerT>(problem.GetInputDataset(), numNeighbors);
+                this->CreateNeighborsContainer(problem.GetInputDataset(), numNeighbors);
 
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();

@@ -13,53 +13,7 @@
 
 using namespace tbb;
 
-
-template<class OuterContainer>
-unique_ptr<OuterContainer> CreateNeighborsContainer(const point_vector_t& inputDataset, size_t numNeighbors)
-{
-
-}
-
-/*
-template<>
-unique_ptr<neighbors_priority_queue_container_t> CreateNeighborsContainer<neighbors_priority_queue_container_t>(const point_vector_t& inputDataset, size_t numNeighbors)
-{
-    try
-    {
-        unique_ptr<neighbors_priority_queue_container_t> pContainer(new neighbors_priority_queue_container_t(inputDataset.size()));
-
-        for (auto point = inputDataset.cbegin(); point != inputDataset.cend(); ++point)
-        {
-            pContainer->insert(make_pair(point->id, PointNeighbors<neighbors_priority_queue_t>(numNeighbors)));
-        }
-
-        return pContainer;
-    }
-    catch(bad_alloc)
-    {
-        throw ApplicationException("Cannot allocate memory for neighbors container.");
-    }
-}
-*/
-
-template<>
-unique_ptr<pointNeighbors_priority_queue_vector_t> CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(const point_vector_t& inputDataset, size_t numNeighbors)
-{
-    try
-    {
-        unique_ptr<pointNeighbors_priority_queue_vector_t> pContainer(new pointNeighbors_priority_queue_vector_t(inputDataset.size(),
-                                                                    PointNeighbors<neighbors_priority_queue_t>(numNeighbors),
-                                                                    cache_aligned_allocator<PointNeighbors<neighbors_priority_queue_t>>()));
-
-        return pContainer;
-    }
-    catch(bad_alloc)
-    {
-        throw ApplicationException("Cannot allocate memory for neighbors container.");
-    }
-}
-
-template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT>
+template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT>
 class AbstractAllKnnAlgorithm
 {
     public:
@@ -76,83 +30,47 @@ class AbstractAllKnnAlgorithm
          * \return An unordered map of point Ids to multisets of Neighbors
          *
          */
-        template<class OuterContainer>
-        unique_ptr<OuterContainer> CreateNeighborsContainer(const PointVectorT& inputDataset, size_t numNeighbors) const
+        unique_ptr<NeighborsContainerT> CreateNeighborsContainer(const PointVectorT& inputDataset, size_t numNeighbors) const
         {
-            return ::CreateNeighborsContainer<OuterContainer>(inputDataset, numNeighbors);
+            try
+            {
+                unique_ptr<NeighborsContainerT> pContainer(new NeighborsContainerT(inputDataset.size(),
+                        PointNeighbors<neighbors_priority_queue_t<PointVectorIteratorT>, PointVectorIteratorT>(numNeighbors),
+                        cache_aligned_allocator<PointNeighbors<neighbors_priority_queue_t<PointVectorIteratorT>, PointVectorIteratorT>>()));
+
+                return pContainer;
+            }
+            catch(bad_alloc)
+            {
+                throw ApplicationException("Cannot allocate memory for neighbors container.");
+            }
         }
 
-        template<class Container>
         inline void AddNeighbor(PointVectorIteratorT inputPoint, PointVectorIteratorT trainingPoint,
-                                 PointNeighbors<Container>& neighbors) const
+                                 PointNeighbors<neighbors_priority_queue_t<PointVectorIteratorT>, PointVectorIteratorT>& neighbors) const
         {
             double dsq = CalcDistanceSquared(inputPoint, trainingPoint);
             neighbors.Add(trainingPoint, dsq);
         }
 
-        template<class Container>
         inline bool CheckAddNeighbor(PointVectorIteratorT inputPoint, PointVectorIteratorT trainingPoint,
-                                 PointNeighbors<Container>& neighbors) const
+                                 PointNeighbors<neighbors_priority_queue_t<PointVectorIteratorT>, PointVectorIteratorT>& neighbors) const
         {
             double dx = 0.0;
             double dsq = CalcDistanceSquared(inputPoint, trainingPoint, dx);
             return neighbors.CheckAdd(trainingPoint, dsq, dx);
         }
 
-        template<class Container>
         inline bool CheckAddNeighbor(PointVectorIteratorT inputPoint, PointVectorIteratorT trainingPoint,
-                                 PointNeighbors<Container>& neighbors, const double& mindy) const
+                                 PointNeighbors<neighbors_priority_queue_t<PointVectorIteratorT>, PointVectorIteratorT>& neighbors, const double& mindy) const
         {
             double dx = 0.0;
             double dsq = CalcDistanceSquared(inputPoint, trainingPoint, dx);
             return neighbors.CheckAdd(trainingPoint, dsq, dx, mindy);
         }
 
-        /*
-        template<class Container>
-        inline array<bool, 2> CheckAddNeighbors(point_vector_iterator_t inputPoint, point_vector_iterator_t trainingPointPrev,
-                                 point_vector_iterator_t trainingPointNext, PointNeighbors<Container>& neighbors) const
-        {
-            array<double, 2> dx = { 0.0, 0.0 };
-            array<point_vector_iterator_t, 2> trainingPoints = {trainingPointPrev, trainingPointNext};
-            auto dsq = CalcDistanceSquared(inputPoint, trainingPoints, dx);
-            return neighbors.CheckAdd(trainingPoints, dsq, dx);
-        }
-        */
-
-        /*
-        template<class Container>
-        inline bool CheckAddNeighbor(point_vector_iterator_t inputPoint, point_vector_iterator_t trainingPoint,
-                                 PointNeighbors<Container>& neighbors) const
-        {
-            double dx = trainingPoint->x - inputPoint->x;
-            double dxSquared = dx*dx;
-
-            auto& lastNeighbor = neighbors.MaxDistanceElement();
-            double maxDistance = lastNeighbor.distanceSquared;
-
-            if (dxSquared >= maxDistance)
-            {
-                return false;
-            }
-            else
-            {
-                double dy = trainingPoint->y - inputPoint->y;
-                double dsq = dxSquared + dy*dy;
-
-                if (dsq < maxDistance)
-                {
-                    neighbors.AddNoCheck(trainingPoint, dsq);
-                }
-            }
-
-            return true;
-        }
-        */
-
-        template<class Container>
         inline void AddNeighbor(PointVectorIteratorT trainingPoint, double distanceSquared,
-                                 PointNeighbors<Container>& neighbors) const
+                                 PointNeighbors<neighbors_priority_queue_t<PointVectorIteratorT>, PointVectorIteratorT>& neighbors) const
         {
             neighbors.Add(trainingPoint, distanceSquared);
         }
@@ -164,7 +82,6 @@ class AbstractAllKnnAlgorithm
 
             return dx*dx + dy*dy;
         }
-
 
         inline double CalcDistanceSquared(PointVectorIteratorT p1, PointVectorIteratorT p2, double& dx) const
         {

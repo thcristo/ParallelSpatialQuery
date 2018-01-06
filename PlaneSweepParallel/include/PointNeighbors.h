@@ -9,26 +9,27 @@
 
 using namespace tbb;
 
+template<class PointVectorIteratorT>
 class NeighborsEnumerator
 {
     public:
         virtual bool HasNext() = 0;
-        virtual Neighbor Next() = 0;
-        virtual void AddAllRemoved(const vector<Neighbor>& neighbors) = 0;
+        virtual Neighbor<PointVectorIteratorT> Next() = 0;
+        virtual void AddAllRemoved(const vector<Neighbor<PointVectorIteratorT>>& neighbors) = 0;
         virtual size_t GetNumAdditions() = 0;
 };
 
-template<class Container>
-class PointNeighbors : public NeighborsEnumerator
+template<class Container, class PointVectorIteratorT>
+class PointNeighbors : public NeighborsEnumerator<PointVectorIteratorT>
 {
     public:
         PointNeighbors(size_t numNeighbors);
         virtual ~PointNeighbors();
 
         bool HasNext();
-        Neighbor Next();
+        Neighbor<PointVectorIteratorT> Next();
 
-        void AddAllRemoved(const vector<Neighbor>& neighbors);
+        void AddAllRemoved(const vector<Neighbor<PointVectorIteratorT>>& neighbors);
 
     private:
         Container container;
@@ -36,15 +37,15 @@ class PointNeighbors : public NeighborsEnumerator
         long id;
 };
 
-template<>
-class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
+template<class PointVectorIteratorT>
+class PointNeighbors<neighbors_priority_queue_t<PointVectorIteratorT>, PointVectorIteratorT> : public NeighborsEnumerator<PointVectorIteratorT>
 {
     public:
-        PointNeighbors(size_t numNeighbors) : PointNeighbors(neighbors_vector_t(numNeighbors, {nullptr, numeric_limits<double>::max()}))
+        PointNeighbors(size_t numNeighbors) : PointNeighbors(neighbors_vector_t<PointVectorIteratorT>(numNeighbors, {PointVectorIteratorT(), numeric_limits<double>::max()}))
         {
         }
 
-        PointNeighbors(neighbors_vector_t neighborsVector) : numNeighbors(neighborsVector.size()),
+        PointNeighbors(neighbors_vector_t<PointVectorIteratorT> neighborsVector) : numNeighbors(neighborsVector.size()),
             container(neighborsVector.cbegin(), neighborsVector.cend())
         {
         }
@@ -62,14 +63,13 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return !container.empty();
         }
 
-        Neighbor Next() override
+        Neighbor<PointVectorIteratorT> Next() override
         {
-            Neighbor neighbor = container.top();
+            Neighbor<PointVectorIteratorT> neighbor = container.top();
             container.pop();
             return neighbor;
         }
 
-        template<class PointVectorIteratorT>
         inline void Add(PointVectorIteratorT pointIter, const double distanceSquared)
         {
             auto& lastNeighbor = container.top();
@@ -77,13 +77,13 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             if (distanceSquared < lastNeighbor.distanceSquared)
             {
                 container.pop();
-                Neighbor newNeighbor = {&*pointIter, distanceSquared};
+                Neighbor<PointVectorIteratorT> newNeighbor = {pointIter, distanceSquared};
                 container.push(newNeighbor);
                 ++numAdditions;
             }
         }
 
-        void AddAllRemoved(const vector<Neighbor>& neighbors)
+        void AddAllRemoved(const vector<Neighbor<PointVectorIteratorT>>& neighbors)
         {
             for (int i = neighbors.size() - 1; i >= 0; --i)
             {
@@ -96,7 +96,6 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return numAdditions;
         }
 
-        template<class PointVectorIteratorT>
         inline bool CheckAdd(PointVectorIteratorT pointIter, const double& distanceSquared, const double& dx)
         {
             auto& lastNeighbor = container.top();
@@ -105,7 +104,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             if (distanceSquared < maxDistance)
             {
                 container.pop();
-                Neighbor newNeighbor = {&*pointIter, distanceSquared};
+                Neighbor<PointVectorIteratorT> newNeighbor = {pointIter, distanceSquared};
                 container.push(newNeighbor);
                 ++numAdditions;
             }
@@ -117,7 +116,6 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return true;
         }
 
-        template<class PointVectorIteratorT>
         inline bool CheckAdd(PointVectorIteratorT pointIter, const double& distanceSquared, const double& dx, const double& mindy)
         {
             auto& lastNeighbor = container.top();
@@ -126,7 +124,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             if (distanceSquared < maxDistance)
             {
                 container.pop();
-                Neighbor newNeighbor = {&*pointIter, distanceSquared};
+                Neighbor<PointVectorIteratorT> newNeighbor = {pointIter, distanceSquared};
                 container.push(newNeighbor);
                 ++numAdditions;
             }
@@ -196,74 +194,29 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
         }
         */
 
-        template<class PointVectorIteratorT>
         inline void AddNoCheck(PointVectorIteratorT pointIter, const double& distanceSquared)
         {
             container.pop();
-            Neighbor newNeighbor = {&*pointIter, distanceSquared};
+            Neighbor<PointVectorIteratorT> newNeighbor = {pointIter, distanceSquared};
             container.push(newNeighbor);
             ++numAdditions;
         }
 
-        inline const Neighbor& MaxDistanceElement() const
+        inline const Neighbor<PointVectorIteratorT>& MaxDistanceElement() const
         {
             return container.top();
         }
 
     private:
         size_t numNeighbors = 0;
-        neighbors_priority_queue_t container;
+        neighbors_priority_queue_t<PointVectorIteratorT> container;
         size_t numAdditions = 0;
 };
 
-/*
-template<>
-class PointNeighbors<neighbors_deque_t> : public NeighborsEnumerator
-{
-    public:
-        PointNeighbors(size_t numNeighbors) : numNeighbors(numNeighbors), container(numNeighbors, {nullptr, numeric_limits<double>::max()})
-        {
-            returnPos = 0;
-            insertPos = numNeighbors - 1;
-        }
-
-        virtual ~PointNeighbors() {}
-
-        bool HasNext() override
-        {
-            return returnPos < numNeighbors;
-        }
-
-        Neighbor Next() override
-        {
-            Neighbor neighbor = container[returnPos];
-            ++returnPos;
-            return neighbor;
-        }
-
-        inline void Add(point_vector_t::const_iterator pointIter, const double distanceSquared)
-        {
-            container[insertPos] = {&*pointIter, distanceSquared};
-            --insertPos;
-        }
-
-    private:
-        size_t numNeighbors;
-        neighbors_deque_t container;
-        size_t returnPos;
-        size_t insertPos;
-};
-
 
 template<class Container>
-using neighbors_container_t = unordered_map<long, PointNeighbors<Container>>;
-*/
+using pointNeighbors_generic_vector_t = vector<PointNeighbors<Container, point_vector_iterator_t>, cache_aligned_allocator<PointNeighbors<Container, point_vector_iterator_t>>>;
 
-template<class Container>
-using pointNeighbors_generic_vector_t = vector<PointNeighbors<Container>, cache_aligned_allocator<PointNeighbors<Container>>>;
-
-//typedef neighbors_container_t<neighbors_priority_queue_t> neighbors_priority_queue_container_t;
-//typedef neighbors_container_t<neighbors_deque_t> neighbors_deque_container_t;
-typedef pointNeighbors_generic_vector_t<neighbors_priority_queue_t> pointNeighbors_priority_queue_vector_t;
+typedef pointNeighbors_generic_vector_t<neighbors_priority_queue_t<point_vector_iterator_t>> pointNeighbors_priority_queue_vector_t;
 
 #endif // POINTNEIGHBORS_H

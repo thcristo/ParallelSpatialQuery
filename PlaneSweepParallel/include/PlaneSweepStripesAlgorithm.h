@@ -5,7 +5,7 @@
 #include "AllKnnResultStripes.h"
 
 template<class ProblemT, class ResultT, class ResultBaseT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT, class StripeDataT>
-class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT>
+class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>
 {
     public:
         PlaneSweepStripesAlgorithm(int numStripes) : numStripes(numStripes)
@@ -29,7 +29,7 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, Resu
             size_t numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
-                this->template CreateNeighborsContainer<NeighborsContainerT>(problem.GetInputDataset(), numNeighbors);
+                this->CreateNeighborsContainer(problem.GetInputDataset(), numNeighbors);
 
             int numStripesLocal = omp_get_max_threads();
 
@@ -119,7 +119,7 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, Resu
         int numStripes = 0;
 
         void PlaneSweepStripe(PointVectorIteratorT inputPointIter, StripeDataT stripeData, int iStripeTraining,
-                              PointNeighbors<neighbors_priority_queue_t>& neighbors, double mindy) const
+                              PointNeighbors<neighbors_priority_queue_t<PointVectorIteratorT>, PointVectorIteratorT>& neighbors, double mindy) const
         {
             auto& trainingDataset = stripeData.TrainingDatasetStripe[iStripeTraining];
 

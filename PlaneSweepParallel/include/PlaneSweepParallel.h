@@ -15,36 +15,39 @@ struct Point {
     double y;
 };
 
-struct Neighbor {
-    const Point* point;
-    double distanceSquared;
-};
-
-
-
-class NeighborComparer
-{
-    public :
-        bool operator()(const Neighbor& n1, const Neighbor& n2) const
-        {
-            return n1.distanceSquared < n2.distanceSquared;
-        }
-};
-
-
-bool endsWith(const std::string& str, const std::string& suffix)
-{
-    return str.size() >= suffix.size() &&
-           str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
-}
-
-typedef vector<Neighbor> neighbors_vector_t;
-typedef deque<Neighbor> neighbors_deque_t;
-typedef priority_queue<Neighbor, neighbors_vector_t, NeighborComparer> neighbors_priority_queue_t;
 typedef vector<Point> point_vector_t;
 typedef vector<point_vector_t> point_vector_vector_t;
 typedef point_vector_t::const_iterator point_vector_iterator_t;
 typedef vector<point_vector_iterator_t> point_vector_index_t;
 typedef point_vector_index_t::const_iterator point_vector_index_iterator_t;
+
+template<class PointVectorIteratorT>
+struct Neighbor {
+    PointVectorIteratorT point;
+    double distanceSquared;
+};
+
+template<class PointVectorIteratorT>
+class NeighborComparer
+{
+    public :
+        bool operator()(const Neighbor<PointVectorIteratorT>& n1, const Neighbor<PointVectorIteratorT>& n2) const
+        {
+            return n1.distanceSquared < n2.distanceSquared;
+        }
+};
+
+typedef Neighbor<point_vector_iterator_t> NeighborMem;
+typedef NeighborComparer<point_vector_iterator_t> NeighborComparerMem;
+
+template<class PointVectorIteratorT>
+using neighbors_vector_t = vector<Neighbor<PointVectorIteratorT>>;
+//typedef deque<Neighbor<point_vector_iterator_t>>> neighbors_deque_t;
+template<class PointVectorIteratorT>
+using neighbors_priority_queue_t = priority_queue<Neighbor<PointVectorIteratorT>, neighbors_vector_t<PointVectorIteratorT>, NeighborComparer<PointVectorIteratorT>>;
+
+
+
+
 
 #endif // PLANESWEEPPARALLEL_H_INCLUDED
