@@ -6,8 +6,8 @@
 
 using namespace tbb;
 
-
-class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
+template<class ProblemT, class ResultT, class ResultBaseT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT>
+class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT>
 {
     public:
         PlaneSweepCopyParallelTBBAlgorithm(int numThreads, bool parallelSort) : numThreads(numThreads), parallelSort(parallelSort)
@@ -26,14 +26,14 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             return parallelSort ? "planesweep_copy_parallel_TBB_psort" : "planesweep_copy_parallel_TBB";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
+        unique_ptr<ResultBaseT> Process(ProblemT& problem) override
         {
             size_t numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
-                this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
+                this->template CreateNeighborsContainer<NeighborsContainerT>(problem.GetInputDataset(), numNeighbors);
 
-            typedef blocked_range<point_vector_t::const_iterator> point_range_t;
+            typedef blocked_range<PointVectorIteratorT> point_range_t;
 
             task_scheduler_init scheduler(task_scheduler_init::deferred);
 
@@ -48,7 +48,7 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
             auto start = chrono::high_resolution_clock::now();
 
-            auto pResult = unique_ptr<AllKnnResultSorted>(new AllKnnResultSorted(problem, GetPrefix(), parallelSort));
+            auto pResult = unique_ptr<ResultT>(new ResultT(problem, GetPrefix(), parallelSort));
 
             auto& inputDataset = pResult->GetInputDatasetSorted();
             auto& trainingDataset = pResult->GetTrainingDatasetSorted();
@@ -101,7 +101,7 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
                         {
                             if (!lowStop)
                             {
-                                if (CheckAddNeighbor(inputPointIter, prevTrainingPointIter, neighbors))
+                                if (this->CheckAddNeighbor(inputPointIter, prevTrainingPointIter, neighbors))
                                 {
                                     if (prevTrainingPointIter > trainingDatasetBegin)
                                     {
@@ -120,7 +120,7 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
                             if (!highStop)
                             {
-                                if (CheckAddNeighbor(inputPointIter, nextTrainingPointIter, neighbors))
+                                if (this->CheckAddNeighbor(inputPointIter, nextTrainingPointIter, neighbors))
                                 {
                                     if (nextTrainingPointIter < trainingDatasetEnd)
                                     {

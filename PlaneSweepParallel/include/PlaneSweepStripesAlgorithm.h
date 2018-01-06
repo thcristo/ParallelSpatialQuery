@@ -4,7 +4,8 @@
 #include "AbstractAllKnnAlgorithm.h"
 #include "AllKnnResultStripes.h"
 
-class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
+template<class ProblemT, class ResultT, class ResultBaseT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT, class StripeDataT>
+class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT>
 {
     public:
         PlaneSweepStripesAlgorithm(int numStripes) : numStripes(numStripes)
@@ -23,12 +24,12 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
             return "planesweep_stripes";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
+        unique_ptr<ResultBaseT> Process(ProblemT& problem) override
         {
             size_t numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
-                this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
+                this->template CreateNeighborsContainer<NeighborsContainerT>(problem.GetInputDataset(), numNeighbors);
 
             int numStripesLocal = omp_get_max_threads();
 
@@ -39,7 +40,7 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
 
             auto start = chrono::high_resolution_clock::now();
 
-            auto pResult = unique_ptr<AllKnnResultStripes>(new AllKnnResultStripes(problem, GetPrefix()));
+            auto pResult = unique_ptr<ResultT>(new ResultT(problem, GetPrefix()));
 
             auto stripeData = pResult->GetStripeData(numStripesLocal);
             numStripesLocal = stripeData.InputDatasetStripe.size();
@@ -117,7 +118,7 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
     private:
         int numStripes = 0;
 
-        void PlaneSweepStripe(point_vector_iterator_t inputPointIter, StripeData stripeData, int iStripeTraining,
+        void PlaneSweepStripe(PointVectorIteratorT inputPointIter, StripeDataT stripeData, int iStripeTraining,
                               PointNeighbors<neighbors_priority_queue_t>& neighbors, double mindy) const
         {
             auto& trainingDataset = stripeData.TrainingDatasetStripe[iStripeTraining];
@@ -141,7 +142,7 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
             {
                 if (!lowStop)
                 {
-                    if (CheckAddNeighbor(inputPointIter, prevTrainingPointIter, neighbors, mindy))
+                    if (this->CheckAddNeighbor(inputPointIter, prevTrainingPointIter, neighbors, mindy))
                     {
                         if (prevTrainingPointIter > trainingDatasetBegin)
                         {
@@ -160,7 +161,7 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
 
                 if (!highStop)
                 {
-                    if (CheckAddNeighbor(inputPointIter, nextTrainingPointIter, neighbors, mindy))
+                    if (this->CheckAddNeighbor(inputPointIter, nextTrainingPointIter, neighbors, mindy))
                     {
                         if (nextTrainingPointIter < trainingDatasetEnd)
                         {

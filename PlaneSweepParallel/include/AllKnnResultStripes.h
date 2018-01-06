@@ -6,40 +6,44 @@
 
 using namespace tbb;
 
-
-class AllKnnResultStripes : public AllKnnResult
+template<class ProblemT, class NeighborsContainerT, class PointVectorT, class DiffContainerT, class PointVectorVectorT, class StripeBoundariesVectorT>
+class AllKnnResultStripes : public AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, DiffContainerT>
 {
+    using AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, DiffContainerT>::problem;
+
     public:
-        AllKnnResultStripes(const AllKnnProblem& problem, const string& filePrefix) : AllKnnResult(problem, filePrefix)
+        AllKnnResultStripes(const ProblemT& problem, const string& filePrefix)
+            : AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, DiffContainerT>(problem, filePrefix)
         {
         }
 
-        AllKnnResultStripes(const AllKnnProblem& problem, const string& filePrefix, bool parallelSort) : AllKnnResult(problem, filePrefix),
-            parallelSort(parallelSort)
+        AllKnnResultStripes(const ProblemT& problem, const string& filePrefix, bool parallelSort)
+            : AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, DiffContainerT>(problem, filePrefix),
+                parallelSort(parallelSort)
         {
         }
 
         virtual ~AllKnnResultStripes() {}
 
-        StripeData GetStripeData(int numStripes)
+        StripeData<PointVectorVectorT, StripeBoundariesVectorT> GetStripeData(int numStripes)
         {
             if (!pInputDatasetStripe)
             {
-                pInputDatasetStripe.reset(new point_vector_vector_t());
+                pInputDatasetStripe.reset(new PointVectorVectorT());
             }
 
             if (!pTrainingDatasetStripe)
             {
-                pTrainingDatasetStripe.reset(new point_vector_vector_t());
+                pTrainingDatasetStripe.reset(new PointVectorVectorT());
             }
 
             if (!pStripeBoundaries)
             {
-                pStripeBoundaries.reset(new vector<StripeBoundaries_t>());
+                pStripeBoundaries.reset(new StripeBoundariesVectorT());
             }
 
-            point_vector_t inputDatasetSortedY(problem.GetInputDataset());
-            point_vector_t trainingDatasetSortedY(problem.GetTrainingDataset());
+            PointVectorT inputDatasetSortedY(problem.GetInputDataset());
+            PointVectorT trainingDatasetSortedY(problem.GetTrainingDataset());
 
             if (parallelSort)
             {
@@ -88,7 +92,7 @@ class AllKnnResultStripes : public AllKnnResult
                     ++inputIterEnd;
                 }
 
-                pInputDatasetStripe->push_back(point_vector_t(inputIterStart, inputIterEnd));
+                pInputDatasetStripe->push_back(PointVectorT(inputIterStart, inputIterEnd));
 
                 double minY = inputIterStart->y <= trainingIterStart->y ? inputIterStart->y : trainingIterStart->y;
 
@@ -117,7 +121,7 @@ class AllKnnResultStripes : public AllKnnResult
                                             upper_bound(trainingIterStart, trainingDatasetSortedYEnd, prev(inputIterEnd)->y,
                                                           [](const double& value, const Point& point) { return value < point.y; } );
 
-                    pTrainingDatasetStripe->push_back(point_vector_t(trainingIterStart, trainingIterEnd));
+                    pTrainingDatasetStripe->push_back(PointVectorT(trainingIterStart, trainingIterEnd));
 
                     maxY = prev(trainingIterEnd)->y >= prev(inputIterEnd)->y ? prev(trainingIterEnd)->y : prev(inputIterEnd)->y;
 
@@ -142,7 +146,7 @@ class AllKnnResultStripes : public AllKnnResult
                 }
                 else
                 {
-                    pTrainingDatasetStripe->push_back(point_vector_t());
+                    pTrainingDatasetStripe->push_back(PointVectorT());
 
                     maxY = prev(inputIterEnd)->y;
                 }
@@ -174,9 +178,9 @@ class AllKnnResultStripes : public AllKnnResult
     protected:
 
     private:
-        unique_ptr<point_vector_vector_t> pInputDatasetStripe;
-        unique_ptr<point_vector_vector_t> pTrainingDatasetStripe;
-        unique_ptr<vector<StripeBoundaries_t>> pStripeBoundaries;
+        unique_ptr<PointVectorVectorT> pInputDatasetStripe;
+        unique_ptr<PointVectorVectorT> pTrainingDatasetStripe;
+        unique_ptr<StripeBoundariesVectorT> pStripeBoundaries;
         bool parallelSort = false;
 };
 

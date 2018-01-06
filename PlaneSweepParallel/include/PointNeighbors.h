@@ -69,7 +69,8 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return neighbor;
         }
 
-        inline void Add(point_vector_iterator_t pointIter, const double distanceSquared)
+        template<class PointVectorIteratorT>
+        inline void Add(PointVectorIteratorT pointIter, const double distanceSquared)
         {
             auto& lastNeighbor = container.top();
 
@@ -95,7 +96,8 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return numAdditions;
         }
 
-        inline bool CheckAdd(point_vector_iterator_t pointIter, const double& distanceSquared, const double& dx)
+        template<class PointVectorIteratorT>
+        inline bool CheckAdd(PointVectorIteratorT pointIter, const double& distanceSquared, const double& dx)
         {
             auto& lastNeighbor = container.top();
             double maxDistance = lastNeighbor.distanceSquared;
@@ -115,7 +117,8 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return true;
         }
 
-        inline bool CheckAdd(point_vector_iterator_t pointIter, const double& distanceSquared, const double& dx, const double& mindy)
+        template<class PointVectorIteratorT>
+        inline bool CheckAdd(PointVectorIteratorT pointIter, const double& distanceSquared, const double& dx, const double& mindy)
         {
             auto& lastNeighbor = container.top();
             double maxDistance = lastNeighbor.distanceSquared;
@@ -193,7 +196,8 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
         }
         */
 
-        inline void AddNoCheck(point_vector_iterator_t pointIter, const double& distanceSquared)
+        template<class PointVectorIteratorT>
+        inline void AddNoCheck(PointVectorIteratorT pointIter, const double& distanceSquared)
         {
             container.pop();
             Neighbor newNeighbor = {&*pointIter, distanceSquared};

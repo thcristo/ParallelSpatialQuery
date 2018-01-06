@@ -5,20 +5,20 @@
 #include <chrono>
 #include <fstream>
 #include <cmath>
-#include "PlaneSweepParallel.h"
-#include "AllKnnProblem.h"
+//#include "PlaneSweepParallel.h"
 #include "PointNeighbors.h"
 
+template<class ProblemT, class NeighborsContainerT, class PointVectorT, class PointIdVectorT>
 class AllKnnResult
 {
     public:
-        AllKnnResult(const AllKnnProblem& problem, const string& filePrefix)
+        AllKnnResult(const ProblemT& problem, const string& filePrefix)
                      : problem(problem), filePrefix(filePrefix)
         {
         }
 
-        AllKnnResult(const AllKnnProblem& problem, const string& filePrefix,
-                     unique_ptr<pointNeighbors_priority_queue_vector_t>& pNeighborsContainer,
+        AllKnnResult(const ProblemT& problem, const string& filePrefix,
+                     unique_ptr<NeighborsContainerT>& pNeighborsContainer,
                      const chrono::duration<double>& elapsed, const chrono::duration<double>& elapsedSorting)
                      :  problem(problem), filePrefix(filePrefix),
                         pNeighborsPriorityQueueVector(move(pNeighborsContainer)), elapsed(elapsed), elapsedSorting(elapsedSorting)
@@ -48,7 +48,7 @@ class AllKnnResult
             pNeighborsPriorityQueueContainer = move(pNeighborsContainer);
         }
         */
-        void setNeighborsContainer(unique_ptr<pointNeighbors_priority_queue_vector_t>& pNeighborsContainer)
+        void setNeighborsContainer(unique_ptr<NeighborsContainerT>& pNeighborsContainer)
         {
             pNeighborsPriorityQueueVector = move(pNeighborsContainer);
             CalcHeapStats();
@@ -86,7 +86,7 @@ class AllKnnResult
 
             ofstream outFile(ss.str(), ios_base::out);
 
-            const point_vector_t& inputDataset = problem.GetInputDataset();
+            const PointVectorT& inputDataset = problem.GetInputDataset();
 
             for (auto inputPoint = inputDataset.cbegin(); inputPoint != inputDataset.cend(); ++inputPoint)
             {
@@ -131,9 +131,10 @@ class AllKnnResult
             outFile.close();
         }
 
-        unique_ptr<vector<long>> FindDifferences(const AllKnnResult& result, double accuracy)
+        unique_ptr<PointIdVectorT> FindDifferences(const AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, PointIdVectorT>& result,
+                                                   double accuracy)
         {
-            auto differences = unique_ptr<vector<long>>(new vector<long>());
+            auto differences = unique_ptr<PointIdVectorT>(new PointIdVectorT());
 
             auto& inputDataset = problem.GetInputDataset();
 
@@ -207,12 +208,12 @@ class AllKnnResult
             return differences;
         }
     protected:
-        const AllKnnProblem& problem;
+        const ProblemT& problem;
 
     private:
         string filePrefix;
         //unique_ptr<neighbors_priority_queue_container_t> pNeighborsPriorityQueueContainer;
-        unique_ptr<pointNeighbors_priority_queue_vector_t> pNeighborsPriorityQueueVector;
+        unique_ptr<NeighborsContainerT> pNeighborsPriorityQueueVector;
         chrono::duration<double> elapsed;
         chrono::duration<double> elapsedSorting;
         size_t minHeapAdditions = 0;

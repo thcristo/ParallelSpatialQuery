@@ -2,7 +2,6 @@
 #define AllKnnPROBLEM_H
 
 #include <string>
-#include <vector>
 #include <fstream>
 #include <algorithm>
 #include <iostream>
@@ -12,7 +11,6 @@
 #include <iterator>
 #include "ApplicationException.h"
 #include "PlaneSweepParallel.h"
-#include "DatasetStream.h"
 
 using namespace std;
 
@@ -22,11 +20,12 @@ struct StripeBoundaries_t
     double maxY;
 };
 
+template<class PointVectorVectorT, class StripeBoundariesVectorT>
 struct StripeData
 {
-    const point_vector_vector_t& InputDatasetStripe;
-    const point_vector_vector_t& TrainingDatasetStripe;
-    const vector<StripeBoundaries_t>& StripeBoundaries;
+    const PointVectorVectorT& InputDatasetStripe;
+    const PointVectorVectorT& TrainingDatasetStripe;
+    const StripeBoundariesVectorT& StripeBoundaries;
 };
 
 istream& operator >>(istream& i, Point& p)
@@ -38,11 +37,13 @@ istream& operator >>(istream& i, Point& p)
     return i;
 }
 
+
+template<class PointVectorT>
 class AllKnnProblem
 {
     public:
         AllKnnProblem(const string& inputFilename, const string& trainingFilename, size_t numNeighbors)
-            : pInputDataset(new point_vector_t), pTrainingDataset(new point_vector_t)
+            : pInputDataset(new PointVectorT()), pTrainingDataset(new PointVectorT())
         {
             this->inputFilename = inputFilename;
             this->trainingFilename = trainingFilename;
@@ -54,12 +55,12 @@ class AllKnnProblem
         {
         }
 
-        const point_vector_t& GetInputDataset() const
+        const PointVectorT& GetInputDataset() const
         {
             return *pInputDataset;
         }
 
-        const point_vector_t& GetTrainingDataset() const
+        const PointVectorT& GetTrainingDataset() const
         {
             return *pTrainingDataset;
         }
@@ -77,8 +78,8 @@ class AllKnnProblem
         string inputFilename;
         string trainingFilename;
         size_t numNeighbors = 0;
-        unique_ptr<point_vector_t> pInputDataset;
-        unique_ptr<point_vector_t> pTrainingDataset;
+        unique_ptr<PointVectorT> pInputDataset;
+        unique_ptr<PointVectorT> pTrainingDataset;
         chrono::duration<double> loadingTime;
 
         void LoadDataFiles()
@@ -92,7 +93,7 @@ class AllKnnProblem
             loadingTime = finish - start;
         }
 
-        void LoadFile(const string& filename, point_vector_t& dataset)
+        void LoadFile(const string& filename, PointVectorT& dataset)
         {
             if (endsWith(filename, ".bin"))
             {
@@ -104,7 +105,7 @@ class AllKnnProblem
             }
         }
 
-        void LoadBinaryFile(const string& filename, point_vector_t& dataset)
+        void LoadBinaryFile(const string& filename, PointVectorT& dataset)
         {
             fstream fs(filename, ios::in | ios::binary);
             size_t numPoints = 0;
@@ -121,7 +122,7 @@ class AllKnnProblem
 
         }
 
-        void LoadTextFile(const string& filename, point_vector_t& dataset)
+        void LoadTextFile(const string& filename, PointVectorT& dataset)
         {
             fstream fs(filename, ios::in);
             copy(istream_iterator<Point>(fs), istream_iterator<Point>(), back_inserter(dataset));

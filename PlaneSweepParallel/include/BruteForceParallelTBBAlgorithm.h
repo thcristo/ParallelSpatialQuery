@@ -6,7 +6,8 @@
 
 using namespace tbb;
 
-class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
+template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT>
+class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT>
 {
     public:
         BruteForceParallelTBBAlgorithm(int numThreads) : numThreads(numThreads)
@@ -25,17 +26,17 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             return "bruteforce_parallel_tbb";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
+        unique_ptr<ResultT> Process(ProblemT& problem) override
         {
             int numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
-                this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
+                this->template CreateNeighborsContainer<NeighborsContainerT>(problem.GetInputDataset(), numNeighbors);
 
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();
 
-            typedef blocked_range<point_vector_t::const_iterator> point_range_t;
+            typedef blocked_range<PointVectorIteratorT> point_range_t;
 
             task_scheduler_init scheduler(task_scheduler_init::deferred);
 
@@ -66,7 +67,7 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
                         for (auto trainingPoint = trainingDatasetBegin; trainingPoint < trainingDatasetEnd; ++trainingPoint)
                         {
-                            AddNeighbor(inputPoint, trainingPoint, neighbors);
+                            this->AddNeighbor(inputPoint, trainingPoint, neighbors);
                         }
                     }
                 }
@@ -75,7 +76,7 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             auto finish = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = finish - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(problem, GetPrefix(), pNeighborsContainer, elapsed, chrono::duration<double>()));
+            return unique_ptr<ResultT>(new ResultT(problem, GetPrefix(), pNeighborsContainer, elapsed, chrono::duration<double>()));
         }
 
     private:

@@ -4,7 +4,8 @@
 #include "AbstractAllKnnAlgorithm.h"
 #include <cmath>
 
-class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
+template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT, class PointVectorIndexT>
+class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT>
 {
     public:
         PlaneSweepAlgorithm() {}
@@ -20,35 +21,35 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
             return "planesweep_serial";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
+        unique_ptr<ResultT> Process(ProblemT& problem) override
         {
             size_t numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
-                this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
+                this->template CreateNeighborsContainer<NeighborsContainerT>(problem.GetInputDataset(), numNeighbors);
 
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();
 
             auto start = chrono::high_resolution_clock::now();
 
-            point_vector_index_t inputDatasetIndex(inputDataset.size());
-            point_vector_index_t trainingDatasetIndex(trainingDataset.size());
+            PointVectorIndexT inputDatasetIndex(inputDataset.size());
+            PointVectorIndexT trainingDatasetIndex(trainingDataset.size());
 
-            point_vector_iterator_t m = inputDataset.cbegin();
-            point_vector_iterator_t n = trainingDataset.cbegin();
+            PointVectorIteratorT m = inputDataset.cbegin();
+            PointVectorIteratorT n = trainingDataset.cbegin();
 
             generate(inputDatasetIndex.begin(), inputDatasetIndex.end(), [&m] { return m++; } );
             generate(trainingDatasetIndex.begin(), trainingDatasetIndex.end(), [&n] { return n++; } );
 
             sort(inputDatasetIndex.begin(), inputDatasetIndex.end(),
-                 [&](const point_vector_iterator_t& iter1, const point_vector_iterator_t& iter2)
+                 [&](const PointVectorIteratorT& iter1, const PointVectorIteratorT& iter2)
                  {
                      return iter1->x < iter2->x;
                  });
 
             sort(trainingDatasetIndex.begin(), trainingDatasetIndex.end(),
-                 [&](const point_vector_iterator_t& iter1, const point_vector_iterator_t& iter2)
+                 [&](const PointVectorIteratorT& iter1, const PointVectorIteratorT& iter2)
                  {
                      return iter1->x < iter2->x;
                  });
@@ -71,14 +72,14 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                                     [&](const point_vector_iterator_t& iter, const double& value) { return iter->x < value; } );
                 */
 
-                point_vector_index_iterator_t nextTrainingPointIndex = startSearchPos;
+                auto nextTrainingPointIndex = startSearchPos;
                 while (nextTrainingPointIndex < trainingDatasetIndexEnd && (*nextTrainingPointIndex)->x < inputPointIter->x)
                 {
                     ++nextTrainingPointIndex;
                 }
 
                 startSearchPos = nextTrainingPointIndex;
-                point_vector_index_iterator_t prevTrainingPointIndex = nextTrainingPointIndex;
+                auto prevTrainingPointIndex = nextTrainingPointIndex;
                 if (prevTrainingPointIndex > trainingDatasetIndexBegin)
                 {
                     --prevTrainingPointIndex;
@@ -91,7 +92,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                 {
                     if (!lowStop)
                     {
-                        if (CheckAddNeighbor(inputPointIter, *prevTrainingPointIndex, neighbors))
+                        if (this->CheckAddNeighbor(inputPointIter, *prevTrainingPointIndex, neighbors))
                         {
                             if (prevTrainingPointIndex > trainingDatasetIndexBegin)
                             {
@@ -110,7 +111,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
 
                     if (!highStop)
                     {
-                        if (CheckAddNeighbor(inputPointIter, *nextTrainingPointIndex, neighbors))
+                        if (this->CheckAddNeighbor(inputPointIter, *nextTrainingPointIndex, neighbors))
                         {
                             if (nextTrainingPointIndex < trainingDatasetIndexEnd)
                             {
@@ -134,7 +135,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
             chrono::duration<double> elapsed = finish - start;
             chrono::duration<double> elapsedSorting = finishSorting - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(problem, GetPrefix(), pNeighborsContainer, elapsed, elapsedSorting));
+            return unique_ptr<ResultT>(new ResultT(problem, GetPrefix(), pNeighborsContainer, elapsed, elapsedSorting));
         }
 
     private:

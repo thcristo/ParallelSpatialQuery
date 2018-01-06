@@ -4,7 +4,8 @@
 #include "AbstractAllKnnAlgorithm.h"
 #include "AllKnnResultStripes.h"
 
-class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
+template<class ProblemT, class ResultT, class ResultBaseT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT, class StripeDataT>
+class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT>
 {
     public:
         PlaneSweepStripesParallelAlgorithm(int numStripes, int numThreads, bool parallelSort) : numStripes(numStripes),
@@ -24,12 +25,12 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
             return parallelSort ? "planesweep_stripes_parallel_psort" : "planesweep_stripes_parallel";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
+        unique_ptr<ResultBaseT> Process(ProblemT& problem) override
         {
             size_t numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
-                this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
+                this->template CreateNeighborsContainer<NeighborsContainerT>(problem.GetInputDataset(), numNeighbors);
 
             if (numThreads > 0)
             {
@@ -38,7 +39,7 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 
             auto start = chrono::high_resolution_clock::now();
 
-            auto pResult = unique_ptr<AllKnnResultStripes>(new AllKnnResultStripes(problem, GetPrefix(), parallelSort));
+            auto pResult = unique_ptr<ResultT>(new ResultT(problem, GetPrefix(), parallelSort));
 
             auto stripeData = pResult->GetStripeData(numStripes);
 
@@ -119,7 +120,7 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
         int numThreads = 0;
         bool parallelSort = false;
 
-        void PlaneSweepStripe(point_vector_iterator_t inputPointIter, StripeData stripeData, int iStripeTraining,
+        void PlaneSweepStripe(PointVectorIteratorT inputPointIter, StripeDataT stripeData, int iStripeTraining,
                               PointNeighbors<neighbors_priority_queue_t>& neighbors, double mindy) const
         {
             auto& trainingDataset = stripeData.TrainingDatasetStripe[iStripeTraining];
@@ -182,7 +183,7 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 
                 if (!lowStop)
                 {
-                    if (CheckAddNeighbor(inputPointIter, prevTrainingPointIter, neighbors, mindy))
+                    if (this->CheckAddNeighbor(inputPointIter, prevTrainingPointIter, neighbors, mindy))
                     {
                         if (prevTrainingPointIter > trainingDatasetBegin)
                         {
@@ -201,7 +202,7 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 
                 if (!highStop)
                 {
-                    if (CheckAddNeighbor(inputPointIter, nextTrainingPointIter, neighbors, mindy))
+                    if (this->CheckAddNeighbor(inputPointIter, nextTrainingPointIter, neighbors, mindy))
                     {
                         if (nextTrainingPointIter < trainingDatasetEnd)
                         {

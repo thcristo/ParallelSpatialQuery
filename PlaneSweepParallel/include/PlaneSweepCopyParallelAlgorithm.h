@@ -7,7 +7,8 @@
 #include <chrono>
 #include <omp.h>
 
-class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
+template<class ProblemT, class ResultT, class ResultBaseT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT>
+class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT>
 {
     public:
         PlaneSweepCopyParallelAlgorithm(int numThreads, bool parallelSort) : numThreads(numThreads), parallelSort(parallelSort)
@@ -26,12 +27,12 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
             return parallelSort ? "planesweep_copy_parallel_psort" : "planesweep_copy_parallel";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
+        unique_ptr<ResultBaseT> Process(ProblemT& problem) override
         {
             size_t numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
-                this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
+                this->template CreateNeighborsContainer<NeighborsContainerT>(problem.GetInputDataset(), numNeighbors);
 
             if (numThreads > 0)
             {
@@ -40,7 +41,7 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
 
             auto start = chrono::high_resolution_clock::now();
 
-            auto pResult = unique_ptr<AllKnnResultSorted>(new AllKnnResultSorted(problem, GetPrefix(), parallelSort));
+            auto pResult = unique_ptr<ResultT>(new ResultT(problem, GetPrefix(), parallelSort));
 
             auto& inputDataset = pResult->GetInputDatasetSorted();
             auto& trainingDataset = pResult->GetTrainingDatasetSorted();
@@ -97,7 +98,7 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
                     {
                         if (!lowStop)
                         {
-                            if (CheckAddNeighbor(inputPointIter, prevTrainingPointIter, neighbors))
+                            if (this->CheckAddNeighbor(inputPointIter, prevTrainingPointIter, neighbors))
                             {
                                 if (prevTrainingPointIter > trainingDatasetBegin)
                                 {
@@ -116,7 +117,7 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
 
                         if (!highStop)
                         {
-                            if (CheckAddNeighbor(inputPointIter, nextTrainingPointIter, neighbors))
+                            if (this->CheckAddNeighbor(inputPointIter, nextTrainingPointIter, neighbors))
                             {
                                 if (nextTrainingPointIter < trainingDatasetEnd)
                                 {

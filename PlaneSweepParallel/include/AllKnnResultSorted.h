@@ -6,26 +6,30 @@
 
 using namespace tbb;
 
-
-class AllKnnResultSorted : public AllKnnResult
+template<class ProblemT, class NeighborsContainerT, class PointVectorT, class DiffContainerT>
+class AllKnnResultSorted : public AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, DiffContainerT>
 {
+    using AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, DiffContainerT>::problem;
+
     public:
-        AllKnnResultSorted(const AllKnnProblem& problem, const string& filePrefix) : AllKnnResult(problem, filePrefix)
+        AllKnnResultSorted(const ProblemT& problem, const string& filePrefix)
+            : AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, DiffContainerT>(problem, filePrefix)
         {
         }
 
-        AllKnnResultSorted(const AllKnnProblem& problem, const string& filePrefix, bool parallelSort) : AllKnnResult(problem, filePrefix),
-            parallelSort(parallelSort)
+        AllKnnResultSorted(const ProblemT& problem, const string& filePrefix, bool parallelSort)
+            : AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, DiffContainerT>(problem, filePrefix),
+                    parallelSort(parallelSort)
         {
         }
 
         virtual ~AllKnnResultSorted() {}
 
-        const point_vector_t& GetInputDatasetSorted()
+        const PointVectorT& GetInputDatasetSorted()
         {
             if (!pInputDatasetSorted)
             {
-                pInputDatasetSorted.reset(new point_vector_t(problem.GetInputDataset()));
+                pInputDatasetSorted.reset(new PointVectorT(problem.GetInputDataset()));
 
                 if (parallelSort)
                 {
@@ -48,11 +52,11 @@ class AllKnnResultSorted : public AllKnnResult
             return *pInputDatasetSorted;
         }
 
-        const point_vector_t& GetTrainingDatasetSorted()
+        const PointVectorT& GetTrainingDatasetSorted()
         {
             if (!pTrainingDatasetSorted)
             {
-                pTrainingDatasetSorted.reset(new point_vector_t(problem.GetTrainingDataset()));
+                pTrainingDatasetSorted.reset(new PointVectorT(problem.GetTrainingDataset()));
 
                 if (parallelSort)
                 {
@@ -78,8 +82,8 @@ class AllKnnResultSorted : public AllKnnResult
     protected:
 
     private:
-        unique_ptr<point_vector_t> pInputDatasetSorted;
-        unique_ptr<point_vector_t> pTrainingDatasetSorted;
+        unique_ptr<PointVectorT> pInputDatasetSorted;
+        unique_ptr<PointVectorT> pTrainingDatasetSorted;
         bool parallelSort = false;
 };
 
