@@ -6,6 +6,13 @@
 #include <vector>
 #include <deque>
 #include <fstream>
+#include <stxxl.h>
+
+#define EXT_PAGE_SIZE  4
+#define EXT_CACHE_PAGES  8
+#define EXT_BLOCK_SIZE 2*1024*1024
+#define EXT_ALLOC_STRATEGY stxxl::RC
+#define EXT_PAGER_TYPE stxxl::pager_type::lru
 
 using namespace std;
 
@@ -20,6 +27,16 @@ typedef vector<point_vector_t> point_vector_vector_t;
 typedef point_vector_t::const_iterator point_vector_iterator_t;
 typedef vector<point_vector_iterator_t> point_vector_index_t;
 typedef point_vector_index_t::const_iterator point_vector_index_iterator_t;
+
+template<typename T>
+using ext_vector = typename stxxl::VECTOR_GENERATOR<T, EXT_PAGE_SIZE, EXT_CACHE_PAGES, EXT_BLOCK_SIZE, EXT_ALLOC_STRATEGY, EXT_PAGER_TYPE>::result;
+
+
+typedef ext_vector<Point> point_vector_ext_t;
+typedef vector<point_vector_ext_t> point_vector_vector_ext_t;
+typedef point_vector_ext_t::const_iterator point_vector_iterator_ext_t;
+typedef ext_vector<point_vector_iterator_ext_t> point_vector_index_ext_t;
+typedef point_vector_index_ext_t::const_iterator point_vector_index_iterator_ext_t;
 
 template<class PointVectorIteratorT>
 struct Neighbor {
@@ -39,6 +56,9 @@ class NeighborComparer
 
 typedef Neighbor<point_vector_iterator_t> NeighborMem;
 typedef NeighborComparer<point_vector_iterator_t> NeighborComparerMem;
+
+typedef Neighbor<point_vector_iterator_ext_t> NeighborExt;
+typedef NeighborComparer<point_vector_iterator_ext_t> NeighborComparerExt;
 
 template<class PointVectorIteratorT>
 using neighbors_vector_t = vector<Neighbor<PointVectorIteratorT>>;

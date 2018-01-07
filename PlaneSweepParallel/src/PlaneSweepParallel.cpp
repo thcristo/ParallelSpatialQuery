@@ -45,6 +45,9 @@ typedef algorithm_ptr_t<AllKnnProblemMem, AllKnnResultMem, point_vector_t, point
 typedef StripeData<point_vector_vector_t, vector<StripeBoundaries_t>> StripeDataMem;
 typedef AllKnnResultStripes<AllKnnProblemMem, pointNeighbors_priority_queue_vector_t, point_vector_t, vector<long>, point_vector_iterator_t, point_vector_vector_t, vector<StripeBoundaries_t>> AllKnnResultStripesMem;
 
+typedef AllKnnProblem<point_vector_ext_t> AllKnnProblemExt;
+//typedef AllKnnResult<AllKnnProblemExt, pointNeighbors_priority_queue_vector_t, point_vector_ext_t, ext_vector<long>, point_vector_iterator_ext_t> AllKnnResultExt;
+
 template<class ProblemT, class ResultBaseT, class PointVectorT, class PointVectorIteratorT, class PointIdVectorT, class NeighborsContainerT>
 void RunAlgorithms(ProblemT& problem, vector<algorithm_ptr_t<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>>& algorithms,
                    ofstream& outFile, bool saveToFile, bool findDifferences, double accuracy)
@@ -241,6 +244,7 @@ int main(int argc, char* argv[])
 
         if (useExternalMemory)
         {
+            AllKnnProblemExt problem(argv[2], argv[3], numNeighbors);
         }
         else
         {

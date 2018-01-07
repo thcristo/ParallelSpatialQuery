@@ -19,7 +19,7 @@
 					<Add directory="include" />
 				</Compiler>
 				<Linker>
-					<Add option="-fopenmp -ltbb" />
+					<Add option="-fopenmp -ltbb -lstxxl" />
 				</Linker>
 			</Target>
 			<Target title="Release">
@@ -37,7 +37,7 @@
 				<Linker>
 					<Add option="-O3" />
 					<Add option="-s" />
-					<Add option="-fopenmp -ltbb" />
+					<Add option="-fopenmp -ltbb -lstxxl" />
 				</Linker>
 			</Target>
 			<Target title="ReleaseProfile">
@@ -55,7 +55,7 @@
 				</Compiler>
 				<Linker>
 					<Add option="-O3" />
-					<Add option="-fopenmp -ltbb" />
+					<Add option="-fopenmp -ltbb -lstxxl" />
 				</Linker>
 			</Target>
 		</Build>
