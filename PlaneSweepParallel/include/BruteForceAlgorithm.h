@@ -4,8 +4,8 @@
 #include "AbstractAllKnnAlgorithm.h"
 #include <chrono>
 
-template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT>
-class BruteForceAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>
+template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborVectorT>
+class BruteForceAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT, NeighborVectorT>
 {
     public:
         BruteForceAlgorithm() {}

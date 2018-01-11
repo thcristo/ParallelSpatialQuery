@@ -3,8 +3,8 @@
 
 #include "AbstractAllKnnAlgorithm.h"
 
-template<class ProblemT, class ResultT, class ResultBaseT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT, class StripeDataT>
-class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>
+template<class ProblemT, class ResultT, class ResultBaseT, class PointVectorT, class PointVectorIteratorT, class NeighborVectorT, class StripeDataT>
+class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT, NeighborVectorT>
 {
     public:
         PlaneSweepStripesParallelTBBAlgorithm(int numStripes, int numThreads, bool parallelSort) : numStripes(numStripes),

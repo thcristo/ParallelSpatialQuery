@@ -13,7 +13,7 @@
 
 using namespace tbb;
 
-template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT>
+template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborVectorT, class NeighborVectorRWIteratorT>
 class AbstractAllKnnAlgorithm
 {
     public:
@@ -30,13 +30,13 @@ class AbstractAllKnnAlgorithm
          * \return An unordered map of point Ids to multisets of Neighbors
          *
          */
-        unique_ptr<NeighborsContainerT> CreateNeighborsContainer(const PointVectorT& inputDataset, size_t numNeighbors) const
+        unique_ptr<NeighborVectorT> CreateNeighborsContainer(const PointVectorT& inputDataset, size_t numNeighbors) const
         {
             try
             {
-                unique_ptr<NeighborsContainerT> pContainer(new NeighborsContainerT(inputDataset.size(),
-                        PointNeighbors<neighbors_priority_queue_t<PointVectorIteratorT>, PointVectorIteratorT>(numNeighbors),
-                        cache_aligned_allocator<PointNeighbors<neighbors_priority_queue_t<PointVectorIteratorT>, PointVectorIteratorT>>()));
+                unique_ptr<NeighborVectorT> pContainer(new NeighborVectorT(numNeighbors*inputDataset.size(),
+                        {PointVectorIteratorT(), numeric_limits<double>::max()},
+                        cache_aligned_allocator<Neighbor<PointVectorIteratorT>>()));
 
                 return pContainer;
             }
@@ -47,32 +47,36 @@ class AbstractAllKnnAlgorithm
         }
 
         inline void AddNeighbor(PointVectorIteratorT inputPoint, PointVectorIteratorT trainingPoint,
-                                 PointNeighbors<neighbors_priority_queue_t<PointVectorIteratorT>, PointVectorIteratorT>& neighbors) const
+                                 NeighborVectorRWIterator neighborsStart, NeighborVectorRWIterator neighborsEnd,
+                                 size_t& numAdditions) const
         {
             double dsq = CalcDistanceSquared(inputPoint, trainingPoint);
-            neighbors.Add(trainingPoint, dsq);
+            HeapAdd(neighborsStart, neighborsEnd, trainingPoint, dsq, numAdditions);
         }
 
         inline bool CheckAddNeighbor(PointVectorIteratorT inputPoint, PointVectorIteratorT trainingPoint,
-                                 PointNeighbors<neighbors_priority_queue_t<PointVectorIteratorT>, PointVectorIteratorT>& neighbors) const
+                                 NeighborVectorRWIterator neighborsStart, NeighborVectorRWIterator neighborsEnd,
+                                 size_t& numAdditions) const
         {
             double dx = 0.0;
             double dsq = CalcDistanceSquared(inputPoint, trainingPoint, dx);
-            return neighbors.CheckAdd(trainingPoint, dsq, dx);
+            return HeapCheckAdd(neighborsStart, neighborsEnd, trainingPoint, dsq, dx, numAdditions);
         }
 
         inline bool CheckAddNeighbor(PointVectorIteratorT inputPoint, PointVectorIteratorT trainingPoint,
-                                 PointNeighbors<neighbors_priority_queue_t<PointVectorIteratorT>, PointVectorIteratorT>& neighbors, const double& mindy) const
+                                 NeighborVectorRWIterator neighborsStart, NeighborVectorRWIterator neighborsEnd,
+                                 size_t& numAdditions, const double& mindy) const
         {
             double dx = 0.0;
             double dsq = CalcDistanceSquared(inputPoint, trainingPoint, dx);
-            return neighbors.CheckAdd(trainingPoint, dsq, dx, mindy);
+            return HeapCheckAdd(neighborsStart, neighborsEnd, trainingPoint, dsq, dx, mindy, numAdditions);
         }
 
-        inline void AddNeighbor(PointVectorIteratorT trainingPoint, double distanceSquared,
-                                 PointNeighbors<neighbors_priority_queue_t<PointVectorIteratorT>, PointVectorIteratorT>& neighbors) const
+        inline void AddNeighbor(PointVectorIteratorT trainingPoint, const double& distanceSquared,
+                                 NeighborVectorRWIterator neighborsStart, NeighborVectorRWIterator neighborsEnd,
+                                 size_t& numAdditions) const
         {
-            neighbors.Add(trainingPoint, distanceSquared);
+            HeapAdd(neighborsStart, neighborsEnd, trainingPoint, distanceSquared, numAdditions);
         }
 
         inline double CalcDistanceSquared(PointVectorIteratorT p1, PointVectorIteratorT p2) const
@@ -131,7 +135,61 @@ class AbstractAllKnnAlgorithm
         */
 
     private:
+        NeighborComparer<PointVectorIteratorT> comparer;
+
+        inline void HeapAdd(NeighborVectorRWIterator heapStart, NeighborVectorRWIterator heapEnd,
+                     PointVectorIteratorT pointIter, const double& distanceSquared, size_t& numAdditions)
+        {
+            if (distanceSquared < heapStart->distanceSquared)
+            {
+                pop_heap(heapStart, heapEnd, comparer);
+                *prev(heapEnd) = {pointIter, distanceSquared};
+                push_heap(heapStart, heapEnd, comparer);
+                ++numAdditions;
+            }
+        }
+
+        inline bool HeapCheckAdd(NeighborVectorRWIterator heapStart, NeighborVectorRWIterator heapEnd,
+                     PointVectorIteratorT pointIter, const double& distanceSquared, const double& dx, size_t& numAdditions)
+        {
+            if (distanceSquared < heapStart->distanceSquared)
+            {
+                pop_heap(heapStart, heapEnd, comparer);
+                *prev(heapEnd) = {pointIter, distanceSquared};
+                push_heap(heapStart, heapEnd, comparer);
+                ++numAdditions;
+            }
+            else if (dx*dx >= maxDistance)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        inline bool HeapCheckAdd(NeighborVectorRWIterator heapStart, NeighborVectorRWIterator heapEnd,
+                     PointVectorIteratorT pointIter, const double& distanceSquared, const double& dx,
+                     const double& mindy, size_t& numAdditions)
+        {
+            if (distanceSquared < heapStart->distanceSquared)
+            {
+                pop_heap(heapStart, heapEnd, comparer);
+                *prev(heapEnd) = {pointIter, distanceSquared};
+                push_heap(heapStart, heapEnd, comparer);
+                ++numAdditions;
+            }
+            else if (dx*dx + mindy*mindy >= maxDistance)
+            {
+                return false;
+            }
+
+            return true;
+        }
 
 };
 
+/*
+template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborVectorT, class NeighborVectorIteratorT>
+unique_ptr<NeighborVectorT> AbstractAllKnnAlgorithm<>::CreateNeighborsContainer(const PointVectorT& inputDataset, size_t numNeighbors) const
+*/
 #endif // ABSTRACTALLKNNALGORITHM_H

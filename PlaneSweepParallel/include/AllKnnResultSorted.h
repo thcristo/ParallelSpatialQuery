@@ -6,19 +6,19 @@
 
 using namespace tbb;
 
-template<class ProblemT, class NeighborsContainerT, class PointVectorT, class PointIdVectorT, class PointVectorIteratorT>
-class AllKnnResultSorted : public AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, PointIdVectorT, PointVectorIteratorT>
+template<class ProblemT, class NeighborVectorT, class PointVectorT, class PointIdVectorT, class PointVectorIteratorT>
+class AllKnnResultSorted : public AllKnnResult<ProblemT, NeighborVectorT, PointVectorT, PointIdVectorT, PointVectorIteratorT>
 {
-    using AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, PointIdVectorT, PointVectorIteratorT>::problem;
+    using AllKnnResult<ProblemT, NeighborVectorT, PointVectorT, PointIdVectorT, PointVectorIteratorT>::problem;
 
     public:
         AllKnnResultSorted(const ProblemT& problem, const string& filePrefix)
-            : AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, PointIdVectorT, PointVectorIteratorT>(problem, filePrefix)
+            : AllKnnResult<ProblemT, NeighborVectorT, PointVectorT, PointIdVectorT, PointVectorIteratorT>(problem, filePrefix)
         {
         }
 
         AllKnnResultSorted(const ProblemT& problem, const string& filePrefix, bool parallelSort)
-            : AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, PointIdVectorT, PointVectorIteratorT>(problem, filePrefix),
+            : AllKnnResult<ProblemT, NeighborVectorT, PointVectorT, PointIdVectorT, PointVectorIteratorT>(problem, filePrefix),
                     parallelSort(parallelSort)
         {
         }

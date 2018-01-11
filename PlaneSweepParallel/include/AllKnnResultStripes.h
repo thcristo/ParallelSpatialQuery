@@ -5,19 +5,19 @@
 #include <tbb/tbb.h>
 
 using namespace tbb;
-template<class ProblemT, class NeighborsContainerT, class PointVectorT, class PointIdVectorT, class PointVectorIteratorT, class PointVectorVectorT, class StripeBoundariesVectorT>
-class AllKnnResultStripes : public AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, PointIdVectorT, PointVectorIteratorT>
+template<class ProblemT, class NeighborVectorT, class PointVectorT, class PointIdVectorT, class PointVectorIteratorT, class PointVectorVectorT, class StripeBoundariesVectorT>
+class AllKnnResultStripes : public AllKnnResult<ProblemT, NeighborVectorT, PointVectorT, PointIdVectorT, PointVectorIteratorT>
 {
-    using AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, PointIdVectorT, PointVectorIteratorT>::problem;
+    using AllKnnResult<ProblemT, NeighborVectorT, PointVectorT, PointIdVectorT, PointVectorIteratorT>::problem;
 
     public:
         AllKnnResultStripes(const ProblemT& problem, const string& filePrefix)
-            : AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, PointIdVectorT, PointVectorIteratorT>(problem, filePrefix)
+            : AllKnnResult<ProblemT, NeighborVectorT, PointVectorT, PointIdVectorT, PointVectorIteratorT>(problem, filePrefix)
         {
         }
 
         AllKnnResultStripes(const ProblemT& problem, const string& filePrefix, bool parallelSort)
-            : AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, PointIdVectorT, PointVectorIteratorT>(problem, filePrefix),
+            : AllKnnResult<ProblemT, NeighborVectorT, PointVectorT, PointIdVectorT, PointVectorIteratorT>(problem, filePrefix),
                 parallelSort(parallelSort)
         {
         }

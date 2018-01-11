@@ -25,8 +25,8 @@
 
 using namespace std;
 
-template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT>
-using algorithm_ptr_t = unique_ptr<AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>>;
+template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborVectorT>
+using algorithm_ptr_t = unique_ptr<AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT, NeighborVectorT>>;
 
 
 
@@ -48,8 +48,8 @@ typedef AllKnnResultStripes<AllKnnProblemMem, pointNeighbors_priority_queue_vect
 typedef AllKnnProblem<point_vector_ext_t> AllKnnProblemExt;
 //typedef AllKnnResult<AllKnnProblemExt, pointNeighbors_priority_queue_vector_t, point_vector_ext_t, ext_vector<long>, point_vector_iterator_ext_t> AllKnnResultExt;
 
-template<class ProblemT, class ResultBaseT, class PointVectorT, class PointVectorIteratorT, class PointIdVectorT, class NeighborsContainerT>
-void RunAlgorithms(ProblemT& problem, vector<algorithm_ptr_t<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>>& algorithms,
+template<class ProblemT, class ResultBaseT, class PointVectorT, class PointVectorIteratorT, class PointIdVectorT, class NeighborVectorT>
+void RunAlgorithms(ProblemT& problem, vector<algorithm_ptr_t<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT, NeighborVectorT>>& algorithms,
                    ofstream& outFile, bool saveToFile, bool findDifferences, double accuracy)
 {
     unique_ptr<ResultBaseT> pResultReference, pResult;

@@ -6,8 +6,8 @@
 
 using namespace tbb;
 
-template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT>
-class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>
+template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborVectorT>
+class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT, NeighborVectorT>
 {
     public:
         BruteForceParallelTBBAlgorithm(int numThreads) : numThreads(numThreads)

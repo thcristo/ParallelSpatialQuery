@@ -5,10 +5,8 @@
 #include <chrono>
 #include <fstream>
 #include <cmath>
-//#include "PlaneSweepParallel.h"
-#include "PointNeighbors.h"
 
-template<class ProblemT, class NeighborsContainerT, class PointVectorT, class PointIdVectorT, class PointVectorIteratorT>
+template<class ProblemT, class NeighborVectorT, class PointVectorT, class PointIdVectorT, class PointVectorIteratorT>
 class AllKnnResult
 {
     public:
@@ -18,7 +16,7 @@ class AllKnnResult
         }
 
         AllKnnResult(const ProblemT& problem, const string& filePrefix,
-                     unique_ptr<NeighborsContainerT>& pNeighborsContainer,
+                     unique_ptr<NeighborVectorT>& pNeighborsContainer,
                      const chrono::duration<double>& elapsed, const chrono::duration<double>& elapsedSorting)
                      :  problem(problem), filePrefix(filePrefix),
                         pNeighborsPriorityQueueVector(move(pNeighborsContainer)), elapsed(elapsed), elapsedSorting(elapsedSorting)
@@ -48,7 +46,7 @@ class AllKnnResult
             pNeighborsPriorityQueueContainer = move(pNeighborsContainer);
         }
         */
-        void setNeighborsContainer(unique_ptr<NeighborsContainerT>& pNeighborsContainer)
+        void setNeighborsContainer(unique_ptr<NeighborVectorT>& pNeighborsContainer)
         {
             pNeighborsPriorityQueueVector = move(pNeighborsContainer);
             CalcHeapStats();
@@ -133,7 +131,7 @@ class AllKnnResult
             outFile.close();
         }
 
-        unique_ptr<PointIdVectorT> FindDifferences(const AllKnnResult<ProblemT, NeighborsContainerT, PointVectorT, PointIdVectorT, PointVectorIteratorT>& result,
+        unique_ptr<PointIdVectorT> FindDifferences(const AllKnnResult<ProblemT, NeighborVectorT, PointVectorT, PointIdVectorT, PointVectorIteratorT>& result,
                                                    double accuracy)
         {
             auto differences = unique_ptr<PointIdVectorT>(new PointIdVectorT());
@@ -214,7 +212,7 @@ class AllKnnResult
     private:
         string filePrefix;
         //unique_ptr<neighbors_priority_queue_container_t> pNeighborsPriorityQueueContainer;
-        unique_ptr<NeighborsContainerT> pNeighborsPriorityQueueVector;
+        unique_ptr<NeighborVectorT> pNeighborsPriorityQueueVector;
         chrono::duration<double> elapsed;
         chrono::duration<double> elapsedSorting;
         size_t minHeapAdditions = 0;

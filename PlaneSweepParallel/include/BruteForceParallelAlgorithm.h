@@ -4,8 +4,8 @@
 #include "AbstractAllKnnAlgorithm.h"
 #include <omp.h>
 
-template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT>
-class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>
+template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborVectorT>
+class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT, NeighborVectorT>
 {
     public:
         BruteForceParallelAlgorithm(int numThreads) : numThreads(numThreads)

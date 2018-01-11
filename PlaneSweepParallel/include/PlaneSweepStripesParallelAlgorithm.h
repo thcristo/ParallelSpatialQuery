@@ -4,8 +4,8 @@
 #include "AbstractAllKnnAlgorithm.h"
 #include "AllKnnResultStripes.h"
 
-template<class ProblemT, class ResultT, class ResultBaseT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT, class StripeDataT>
-class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>
+template<class ProblemT, class ResultT, class ResultBaseT, class PointVectorT, class PointVectorIteratorT, class NeighborVectorT, class StripeDataT>
+class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultBaseT, PointVectorT, PointVectorIteratorT, NeighborVectorT>
 {
     public:
         PlaneSweepStripesParallelAlgorithm(int numStripes, int numThreads, bool parallelSort) : numStripes(numStripes),

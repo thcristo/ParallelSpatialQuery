@@ -27,16 +27,20 @@ typedef vector<point_vector_t> point_vector_vector_t;
 typedef point_vector_t::const_iterator point_vector_iterator_t;
 typedef vector<point_vector_iterator_t> point_vector_index_t;
 typedef point_vector_index_t::const_iterator point_vector_index_iterator_t;
-
+typedef vector<size_t> size_vector_t;
+typedef vector<size_t>::iterator size_vector_iterator_rw_t;
+typedef vector<size_t>::const_iterator size_vector_iterator_t;
 template<typename T>
 using ext_vector = typename stxxl::VECTOR_GENERATOR<T, EXT_PAGE_SIZE, EXT_CACHE_PAGES, EXT_BLOCK_SIZE, EXT_ALLOC_STRATEGY, EXT_PAGER_TYPE>::result;
-
 
 typedef ext_vector<Point> point_vector_ext_t;
 typedef vector<point_vector_ext_t> point_vector_vector_ext_t;
 typedef point_vector_ext_t::const_iterator point_vector_iterator_ext_t;
 typedef ext_vector<point_vector_iterator_ext_t> point_vector_index_ext_t;
 typedef point_vector_index_ext_t::const_iterator point_vector_index_iterator_ext_t;
+typedef ext_vector<size_t> size_vector_ext_t;
+typedef ext_vector<size_t>::iterator size_vector_iterator_rw_ext_t;
+typedef ext_vector<size_t>::const_iterator size_vector_iterator_ext_t;
 
 template<class PointVectorIteratorT>
 struct Neighbor {
@@ -55,16 +59,22 @@ class NeighborComparer
 };
 
 typedef Neighbor<point_vector_iterator_t> NeighborMem;
+typedef vector<NeighborMem> neighbor_vector_mem_t;
+typedef neighbor_vector_mem_t::iterator neighbor_vector_iterator_rw_t;
+typedef neighbor_vector_mem_t::const_iterator neighbor_vector_iterator_t;
 typedef NeighborComparer<point_vector_iterator_t> NeighborComparerMem;
 
 typedef Neighbor<point_vector_iterator_ext_t> NeighborExt;
+typedef vector<NeighborExt> neighbor_vector_ext_t;
+typedef neighbor_vector_ext_t::iterator neighbor_vector_iterator_rw_ext_t;
+typedef neighbor_vector_ext_t::const_iterator neighbor_vector_iterator_ext_t;
 typedef NeighborComparer<point_vector_iterator_ext_t> NeighborComparerExt;
 
-template<class PointVectorIteratorT>
-using neighbors_vector_t = vector<Neighbor<PointVectorIteratorT>>;
+//template<class PointVectorIteratorT>
+//using neighbors_vector_t = vector<Neighbor<PointVectorIteratorT>>;
 //typedef deque<Neighbor<point_vector_iterator_t>>> neighbors_deque_t;
-template<class PointVectorIteratorT>
-using neighbors_priority_queue_t = priority_queue<Neighbor<PointVectorIteratorT>, neighbors_vector_t<PointVectorIteratorT>, NeighborComparer<PointVectorIteratorT>>;
+//template<class PointVectorIteratorT>
+//using neighbors_priority_queue_t = priority_queue<Neighbor<PointVectorIteratorT>, neighbors_vector_t<PointVectorIteratorT>, NeighborComparer<PointVectorIteratorT>>;
 
 
 

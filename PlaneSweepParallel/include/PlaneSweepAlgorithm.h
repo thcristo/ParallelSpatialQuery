@@ -4,8 +4,8 @@
 #include "AbstractAllKnnAlgorithm.h"
 #include <cmath>
 
-template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborsContainerT, class PointVectorIndexT>
-class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT, NeighborsContainerT>
+template<class ProblemT, class ResultT, class PointVectorT, class PointVectorIteratorT, class NeighborVectorT, class PointVectorIndexT>
+class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm<ProblemT, ResultT, PointVectorT, PointVectorIteratorT, NeighborVectorT>
 {
     public:
         PlaneSweepAlgorithm() {}

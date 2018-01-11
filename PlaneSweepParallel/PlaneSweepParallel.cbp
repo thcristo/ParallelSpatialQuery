@@ -81,7 +81,6 @@
 		<Unit filename="include/PlaneSweepStripesAlgorithm.h" />
 		<Unit filename="include/PlaneSweepStripesParallelAlgorithm.h" />
 		<Unit filename="include/PlaneSweepStripesParallelTBBAlgorithm.h" />
-		<Unit filename="include/PointNeighbors.h" />
 		<Unit filename="src/PlaneSweepParallel.cpp" />
 		<Extensions>
 			<code_completion />
