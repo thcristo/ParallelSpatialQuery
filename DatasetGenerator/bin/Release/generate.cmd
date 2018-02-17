@@ -1,0 +1,4 @@
+DatasetGenerator 32000000 input_test_32M.bin
+DatasetGenerator 32000000 training_test_32M.bin
+DatasetGenerator 64000000 input_test_64M.bin
+DatasetGenerator 64000000 training_test_64M.bin

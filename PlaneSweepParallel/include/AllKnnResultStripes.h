@@ -3,6 +3,7 @@
 
 #include "AllKnnResult.h"
 #include <tbb/tbb.h>
+#include <cmath>
 
 using namespace tbb;
 
@@ -21,7 +22,7 @@ class AllKnnResultStripes : public AllKnnResult
 
         virtual ~AllKnnResultStripes() {}
 
-        StripeData GetStripeData(int numStripes)
+        StripeData GetStripeData(size_t numStripes)
         {
             if (!pInputDatasetStripe)
             {
@@ -70,7 +71,68 @@ class AllKnnResultStripes : public AllKnnResult
                      });
             }
 
+            if (numStripes > 0)
+            {
+                create_fixed_stripes(numStripes, inputDatasetSortedY, trainingDatasetSortedY);
+            }
+            else
+            {
+                numStripes = get_optimal_stripes();
+                create_fixed_stripes(numStripes, inputDatasetSortedY, trainingDatasetSortedY);
+            }
 
+            return {*pInputDatasetStripe, *pTrainingDatasetStripe, *pStripeBoundaries};
+        }
+
+
+        /*
+        void create_dynamic_stripes(const point_vector_t& inputDatasetSortedY, const point_vector_t& trainingDatasetSortedY)
+        {
+            int num_stripes = omp_get_max_threads();
+            size_t inputDatasetStripeSize = inputDatasetSortedY.size()/numStripes + 1;
+            auto inputDatasetSortedYBegin = inputDatasetSortedY.cbegin();
+            auto inputDatasetSortedYEnd = inputDatasetSortedY.cend();
+            auto trainingDatasetSortedYBegin = trainingDatasetSortedY.cbegin();
+            auto trainingDatasetSortedYEnd = trainingDatasetSortedY.cend();
+
+
+
+            #pragma omp parallel for
+            for (int i=0; i < num_stripes; ++i)
+            {
+                auto inputIterStart = inputDatasetSortedYBegin + i*inputDatasetStripeSize;
+                if (i > 0)
+                {
+                    double ymin = inputIterStart->y;
+                    while (prev(inputIterStart)->y == ymin && inputIterStart < inputDatasetSortedYEnd)
+                        ++inputIterStart;
+                }
+                if (inputIterStart < inputDatasetSortedYEnd)
+                {
+                    auto inputIterEnd = inputDatasetSortedYEnd;
+
+                    if ((size_t)distance(inputIterStart, inputDatasetSortedYEnd) > inputDatasetStripeSize)
+                    {
+                        inputIterEnd = inputIterStart + inputDatasetStripeSize;
+                        double ymin = inputIterEnd->y;
+                        while (prev(inputIterEnd)->y == ymin && inputIterEnd < inputDatasetSortedYEnd)
+                            ++inputIterEnd;
+                    }
+
+                    double yLow = inputIterStart->y;
+                    double yHigh = prev(inputIterEnd)->y;
+
+                    double dy = yHigh - yLow;
+                    size_t numPoints = distance(inputIterStart, inputIterEnd);
+
+                    double avgNumPointsY = sqrt(dy*numPoints);
+                }
+
+            }
+        }
+        */
+        void create_fixed_stripes(size_t numStripes, const point_vector_t& inputDatasetSortedY, const point_vector_t& trainingDatasetSortedY)
+        {
             size_t inputDatasetStripeSize = inputDatasetSortedY.size()/numStripes + 1;
             auto inputDatasetSortedYEnd = inputDatasetSortedY.cend();
             auto trainingDatasetSortedYEnd = trainingDatasetSortedY.cend();
@@ -167,10 +229,19 @@ class AllKnnResultStripes : public AllKnnResult
                 }
 
             } while (!exit);
-
-            return {*pInputDatasetStripe, *pTrainingDatasetStripe, *pStripeBoundaries};
         }
 
+        size_t getNumStripes() override
+        {
+            if (pInputDatasetStripe != nullptr)
+            {
+                return pInputDatasetStripe->size();
+            }
+            else
+            {
+                return 0;
+            }
+        }
     protected:
 
     private:
@@ -178,6 +249,18 @@ class AllKnnResultStripes : public AllKnnResult
         unique_ptr<point_vector_vector_t> pTrainingDatasetStripe;
         unique_ptr<vector<StripeBoundaries_t>> pStripeBoundaries;
         bool parallelSort = false;
+
+        size_t get_optimal_stripes()
+        {
+            size_t numTrainingPoints = problem.GetTrainingDataset().size();
+            size_t numNeighbors = problem.GetNumNeighbors();
+
+            double numPointsPerDim = sqrt(numTrainingPoints);
+            double neighborsPerDim = sqrt(numNeighbors);
+
+            size_t optimal_stripes = llround(numPointsPerDim/neighborsPerDim);
+            return optimal_stripes;
+        }
 };
 
 #endif // ALLKNNRESULTSTRIPES_H

@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
     try
     {
         int numNeighbors = atoi(argv[1]);
-        int numThreads = 0, numStripes = omp_get_max_threads();
+        int numThreads = 0, numStripes = 0;
 
         if (argc >= 5)
         {
@@ -198,14 +198,16 @@ int main(int argc, char* argv[])
                 << " totalAdd: " << pResult->getTotalHeapAdditions()
                 <<  " minAdd: " << pResult->getMinHeapAdditions()
                 << " maxAdd: " << pResult->getMaxHeapAdditions()
-                << " avgAdd: " << pResult->getAvgHeapAdditions();
+                << " avgAdd: " << pResult->getAvgHeapAdditions()
+                << " numStripes: " << pResult->getNumStripes();
 
             outFile << fixed << setprecision(3) << algorithms[iAlgo]->GetTitle() << ";" << pResult->getDuration().count()
                 << ";" << pResult->getDurationSorting().count()
                 << ";" << pResult->getTotalHeapAdditions()
                 << ";" << pResult->getMinHeapAdditions()
                 << ";" << pResult->getMaxHeapAdditions()
-                << ";" << pResult->getAvgHeapAdditions();
+                << ";" << pResult->getAvgHeapAdditions()
+                << ";" << pResult->getNumStripes();
 
             if (saveToFile)
             {

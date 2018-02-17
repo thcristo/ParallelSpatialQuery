@@ -74,6 +74,11 @@ class AllKnnResult
             return totalHeapAdditions;
         }
 
+        virtual size_t getNumStripes()
+        {
+           return 0;
+        }
+
         void SaveToFile() const
         {
             auto ms = chrono::duration_cast<chrono::milliseconds>(elapsed);
