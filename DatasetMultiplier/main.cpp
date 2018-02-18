@@ -23,7 +23,11 @@ bool endsWith(const string& str, const string& suffix)
 
 size_t getTargetNumOfPoints(size_t sourcePoints, int factor)
 {
-    if (factor == 4)
+    if (factor == 1)
+    {
+        return sourcePoints;
+    }
+    else if (factor == 4)
     {
         return 4*sourcePoints;
     }
@@ -42,22 +46,32 @@ size_t getTargetNumOfPoints(size_t sourcePoints, int factor)
         return 0;
 }
 
-void write_output_points(const Point& point, unique_ptr<fstream>& pTargetStream, bool isBinaryTarget, size_t pos)
+void write_output_points(const Point& point, unique_ptr<fstream>& pTargetStream, bool isBinaryTarget, size_t pos, int factor)
 {
-    double sourceX = point.x/2.0, sourceY = point.y/2.0;
-    Point targetPoints[4];
-
-    targetPoints[0] = {(long)(4*pos+1), sourceX, sourceY};
-    targetPoints[1] = {(long)(4*pos+2), sourceX, 0.5 + sourceY};
-    targetPoints[2] = {(long)(4*pos+3), 0.5 + sourceX, sourceY};
-    targetPoints[3] = {(long)(4*pos+4), 0.5 + sourceX, 0.5 + sourceY};
-
-    for (int i=0; i < 4; ++i)
+    if (factor == 1)
     {
         if (isBinaryTarget)
-            pTargetStream->write(reinterpret_cast<const char*>(targetPoints + i), streamsize(sizeof(Point)));
+            pTargetStream->write(reinterpret_cast<const char*>(&point), streamsize(sizeof(Point)));
         else
-            *pTargetStream << targetPoints[i].id << '\t' << targetPoints[i].x << '\t' << targetPoints[i].y << '\n';
+            *pTargetStream << point.id << '\t' << point.x << '\t' << point.y << '\n';
+    }
+    else
+    {
+        double sourceX = point.x/2.0, sourceY = point.y/2.0;
+        Point targetPoints[4];
+
+        targetPoints[0] = {(long)(4*pos+1), sourceX, sourceY};
+        targetPoints[1] = {(long)(4*pos+2), sourceX, 0.5 + sourceY};
+        targetPoints[2] = {(long)(4*pos+3), 0.5 + sourceX, sourceY};
+        targetPoints[3] = {(long)(4*pos+4), 0.5 + sourceX, 0.5 + sourceY};
+
+        for (int i=0; i < 4; ++i)
+        {
+            if (isBinaryTarget)
+                pTargetStream->write(reinterpret_cast<const char*>(targetPoints + i), streamsize(sizeof(Point)));
+            else
+                *pTargetStream << targetPoints[i].id << '\t' << targetPoints[i].x << '\t' << targetPoints[i].y << '\n';
+        }
     }
 }
 
@@ -77,7 +91,7 @@ int main(int argc, char* argv[])
         cout << "Argument error. Please enter:\n";
         cout << "Argument 1: The original filename to use as base\n";
         cout << "Argument 2: The target filename to create\n";
-        cout << "Argument 3: factor (2 or 4)\n";
+        cout << "Argument 3: factor (1, 2 or 4)\n";
 
         return 1;
     }
@@ -87,9 +101,9 @@ int main(int argc, char* argv[])
     string sourceFilename(argv[1]), targetFilename(argv[2]);
     int factor = atoi(argv[3]);
 
-    if (factor != 2 && factor != 4)
+    if (factor != 1 && factor != 2 && factor != 4)
     {
-        cout << "Factor argument must be equal to 2 or 4" << endl;
+        cout << "Factor argument must be equal to 1, 2 or 4" << endl;
         return 1;
     }
 
@@ -136,9 +150,9 @@ int main(int argc, char* argv[])
             Point p;
             fsSource.read(reinterpret_cast<char*>(&p), streamsize(sizeof(Point)));
 
-            if (factor == 4 || (factor == 2 && i%2 == 1))
+            if (factor == 1 || factor == 4 || (factor == 2 && i%2 == 1))
             {
-                write_output_points(p, pTargetStream, isBinaryTarget, j);
+                write_output_points(p, pTargetStream, isBinaryTarget, j, factor);
                 ++j;
             }
         }
@@ -172,9 +186,9 @@ int main(int argc, char* argv[])
         while (iter != eof)
         {
             Point p = *iter++;
-            if (factor == 4 || (factor == 2 && i%2 == 1))
+            if (factor == 1 || factor == 4 || (factor == 2 && i%2 == 1))
             {
-                write_output_points(p, pTargetStream, isBinaryTarget, j);
+                write_output_points(p, pTargetStream, isBinaryTarget, j, factor);
                 ++j;
             }
             ++i;

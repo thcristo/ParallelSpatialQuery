@@ -187,7 +187,7 @@ int main(int argc, char* argv[])
         ofstream outFile(ss.str(), ios_base::out);
         outFile.imbue(locale(outFile.getloc(), new punct_facet<char, ',', '.'>));
 
-        outFile << "Algorithm;Total Duration;Sorting Duration;Total Heap Additions;Min. Heap Additions;Max. Heap Additions;Avg. Heap Additions;Differences;First 5 different point ids" << endl;
+        outFile << "Algorithm;Total Duration;Sorting Duration;Total Heap Additions;Min. Heap Additions;Max. Heap Additions;Avg. Heap Additions;NumberOfStripes;Differences;First 5 different point ids" << endl;
         outFile.flush();
 
         for (size_t iAlgo = 0; iAlgo < algorithms.size(); ++iAlgo)
