@@ -47,4 +47,12 @@ typedef point_vector_t::const_iterator point_vector_iterator_t;
 typedef vector<point_vector_iterator_t> point_vector_index_t;
 typedef point_vector_index_t::const_iterator point_vector_index_iterator_t;
 
+template <class charT, charT decimalSeparator, charT thousandsSeparator>
+class punct_facet: public numpunct<charT> {
+protected:
+    charT do_decimal_point() const { return decimalSeparator; }
+    charT do_thousands_sep() const { return thousandsSeparator; }
+    string do_grouping() const { return "\03"; }
+};
+
 #endif // PLANESWEEPPARALLEL_H_INCLUDED

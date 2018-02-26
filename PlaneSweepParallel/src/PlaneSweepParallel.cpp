@@ -18,19 +18,13 @@
 #include "PlaneSweepStripesParallelAlgorithm.h"
 #include "PlaneSweepStripesParallelTBBAlgorithm.h"
 
-#define NUM_ALGORITHMS 14
+#define NUM_ALGORITHMS 16
 
 using namespace std;
 
 typedef unique_ptr<AbstractAllKnnAlgorithm> algorithm_ptr_t;
 
-template <class charT, charT decimalSeparator, charT thousandsSeparator>
-class punct_facet: public numpunct<charT> {
-protected:
-    charT do_decimal_point() const { return decimalSeparator; }
-    charT do_thousands_sep() const { return thousandsSeparator; }
-    string do_grouping() const { return "\03"; }
-};
+
 
 int main(int argc, char* argv[])
 {
@@ -164,17 +158,24 @@ int main(int argc, char* argv[])
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesAlgorithm(numStripes)));
                         break;
                     case 10:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, false)));
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, false, false)));
                         break;
                     case 11:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true)));
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, false)));
                         break;
                     case 12:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, false)));
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, false, false)));
                         break;
                     case 13:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true)));
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, false)));
                         break;
+                    case 14:
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, true)));
+                        break;
+                    case 15:
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, true)));
+                        break;
+
                 }
             }
         }
@@ -275,4 +276,5 @@ int main(int argc, char* argv[])
         cout << "Exception: " << ex.what() << endl;
         return 1;
     }
+
 }

@@ -2,13 +2,13 @@
 #define PLANESWEEPSTRIPESPARALLELTBBALGORITHM_H
 
 #include "AbstractAllKnnAlgorithm.h"
-
+#include "AllKnnResultStripesParallelTBB.h"
 
 class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
-        PlaneSweepStripesParallelTBBAlgorithm(int numStripes, int numThreads, bool parallelSort) : numStripes(numStripes),
-            numThreads(numThreads), parallelSort(parallelSort)
+        PlaneSweepStripesParallelTBBAlgorithm(int numStripes, int numThreads, bool parallelSort, bool splitByT) : numStripes(numStripes),
+            numThreads(numThreads), parallelSort(parallelSort), splitByT(splitByT)
         {
         }
 
@@ -16,12 +16,18 @@ class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
         string GetTitle() const
         {
-            return parallelSort ? "Plane sweep stripes parallel TBB (parallel sorting)" : "Plane sweep stripes parallel TBB";
+            if (splitByT)
+                return parallelSort ? "Plane sweep stripes parallel TBB (parallel sorting, split by training)" : "Plane sweep stripes parallel TBB (split by training)";
+            else
+                return parallelSort ? "Plane sweep stripes parallel TBB (parallel sorting)" : "Plane sweep stripes parallel TBB";
         }
 
         string GetPrefix() const
         {
-            return parallelSort ? "planesweep_stripes_parallel_TBB_psort" : "planesweep_stripes_parallel_TBB";
+            if (splitByT)
+                return parallelSort ? "planesweep_stripes_parallel_TBB_psort_splitByT" : "planesweep_stripes_parallel_TBB_splitByT";
+            else
+                return parallelSort ? "planesweep_stripes_parallel_TBB_psort" : "planesweep_stripes_parallel_TBB";
         }
 
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
@@ -44,7 +50,7 @@ class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
             auto start = chrono::high_resolution_clock::now();
 
-            auto pResult = unique_ptr<AllKnnResultStripes>(new AllKnnResultStripes(problem, GetPrefix(), parallelSort));
+            auto pResult = unique_ptr<AllKnnResultStripesParallelTBB>(new AllKnnResultStripesParallelTBB(problem, GetPrefix(), parallelSort, splitByT));
 
             auto stripeData = pResult->GetStripeData(numStripes);
 
@@ -129,6 +135,7 @@ class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
         int numStripes = 0;
         int numThreads = 0;
         bool parallelSort = false;
+        bool splitByT = false;
 
         void PlaneSweepStripe(point_vector_iterator_t inputPointIter, StripeData stripeData, int iStripeTraining,
                               PointNeighbors<neighbors_priority_queue_t>& neighbors, double mindy) const
@@ -137,6 +144,9 @@ class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
             auto trainingDatasetBegin = trainingDataset.cbegin();
             auto trainingDatasetEnd = trainingDataset.cend();
+
+            if (trainingDatasetBegin == trainingDatasetEnd)
+                return;
 
             auto nextTrainingPointIter = lower_bound(trainingDatasetBegin, trainingDatasetEnd, inputPointIter->x,
                         [](const Point& point, const double& value) { return point.x < value; } );

@@ -39,6 +39,17 @@ class AllKnnResultStripes : public AllKnnResult
                 pStripeBoundaries.reset(new vector<StripeBoundaries_t>());
             }
 
+            /*
+            if (!pStripeIndex)
+            {
+                pStripeIndex.reset(new vector<size_t>());
+            }
+
+            if (!pInputPoints)
+            {
+                pInputPoints.reset(new point_vector_t());
+            }
+            */
             point_vector_t inputDatasetSortedY(problem.GetInputDataset());
             point_vector_t trainingDatasetSortedY(problem.GetTrainingDataset());
 
@@ -81,6 +92,7 @@ class AllKnnResultStripes : public AllKnnResult
                 create_fixed_stripes(numStripes, inputDatasetSortedY, trainingDatasetSortedY);
             }
 
+            //return {*pInputDatasetStripe, *pTrainingDatasetStripe, *pStripeBoundaries, *pStripeIndex, *pInputPoints};
             return {*pInputDatasetStripe, *pTrainingDatasetStripe, *pStripeBoundaries};
         }
 
@@ -131,7 +143,22 @@ class AllKnnResultStripes : public AllKnnResult
             }
         }
         */
-        void create_fixed_stripes(size_t numStripes, const point_vector_t& inputDatasetSortedY, const point_vector_t& trainingDatasetSortedY)
+
+
+        size_t getNumStripes() override
+        {
+            if (pInputDatasetStripe != nullptr)
+            {
+                return pInputDatasetStripe->size();
+            }
+            else
+            {
+                return 0;
+            }
+        }
+    protected:
+
+        virtual void create_fixed_stripes(size_t numStripes, const point_vector_t& inputDatasetSortedY, const point_vector_t& trainingDatasetSortedY)
         {
             size_t inputDatasetStripeSize = inputDatasetSortedY.size()/numStripes + 1;
             auto inputDatasetSortedYEnd = inputDatasetSortedY.cend();
@@ -231,23 +258,12 @@ class AllKnnResultStripes : public AllKnnResult
             } while (!exit);
         }
 
-        size_t getNumStripes() override
-        {
-            if (pInputDatasetStripe != nullptr)
-            {
-                return pInputDatasetStripe->size();
-            }
-            else
-            {
-                return 0;
-            }
-        }
-    protected:
-
-    private:
         unique_ptr<point_vector_vector_t> pInputDatasetStripe;
         unique_ptr<point_vector_vector_t> pTrainingDatasetStripe;
         unique_ptr<vector<StripeBoundaries_t>> pStripeBoundaries;
+        //unique_ptr<vector<size_t>> pStripeIndex;
+        //unique_ptr<point_vector_t> pInputPoints;
+
         bool parallelSort = false;
 
         size_t get_optimal_stripes()
@@ -260,6 +276,31 @@ class AllKnnResultStripes : public AllKnnResult
 
             size_t optimal_stripes = llround(numPointsPerDim/neighborsPerDim);
             return optimal_stripes;
+        }
+
+        void SaveStripes()
+        {
+            auto now = chrono::system_clock::now();
+            auto in_time_t = chrono::system_clock::to_time_t(now);
+            stringstream ss;
+            ss <<  "stripes_" << put_time(localtime(&in_time_t), "%Y%m%d%H%M%S") << ".csv";
+
+            ofstream outFile(ss.str(), ios_base::out);
+            outFile.imbue(locale(outFile.getloc(), new punct_facet<char, ',', '.'>));
+
+            outFile << "StripeId;MinY;MaxY;InputPoints;TrainingPoints" << endl;
+            outFile.flush();
+
+            size_t numStripes = pInputDatasetStripe->size();
+
+            for (size_t i=0; i < numStripes; ++i)
+            {
+                outFile << i << ";" << (pStripeBoundaries->at(i)).minY  << ";" << (pStripeBoundaries->at(i)).maxY  << ";" << (pInputDatasetStripe->at(i)).size() << ";" << (pTrainingDatasetStripe->at(i)).size() << endl;
+            }
+
+
+            outFile.close();
+
         }
 };
 

@@ -1,1 +1,1 @@
-PlaneSweepParallel 10 E:\Files\eap\de\start\data\water_parks\linearwaterNNew.bin E:\Files\eap\de\start\data\water_parks\paskrsNNew_obj.bin 0 1.0E-15 0 0 0 00000000000101
+PlaneSweepParallel 10 E:\Files\eap\de\start\data\water_parks\linearwaterNNew.bin E:\Files\eap\de\start\data\water_parks\paskrsNNew_obj.bin 0 1.0E-15 20000 0 1 00000010000101

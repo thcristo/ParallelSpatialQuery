@@ -27,6 +27,8 @@ struct StripeData
     const point_vector_vector_t& InputDatasetStripe;
     const point_vector_vector_t& TrainingDatasetStripe;
     const vector<StripeBoundaries_t>& StripeBoundaries;
+    //const vector<size_t>& StripeIndex;
+    //const point_vector_t& InputPoints;
 };
 
 istream& operator >>(istream& i, Point& p)
