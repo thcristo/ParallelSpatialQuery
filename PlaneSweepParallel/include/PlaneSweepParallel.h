@@ -1,11 +1,11 @@
 #ifndef PLANESWEEPPARALLEL_H_INCLUDED
 #define PLANESWEEPPARALLEL_H_INCLUDED
 
-
 #include <queue>
 #include <vector>
 #include <deque>
 #include <fstream>
+#include <stxxl/vector>
 
 using namespace std;
 
@@ -54,5 +54,7 @@ protected:
     charT do_thousands_sep() const { return thousandsSeparator; }
     string do_grouping() const { return "\03"; }
 };
+
+typedef stxxl::VECTOR_GENERATOR<Point>::result ext_point_vector_t;
 
 #endif // PLANESWEEPPARALLEL_H_INCLUDED

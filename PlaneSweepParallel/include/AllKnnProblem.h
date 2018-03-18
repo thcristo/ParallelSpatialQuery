@@ -31,6 +31,15 @@ struct StripeData
     //const point_vector_t& InputPoints;
 };
 
+struct StripeDataExternal
+{
+    const vector<size_t>& InputPointsOffset;
+    const vector<size_t>& InputPointsCount;
+    const vector<size_t>& TrainingPointsCount;
+    const vector<size_t>& TrainingPointsOffset;
+    const vector<StripeBoundaries_t>& StripeBoundaries;
+};
+
 istream& operator >>(istream& i, Point& p)
 {
     i >> p.id;
@@ -43,13 +52,18 @@ istream& operator >>(istream& i, Point& p)
 class AllKnnProblem
 {
     public:
-        AllKnnProblem(const string& inputFilename, const string& trainingFilename, size_t numNeighbors)
-            : pInputDataset(new point_vector_t), pTrainingDataset(new point_vector_t)
+        AllKnnProblem(const string& inputFilename, const string& trainingFilename, size_t numNeighbors, bool useExternalMemory, size_t memoryLimitMB)
+            : pInputDataset(new point_vector_t), pTrainingDataset(new point_vector_t),
+                useExternalMemory(useExternalMemory), memoryLimitMB(memoryLimitMB),
+                pExtInputDataset(new ext_point_vector_t), pExtTrainingDataset(new ext_point_vector_t)
         {
             this->inputFilename = inputFilename;
             this->trainingFilename = trainingFilename;
             this->numNeighbors = numNeighbors;
-            this->LoadDataFiles();
+            if (useExternalMemory)
+                this->LoadExternalDataFiles();
+            else
+                this->LoadDataFiles();
         }
 
         virtual ~AllKnnProblem()
@@ -64,6 +78,16 @@ class AllKnnProblem
         const point_vector_t& GetTrainingDataset() const
         {
             return *pTrainingDataset;
+        }
+
+        const ext_point_vector_t& GetExtInputDataset() const
+        {
+            return *pExtInputDataset;
+        }
+
+        const ext_point_vector_t& GetExtTrainingDataset() const
+        {
+            return *pExtTrainingDataset;
         }
 
         size_t GetNumNeighbors() const
@@ -81,6 +105,11 @@ class AllKnnProblem
         size_t numNeighbors = 0;
         unique_ptr<point_vector_t> pInputDataset;
         unique_ptr<point_vector_t> pTrainingDataset;
+        bool useExternalMemory = false;
+        size_t memoryLimitMB = 0;
+        unique_ptr<ext_point_vector_t> pExtInputDataset;
+        unique_ptr<ext_point_vector_t> pExtTrainingDataset;
+
         chrono::duration<double> loadingTime;
 
         void LoadDataFiles()
@@ -94,7 +123,19 @@ class AllKnnProblem
             loadingTime = finish - start;
         }
 
-        void LoadFile(const string& filename, point_vector_t& dataset)
+        void LoadExternalDataFiles()
+        {
+            auto start = chrono::high_resolution_clock::now();
+
+            LoadFile(inputFilename, *pExtInputDataset);
+            LoadFile(trainingFilename, *pExtTrainingDataset);
+
+            auto finish = chrono::high_resolution_clock::now();
+            loadingTime = finish - start;
+        }
+
+        template<class PointVector>
+        void LoadFile(const string& filename, PointVector& dataset)
         {
             if (endsWith(filename, ".bin"))
             {
@@ -106,7 +147,8 @@ class AllKnnProblem
             }
         }
 
-        void LoadBinaryFile(const string& filename, point_vector_t& dataset)
+        template<class PointVector>
+        void LoadBinaryFile(const string& filename, PointVector& dataset)
         {
             fstream fs(filename, ios::in | ios::binary);
             size_t numPoints = 0;
@@ -119,92 +161,14 @@ class AllKnnProblem
                 fs.read(reinterpret_cast<char*>(&p), streamsize(sizeof(Point)));
                 dataset.push_back(p);
             }
-            //copy(istream_iterator<Point>(fs), istream_iterator<Point>(), back_inserter(dataset));
-
         }
 
-        void LoadTextFile(const string& filename, point_vector_t& dataset)
+        template<class PointVector>
+        void LoadTextFile(const string& filename, PointVector& dataset)
         {
             fstream fs(filename, ios::in);
             copy(istream_iterator<Point>(fs), istream_iterator<Point>(), back_inserter(dataset));
-
-            /*
-            size_t numInputLines = 0;
-            ifstream inputFile(inputFilename, ios_base::in);
-            if (inputFile.is_open())
-            {
-                numInputLines = count(istreambuf_iterator<char>(inputFile), istreambuf_iterator<char>(), '\n');
-                if (numInputLines == 0)
-                {
-                    throw ApplicationException("Input file does not contain any lines.");
-                }
-            }
-            else
-            {
-                throw ApplicationException("Cannot open input file.");
-            }
-
-            size_t numTrainingLines = 0;
-            ifstream trainingFile(trainingFilename, ios_base::in);
-            if (trainingFile.is_open())
-            {
-                numTrainingLines = count(istreambuf_iterator<char>(trainingFile), istreambuf_iterator<char>(), '\n');
-                if (numTrainingLines == 0)
-                {
-                    throw ApplicationException("Training file does not contain any lines.");
-                }
-            }
-            else
-            {
-                throw ApplicationException("Cannot open training file.");
-            }
-
-            pInputDataset->reserve(numInputLines);
-
-            pTrainingDataset->reserve(numTrainingLines);
-
-            inputFile.clear();
-            inputFile.seekg(0, ios_base::beg);
-
-            trainingFile.clear();
-            trainingFile.seekg(0, ios_base::beg);
-
-            LoadPoints(inputFilename, inputFile, *pInputDataset);
-            LoadPoints(trainingFilename, trainingFile, *pTrainingDataset);
-            */
         }
-
-        /*
-        void LoadPoints(const string& filename, ifstream& file, point_vector_t& points)
-        {
-            long linenum = 0;
-
-            while (file.good())
-            {
-                string line;
-                getline(file, line);
-                ++linenum;
-                if (line.empty())
-                    continue;
-
-                stringstream ss(line);
-
-                Point point = {0, 0.0, 0.0};
-
-                if ( (ss >> point.id) && (ss >> point.x) && (ss >> point.y) )
-                {
-                    points.push_back(point);
-                }
-                else
-                {
-                    stringstream s;
-                    s << "Error at reading file " << filename << " at line " << linenum;
-                    throw ApplicationException(s.str());
-                }
-            }
-        }
-        */
-
 };
 
 #endif // AllKnnPROBLEM_H

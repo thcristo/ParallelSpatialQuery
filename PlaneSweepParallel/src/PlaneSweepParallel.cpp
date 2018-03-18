@@ -17,8 +17,9 @@
 #include "PlaneSweepStripesAlgorithm.h"
 #include "PlaneSweepStripesParallelAlgorithm.h"
 #include "PlaneSweepStripesParallelTBBAlgorithm.h"
+#include "PlaneSweepStripesParallelExternalAlgorithm.h"
 
-#define NUM_ALGORITHMS 16
+#define NUM_ALGORITHMS 17
 
 using namespace std;
 
@@ -32,6 +33,8 @@ int main(int argc, char* argv[])
     bool saveToFile = true;
     bool findDifferences = true;
     string enableAlgo(NUM_ALGORITHMS, '1');
+    bool useExternalMemory = false;
+    unsigned int memoryLimitMB = 0;
 
     if (argc < 4)
     {
@@ -45,6 +48,7 @@ int main(int argc, char* argv[])
         cout << "Argument 7: Save results of each algorithm to a text file (0/1, optional)\n";
         cout << "Argument 8: Compare results of each algorithm with results of the first algorithm (0/1, optional)\n";
         cout << "Argument 9: Enable/Disable algorithms (bitstream, e.g. 01100110011110, optional)\n";
+        cout << "Argument 10: Megabytes of physical memory to use for external memory algorithms (int, optional)\n";
         return 1;
     }
 
@@ -111,74 +115,102 @@ int main(int argc, char* argv[])
             }
         }
 
-        cout.imbue(std::locale(cout.getloc(), new punct_facet<char, ',', '.'>));
-
-        AllKnnProblem problem(argv[2], argv[3], numNeighbors);
-        unique_ptr<AllKnnResult> pResultReference, pResult;
-        unique_ptr<vector<long>> pDiff;
-        cout << "Read " << problem.GetInputDataset().size() << " input points and " << problem.GetTrainingDataset().size()
-            << " training points " << "in " << problem.getLoadingTime().count() << " seconds" << endl;
+        if (argc >= 11)
+        {
+            unsigned int limit = atoi(argv[10]);
+            if (limit > 0)
+            {
+                memoryLimitMB = limit;
+            }
+        }
 
         vector<algorithm_ptr_t> algorithms;
 
-        for (int i=0; i < NUM_ALGORITHMS; ++i)
+        if (enableAlgo[16]== '1' || enableAlgo[17]== '1')
         {
-            if (enableAlgo[i] == '1')
-            {
-                switch(i)
-                {
-                    case 0:
-                        algorithms.push_back(algorithm_ptr_t(new BruteForceAlgorithm));
-                        break;
-                    case 1:
-                        algorithms.push_back(algorithm_ptr_t(new BruteForceParallelAlgorithm(numThreads)));
-                        break;
-                    case 2:
-                        algorithms.push_back(algorithm_ptr_t(new BruteForceParallelTBBAlgorithm(numThreads)));
-                        break;
-                    case 3:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepAlgorithm()));
-                        break;
-                    case 4:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyAlgorithm()));
-                        break;
-                    case 5:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads, false)));
-                        break;
-                    case 6:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads, true)));
-                        break;
-                    case 7:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads, false)));
-                        break;
-                    case 8:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads, true)));
-                        break;
-                    case 9:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesAlgorithm(numStripes)));
-                        break;
-                    case 10:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, false, false)));
-                        break;
-                    case 11:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, false)));
-                        break;
-                    case 12:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, false, false)));
-                        break;
-                    case 13:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, false)));
-                        break;
-                    case 14:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, true)));
-                        break;
-                    case 15:
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, true)));
-                        break;
+            useExternalMemory = true;
 
+            if (enableAlgo[16] == '1')
+            {
+                algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalAlgorithm(numStripes, numThreads, true, false)));
+            }
+
+            if (enableAlgo[17] == '1')
+            {
+                algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalAlgorithm(numStripes, numThreads, true, true)));
+            }
+        }
+        else
+        {
+            for (int i=0; i < NUM_ALGORITHMS; ++i)
+            {
+                if (enableAlgo[i] == '1')
+                {
+                    switch(i)
+                    {
+                        case 0:
+                            algorithms.push_back(algorithm_ptr_t(new BruteForceAlgorithm));
+                            break;
+                        case 1:
+                            algorithms.push_back(algorithm_ptr_t(new BruteForceParallelAlgorithm(numThreads)));
+                            break;
+                        case 2:
+                            algorithms.push_back(algorithm_ptr_t(new BruteForceParallelTBBAlgorithm(numThreads)));
+                            break;
+                        case 3:
+                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepAlgorithm()));
+                            break;
+                        case 4:
+                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyAlgorithm()));
+                            break;
+                        case 5:
+                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads, false)));
+                            break;
+                        case 6:
+                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads, true)));
+                            break;
+                        case 7:
+                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads, false)));
+                            break;
+                        case 8:
+                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads, true)));
+                            break;
+                        case 9:
+                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesAlgorithm(numStripes)));
+                            break;
+                        case 10:
+                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, false, false)));
+                            break;
+                        case 11:
+                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, false)));
+                            break;
+                        case 12:
+                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, false, false)));
+                            break;
+                        case 13:
+                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, false)));
+                            break;
+                        case 14:
+                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, true)));
+                            break;
+                        case 15:
+                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, true)));
+                            break;
+
+                    }
                 }
             }
         }
+
+        cout.imbue(std::locale(cout.getloc(), new punct_facet<char, ',', '.'>));
+
+        AllKnnProblem problem(argv[2], argv[3], numNeighbors, useExternalMemory, memoryLimitMB);
+        unique_ptr<AllKnnResult> pResultReference, pResult;
+        unique_ptr<vector<long>> pDiff;
+
+        if (!useExternalMemory)
+            cout << "Read " << problem.GetInputDataset().size() << " input points and " << problem.GetTrainingDataset().size()
+                << " training points " << "in " << problem.getLoadingTime().count() << " seconds" << endl;
 
         auto now = chrono::system_clock::now();
         auto in_time_t = chrono::system_clock::to_time_t(now);
@@ -215,7 +247,7 @@ int main(int argc, char* argv[])
                 pResult->SaveToFile();
             }
 
-            if (findDifferences && iAlgo > 0)
+            if (!useExternalMemory && findDifferences && iAlgo > 0)
             {
                 pDiff = pResult->FindDifferences(*pResultReference, accuracy);
                 cout << " " << pDiff->size() << " differences. ";
@@ -254,7 +286,7 @@ int main(int argc, char* argv[])
             outFile << endl;
             outFile.flush();
 
-            if (findDifferences && iAlgo == 0)
+            if (!useExternalMemory && findDifferences && iAlgo == 0)
             {
                 pResultReference = move(pResult);
             }
