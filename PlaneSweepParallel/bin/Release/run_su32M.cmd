@@ -1,1 +1,1 @@
-PlaneSweepParallel 10 E:\Files\eap\de\start\data\large\input32M.bin E:\Files\eap\de\start\data\large\training32M.bin 0 1.0E-15 200 0 0 00011111111111
+PlaneSweepParallel 10 E:\Files\eap\de\start\data\large\input32M.bin E:\Files\eap\de\start\data\large\training32M.bin 0 1.0E-15 0 0 0 0000000000010111
