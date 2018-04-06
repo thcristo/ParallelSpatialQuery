@@ -19,7 +19,7 @@
 #include "PlaneSweepStripesParallelTBBAlgorithm.h"
 #include "PlaneSweepStripesParallelExternalAlgorithm.h"
 
-#define NUM_ALGORITHMS 17
+#define NUM_ALGORITHMS 18
 
 using namespace std;
 

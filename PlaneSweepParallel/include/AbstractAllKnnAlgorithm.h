@@ -8,7 +8,6 @@
 #include "AllKnnProblem.h"
 #include "AllKnnResult.h"
 #include "PlaneSweepParallel.h"
-
 #include <tbb/tbb.h>
 
 using namespace tbb;

@@ -39,17 +39,6 @@ class AllKnnResultStripes : public AllKnnResult
                 pStripeBoundaries.reset(new vector<StripeBoundaries_t>());
             }
 
-            /*
-            if (!pStripeIndex)
-            {
-                pStripeIndex.reset(new vector<size_t>());
-            }
-
-            if (!pInputPoints)
-            {
-                pInputPoints.reset(new point_vector_t());
-            }
-            */
             point_vector_t inputDatasetSortedY(problem.GetInputDataset());
             point_vector_t trainingDatasetSortedY(problem.GetTrainingDataset());
 
@@ -92,58 +81,8 @@ class AllKnnResultStripes : public AllKnnResult
                 create_fixed_stripes(numStripes, inputDatasetSortedY, trainingDatasetSortedY);
             }
 
-            //return {*pInputDatasetStripe, *pTrainingDatasetStripe, *pStripeBoundaries, *pStripeIndex, *pInputPoints};
             return {*pInputDatasetStripe, *pTrainingDatasetStripe, *pStripeBoundaries};
         }
-
-
-        /*
-        void create_dynamic_stripes(const point_vector_t& inputDatasetSortedY, const point_vector_t& trainingDatasetSortedY)
-        {
-            int num_stripes = omp_get_max_threads();
-            size_t inputDatasetStripeSize = inputDatasetSortedY.size()/numStripes + 1;
-            auto inputDatasetSortedYBegin = inputDatasetSortedY.cbegin();
-            auto inputDatasetSortedYEnd = inputDatasetSortedY.cend();
-            auto trainingDatasetSortedYBegin = trainingDatasetSortedY.cbegin();
-            auto trainingDatasetSortedYEnd = trainingDatasetSortedY.cend();
-
-
-
-            #pragma omp parallel for
-            for (int i=0; i < num_stripes; ++i)
-            {
-                auto inputIterStart = inputDatasetSortedYBegin + i*inputDatasetStripeSize;
-                if (i > 0)
-                {
-                    double ymin = inputIterStart->y;
-                    while (prev(inputIterStart)->y == ymin && inputIterStart < inputDatasetSortedYEnd)
-                        ++inputIterStart;
-                }
-                if (inputIterStart < inputDatasetSortedYEnd)
-                {
-                    auto inputIterEnd = inputDatasetSortedYEnd;
-
-                    if ((size_t)distance(inputIterStart, inputDatasetSortedYEnd) > inputDatasetStripeSize)
-                    {
-                        inputIterEnd = inputIterStart + inputDatasetStripeSize;
-                        double ymin = inputIterEnd->y;
-                        while (prev(inputIterEnd)->y == ymin && inputIterEnd < inputDatasetSortedYEnd)
-                            ++inputIterEnd;
-                    }
-
-                    double yLow = inputIterStart->y;
-                    double yHigh = prev(inputIterEnd)->y;
-
-                    double dy = yHigh - yLow;
-                    size_t numPoints = distance(inputIterStart, inputIterEnd);
-
-                    double avgNumPointsY = sqrt(dy*numPoints);
-                }
-
-            }
-        }
-        */
-
 
         size_t getNumStripes() override
         {
@@ -261,8 +200,6 @@ class AllKnnResultStripes : public AllKnnResult
         unique_ptr<point_vector_vector_t> pInputDatasetStripe;
         unique_ptr<point_vector_vector_t> pTrainingDatasetStripe;
         unique_ptr<vector<StripeBoundaries_t>> pStripeBoundaries;
-        //unique_ptr<vector<size_t>> pStripeIndex;
-        //unique_ptr<point_vector_t> pInputPoints;
 
         bool parallelSort = false;
 

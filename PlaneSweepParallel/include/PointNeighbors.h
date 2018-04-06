@@ -4,7 +4,6 @@
 #include <memory.h>
 #include <unordered_map>
 #include "PlaneSweepParallel.h"
-
 #include <tbb/tbb.h>
 
 using namespace tbb;
@@ -48,12 +47,6 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             container(neighborsVector.cbegin(), neighborsVector.cend())
         {
         }
-
-        /*
-        PointNeighbors(size_t numNeighbors) : numNeighbors(numNeighbors)
-        {
-        }
-        */
 
         virtual ~PointNeighbors() {}
 
@@ -135,64 +128,6 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return true;
         }
 
-        /*
-        inline array<bool,2> CheckAdd(const array<point_vector_iterator_t,2>& pointIter, const array<double,2>& distanceSquared, const array<double,2>& dx)
-        {
-            array<bool, 2> continuations = {true, true};
-
-            for (int i=0; i < 2; ++i)
-            {
-                auto& lastNeighbor = container.top();
-                double maxDistance = lastNeighbor.distanceSquared;
-
-                if (distanceSquared[i] < maxDistance)
-                {
-                    container.pop();
-                    Neighbor newNeighbor = {&*pointIter[i], distanceSquared[i]};
-                    container.push(newNeighbor);
-                    ++numAdditions;
-                }
-                else if (dx[i]*dx[i] >= maxDistance)
-                {
-                    continuations[i] = false;
-                }
-            }
-
-            return continuations;
-        }
-        */
-
-        /*
-        inline bool CheckAdd(point_vector_iterator_t pointIter, const double& distanceSquared, const double& dx)
-        {
-
-            if (container.size() < numNeighbors)
-            {
-                Neighbor newNeighbor = {&*pointIter, distanceSquared};
-                container.push(newNeighbor);
-            }
-            else
-            {
-                auto& lastNeighbor = container.top();
-                double maxDistance = lastNeighbor.distanceSquared;
-
-                if (distanceSquared < maxDistance)
-                {
-                    container.pop();
-                    Neighbor newNeighbor = {&*pointIter, distanceSquared};
-                    container.push(newNeighbor);
-                    ++numAdditions;
-                }
-                else if (dx*dx >= maxDistance)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-        */
-
         inline void AddNoCheck(point_vector_iterator_t pointIter, const double& distanceSquared)
         {
             container.pop();
@@ -206,60 +141,31 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return container.top();
         }
 
+        void setLowStripe(int stripe)
+        {
+            lowStripe = stripe;
+        }
+
+        void setHighStripe(int stripe)
+        {
+            highStripe = stripe;
+        }
+
     private:
         size_t numNeighbors = 0;
         neighbors_priority_queue_t container;
         size_t numAdditions = 0;
+        int lowStripe = -1;
+        int highStripe = -1;
 };
-
-/*
-template<>
-class PointNeighbors<neighbors_deque_t> : public NeighborsEnumerator
-{
-    public:
-        PointNeighbors(size_t numNeighbors) : numNeighbors(numNeighbors), container(numNeighbors, {nullptr, numeric_limits<double>::max()})
-        {
-            returnPos = 0;
-            insertPos = numNeighbors - 1;
-        }
-
-        virtual ~PointNeighbors() {}
-
-        bool HasNext() override
-        {
-            return returnPos < numNeighbors;
-        }
-
-        Neighbor Next() override
-        {
-            Neighbor neighbor = container[returnPos];
-            ++returnPos;
-            return neighbor;
-        }
-
-        inline void Add(point_vector_t::const_iterator pointIter, const double distanceSquared)
-        {
-            container[insertPos] = {&*pointIter, distanceSquared};
-            --insertPos;
-        }
-
-    private:
-        size_t numNeighbors;
-        neighbors_deque_t container;
-        size_t returnPos;
-        size_t insertPos;
-};
-
 
 template<class Container>
-using neighbors_container_t = unordered_map<long, PointNeighbors<Container>>;
-*/
+using pointNeighbors_generic_map_t = unordered_map<long, PointNeighbors<Container>>;
 
 template<class Container>
 using pointNeighbors_generic_vector_t = vector<PointNeighbors<Container>, cache_aligned_allocator<PointNeighbors<Container>>>;
 
-//typedef neighbors_container_t<neighbors_priority_queue_t> neighbors_priority_queue_container_t;
-//typedef neighbors_container_t<neighbors_deque_t> neighbors_deque_container_t;
+typedef pointNeighbors_generic_map_t<neighbors_priority_queue_t> pointNeighbors_priority_queue_map_t;
 typedef pointNeighbors_generic_vector_t<neighbors_priority_queue_t> pointNeighbors_priority_queue_vector_t;
 
 #endif // POINTNEIGHBORS_H
