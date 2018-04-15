@@ -8,7 +8,7 @@
 class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
-        PlaneSweepStripesParallelExternalAlgorithm(int numStripes, int numThreads, bool parallelSort, bool splitByT) : numStripes(numStripes),
+        PlaneSweepStripesParallelExternalAlgorithm(size_t numStripes, int numThreads, bool parallelSort, bool splitByT) : numStripes(numStripes),
             numThreads(numThreads), parallelSort(parallelSort), splitByT(splitByT)
         {
         }
@@ -49,14 +49,16 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
 
             auto finishSorting = chrono::high_resolution_clock::now();
 
-            int startStripe = -1;
-            int endStripe = -1;
+            size_t startStripe = 0;
+            size_t endStripe = 0;
+            size_t nextStripe = 0;
 
             do
             {
-                auto pWindow = pResult->GetWindow(endStripe + 1, false);
+                auto pWindow = pResult->GetWindow(nextStripe, false);
                 startStripe = pWindow->GetStartStripe();
                 endStripe = pWindow->GetEndStripe();
+                nextStripe = endStripe + 1;
 
                 if (pWindow != nullptr)
                     PlaneSweepWindow(pWindow, pResult, numThreadsToUse);
@@ -67,11 +69,14 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
 
             if (!pResult->HasAllocationError())
             {
-                while (startStripe > 0)
+                nextStripe = startStripe - 1;
+
+                while (nextStripe >= 0)
                 {
-                    auto pWindow = pResult->GetWindow(startStripe - 1, true);
+                    auto pWindow = pResult->GetWindow(nextStripe, true);
                     startStripe = pWindow->GetStartStripe();
                     endStripe = pWindow->GetEndStripe();
+                    nextStripe = startStripe - 1;
 
                     if (pWindow != nullptr)
                         PlaneSweepWindow(pWindow, pResult, numThreadsToUse);
@@ -91,17 +96,17 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
         }
 
     private:
-        int numStripes = 0;
+        size_t numStripes = 0;
         int numThreads = 0;
         bool parallelSort = false;
         bool splitByT = false;
 
-        void PlaneSweepWindow(unique_ptr<StripesWindow>& pWindow, unique_ptr<AllKnnResultStripesParallelExternal>& pResult, int numThreadsToUse)
+        void PlaneSweepWindow(unique_ptr<StripesWindow>& pWindow, unique_ptr<AllKnnResultStripesParallelExternal>& pResult, unsigned int numThreadsToUse)
         {
             bool isSecondPass = pWindow->IsSecondPass();
-            int windowStartStripe = pWindow->GetStartStripe();
-            int windowEndStripe = pWindow->GetEndStripe();
-            int numWindowStripes = pWindow->GetNumStripes();
+            size_t windowStartStripe = pWindow->GetStartStripe();
+            size_t windowEndStripe = pWindow->GetEndStripe();
+            size_t numWindowStripes = pWindow->GetNumStripes();
             auto stripeData = pWindow->GetStripeData();
 
             auto pPendingPointsContainer = pResult->GetPendingPointsForWindow(*pWindow);
@@ -114,18 +119,18 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
             for (auto inputPointIter = pendingPointsIterBegin; inputPointIter < pendingPointsIterEnd; ++inputPointIter)
             {
                 bool exit = false;
-                int currentStripe = isSecondPass ? windowEndStripe : windowStartStripe;
+                size_t currentStripe = isSecondPass ? windowEndStripe : windowStartStripe;
                 int step = isSecondPass ? -1 : 1;
                 auto& neighbors = pendingNeighborsContainer.at(inputPointIter->id);
 
                 do
                 {
-                    double dy = isSecondPass ? inputPointIter->y - stripeData.StripeBoundaries[currentStripe].maxY
-                                : stripeData.StripeBoundaries[currentStripe].minY - inputPointIter->y;
+                    double dy = isSecondPass ? inputPointIter->y - stripeData.StripeBoundaries[currentStripe - windowStartStripe].maxY
+                                : stripeData.StripeBoundaries[currentStripe - windowStartStripe].minY - inputPointIter->y;
                     double dySquared = dy*dy;
                     if (dySquared < neighbors.MaxDistanceElement().distanceSquared)
                     {
-                        PlaneSweepStripe(inputPointIter, stripeData, currentStripe, neighbors, dySquared);
+                        PlaneSweepStripe(inputPointIter, stripeData, currentStripe - windowStartStripe, neighbors, dySquared);
                         exit = isSecondPass ? currentStripe == windowStartStripe : currentStripe == windowEndStripe;
 
                         if (exit)
@@ -146,7 +151,9 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                     }
 
                     if (!exit)
+                    {
                         currentStripe += step;
+                    }
                 } while (!exit);
             }
 
@@ -155,22 +162,24 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                 auto& neighborsContainer = pWindow->GetNeighborsContainer();
 
                 #pragma omp parallel for schedule(dynamic) if (numWindowStripes >= numThreadsToUse)
-                for (int iStripeInput = windowStartStripe; iStripeInput <= windowEndStripe; ++iStripeInput)
+                for (size_t iStripeInput = windowStartStripe; iStripeInput <= windowEndStripe; ++iStripeInput)
                 {
-                    auto& inputDataset = stripeData.InputDatasetStripe[iStripeInput];
+                    auto& inputDataset = stripeData.InputDatasetStripe[iStripeInput - windowStartStripe];
                     auto inputDatasetBegin = inputDataset.cbegin();
                     auto inputDatasetEnd = inputDataset.cend();
+                    auto& stripeNeighborsContainer = neighborsContainer[iStripeInput - windowStartStripe];
 
                     #pragma omp parallel for if (numWindowStripes < numThreadsToUse)
                     for (auto inputPointIter = inputDatasetBegin; inputPointIter < inputDatasetEnd; ++inputPointIter)
                     {
-                        int iStripeTraining = iStripeInput;
-                        auto& neighbors = neighborsContainer.at(inputPointIter->id);
+                        size_t iStripeTraining = iStripeInput;
+                        size_t inputPointOffset = std::distance(inputDatasetBegin, inputPointIter);
+                        auto& neighbors = stripeNeighborsContainer.at(inputPointOffset);
 
-                        PlaneSweepStripe(inputPointIter, stripeData, iStripeTraining, neighbors, 0.0);
+                        PlaneSweepStripe(inputPointIter, stripeData, iStripeTraining - windowStartStripe, neighbors, 0.0);
 
-                        int iStripeTrainingPrev = iStripeTraining - 1;
-                        int iStripeTrainingNext = iStripeTraining + 1;
+                        size_t iStripeTrainingPrev = iStripeTraining - 1;
+                        size_t iStripeTrainingNext = iStripeTraining + 1;
                         bool lowStripeEnd = iStripeTrainingPrev < windowStartStripe;
                         bool highStripeEnd = iStripeTrainingNext > windowEndStripe;
 
@@ -188,11 +197,11 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                         {
                             if (!lowStripeEnd)
                             {
-                                double dyLow = inputPointIter->y - stripeData.StripeBoundaries[iStripeTrainingPrev].maxY;
+                                double dyLow = inputPointIter->y - stripeData.StripeBoundaries[iStripeTrainingPrev - windowStartStripe].maxY;
                                 double dySquaredLow = dyLow*dyLow;
                                 if (dySquaredLow < neighbors.MaxDistanceElement().distanceSquared)
                                 {
-                                    PlaneSweepStripe(inputPointIter, stripeData, iStripeTrainingPrev, neighbors, dySquaredLow);
+                                    PlaneSweepStripe(inputPointIter, stripeData, iStripeTrainingPrev - windowStartStripe, neighbors, dySquaredLow);
                                     --iStripeTrainingPrev;
                                     lowStripeEnd = iStripeTrainingPrev < windowStartStripe;
                                     if (lowStripeEnd)
@@ -207,11 +216,11 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
 
                             if (!highStripeEnd)
                             {
-                                double dyHigh = stripeData.StripeBoundaries[iStripeTrainingNext].minY - inputPointIter->y;
+                                double dyHigh = stripeData.StripeBoundaries[iStripeTrainingNext - windowStartStripe].minY - inputPointIter->y;
                                 double dySquaredHigh = dyHigh*dyHigh;
                                 if (dySquaredHigh < neighbors.MaxDistanceElement().distanceSquared)
                                 {
-                                    PlaneSweepStripe(inputPointIter, stripeData, iStripeTrainingNext, neighbors, dySquaredHigh);
+                                    PlaneSweepStripe(inputPointIter, stripeData, iStripeTrainingNext - windowStartStripe, neighbors, dySquaredHigh);
                                     ++iStripeTrainingNext;
                                     highStripeEnd = iStripeTrainingNext > windowEndStripe;
                                     if (highStripeEnd)
@@ -228,10 +237,10 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                 }
             }
 
-            pWindow->CommitWindow();
+            pResult->CommitWindow(*pWindow, *pPendingPointsContainer);
         }
 
-        void PlaneSweepStripe(point_vector_iterator_t inputPointIter, StripeData stripeData, int iStripeTraining,
+        void PlaneSweepStripe(point_vector_iterator_t inputPointIter, StripeData stripeData, size_t iStripeTraining,
                               PointNeighbors<neighbors_priority_queue_t>& neighbors, double mindy) const
         {
             auto& trainingDataset = stripeData.TrainingDatasetStripe[iStripeTraining];

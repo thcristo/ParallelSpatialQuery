@@ -5,51 +5,75 @@
 class StripesWindow
 {
     public:
-        StripesWindow() {}
+        StripesWindow(size_t startStripe, size_t endStripe, unique_ptr<point_vector_vector_t>& pInputStripes,
+                      unique_ptr<point_vector_vector_t>& pTrainingStripes, unique_ptr<vector<StripeBoundaries_t>>& pBoundaries,
+                      size_t numNeighbors)
+                      : startStripe(startStripe), endStripe(endStripe), secondPass(false),
+                        pInputDatasetStripe(move(pInputStripes)), pTrainingDatasetStripe(move(pTrainingStripes)),
+                        pStripeBoundaries(move(pBoundaries)), numNeighbors(numNeighbors)
+        {
+            size_t numStripes = GetNumStripes();
+            pNeighborsContainer.reset(new pointNeighbors_vector_vector_t(numStripes,
+                    vector<PointNeighbors<neighbors_priority_queue_t>>()));
+
+            for(size_t i=0; i < numStripes; ++i)
+            {
+                size_t numInputPoints = pInputDatasetStripe->at(i).size();
+                pNeighborsContainer->at(i).assign(numInputPoints, PointNeighbors<neighbors_priority_queue_t>(numNeighbors));
+            }
+        }
+
+        StripesWindow(size_t startStripe, size_t endStripe, unique_ptr<point_vector_vector_t>& pTrainingStripes,
+                      unique_ptr<vector<StripeBoundaries_t>>& pBoundaries)
+                      : startStripe(startStripe), endStripe(endStripe), secondPass(true),
+                        pTrainingDatasetStripe(move(pTrainingStripes)),
+                        pStripeBoundaries(move(pBoundaries))
+        {
+        }
+
         virtual ~StripesWindow() {}
 
-        int GetStartStripe()
+        size_t GetStartStripe() const
         {
-           return -1;
+           return startStripe;
         }
 
-        int GetEndStripe()
+        size_t GetEndStripe() const
         {
-           return -1;
+           return endStripe;
         }
 
-        int GetNumStripes()
+        size_t GetNumStripes() const
         {
-           return 0;
+           return endStripe - startStripe + 1;
         }
 
-        bool IsSecondPass()
+        bool IsSecondPass() const
         {
-            return false;
+            return secondPass;
         }
 
-        StripeData GetStripeData()
+        StripeData GetStripeData() const
         {
             return {*pInputDatasetStripe, *pTrainingDatasetStripe, *pStripeBoundaries};
         }
 
-        pointNeighbors_priority_queue_map_t& GetNeighborsContainer()
+        pointNeighbors_vector_vector_t& GetNeighborsContainer() const
         {
                 return *pNeighborsContainer;
-        }
-
-        void CommitWindow()
-        {
-            //pResult->CheckAddPendingPoint(inputPointIter, neighbors);
         }
 
     protected:
 
     private:
+        size_t startStripe = 0;
+        size_t endStripe = 0;
+        bool secondPass = false;
         unique_ptr<point_vector_vector_t> pInputDatasetStripe;
         unique_ptr<point_vector_vector_t> pTrainingDatasetStripe;
         unique_ptr<vector<StripeBoundaries_t>> pStripeBoundaries;
-        unique_ptr<pointNeighbors_priority_queue_map_t> pNeighborsContainer;
+        unique_ptr<pointNeighbors_vector_vector_t> pNeighborsContainer;
+        size_t numNeighbors = 0;
 };
 
 #endif // STRIPESWINDOW_H

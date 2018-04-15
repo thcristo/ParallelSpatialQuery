@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
     bool findDifferences = true;
     string enableAlgo(NUM_ALGORITHMS, '1');
     bool useExternalMemory = false;
-    unsigned int memoryLimitMB = 0;
+    size_t memoryLimitMB = 1024;
 
     if (argc < 4)
     {
@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
 
         if (argc >= 11)
         {
-            unsigned int limit = atoi(argv[10]);
+            size_t limit = stoull(argv[10]);
             if (limit > 0)
             {
                 memoryLimitMB = limit;
@@ -134,8 +134,7 @@ int main(int argc, char* argv[])
             {
                 algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalAlgorithm(numStripes, numThreads, true, false)));
             }
-
-            if (enableAlgo[17] == '1')
+            else if (enableAlgo[17] == '1')
             {
                 algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalAlgorithm(numStripes, numThreads, true, true)));
             }
@@ -208,9 +207,8 @@ int main(int argc, char* argv[])
         unique_ptr<AllKnnResult> pResultReference, pResult;
         unique_ptr<vector<long>> pDiff;
 
-        if (!useExternalMemory)
-            cout << "Read " << problem.GetInputDataset().size() << " input points and " << problem.GetTrainingDataset().size()
-                << " training points " << "in " << problem.getLoadingTime().count() << " seconds" << endl;
+        cout << "Read " << problem.GetInputDatasetSize() << " input points and " << problem.GetTrainingDatasetSize()
+            << " training points " << "in " << problem.getLoadingTime().count() << " seconds" << endl;
 
         auto now = chrono::system_clock::now();
         auto in_time_t = chrono::system_clock::to_time_t(now);

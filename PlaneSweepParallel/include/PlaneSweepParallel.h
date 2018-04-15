@@ -9,18 +9,24 @@
 
 using namespace std;
 
-struct Point {
+struct Point
+{
     long id;
     double x;
     double y;
 };
 
-struct Neighbor {
+struct Neighbor
+{
     const Point* point;
     double distanceSquared;
 };
 
-
+struct NeighborExt
+{
+    long id;
+    double distanceSquared;
+};
 
 class NeighborComparer
 {
@@ -31,6 +37,10 @@ class NeighborComparer
         }
 };
 
+struct StripePoint : public Point
+{
+    size_t stripe;
+};
 
 bool endsWith(const std::string& str, const std::string& suffix)
 {
@@ -56,5 +66,6 @@ protected:
 };
 
 typedef stxxl::VECTOR_GENERATOR<Point>::result ext_point_vector_t;
+typedef stxxl::VECTOR_GENERATOR<NeighborExt>::result ext_neighbors_vector_t;
 
 #endif // PLANESWEEPPARALLEL_H_INCLUDED

@@ -54,14 +54,17 @@ class AllKnnProblem
     public:
         AllKnnProblem(const string& inputFilename, const string& trainingFilename, size_t numNeighbors, bool useExternalMemory, size_t memoryLimitMB)
             : pInputDataset(new point_vector_t), pTrainingDataset(new point_vector_t),
-                useExternalMemory(useExternalMemory), memoryLimitMB(memoryLimitMB),
-                pExtInputDataset(new ext_point_vector_t), pExtTrainingDataset(new ext_point_vector_t)
+                useExternalMemory(useExternalMemory), memoryLimitMB(memoryLimitMB)
         {
             this->inputFilename = inputFilename;
             this->trainingFilename = trainingFilename;
             this->numNeighbors = numNeighbors;
             if (useExternalMemory)
+            {
+                pExtInputDataset.reset(new ext_point_vector_t());
+                pExtTrainingDataset.reset(new ext_point_vector_t());
                 this->LoadExternalDataFiles();
+            }
             else
                 this->LoadDataFiles();
         }
@@ -95,8 +98,28 @@ class AllKnnProblem
             return numNeighbors;
         }
 
+        size_t GetInputDatasetSize() const
+        {
+            if (useExternalMemory)
+                return pExtInputDataset->size();
+            else
+                return pInputDataset->size();
+        }
+
+        size_t GetTrainingDatasetSize() const
+        {
+            if (useExternalMemory)
+                return pExtTrainingDataset->size();
+            else
+                return pExtTrainingDataset->size();
+        }
+
         const chrono::duration<double>& getLoadingTime() const { return loadingTime; }
 
+        size_t GetMemoryLimitBytes() const
+        {
+            return memoryLimitMB*1024*1024;
+        }
     protected:
 
     private:
