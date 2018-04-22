@@ -194,16 +194,14 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             }
         }
 
-        bool HasAllocationError()
+        bool HasAllocationError() override
         {
             return hasAllocationError;
         }
 
-        unique_ptr<vector<StripePoint>> GetPendingPointsForWindow(const StripesWindow& window)
+        unique_ptr<point_vector_t> GetPendingPointsForWindow(const StripesWindow& window)
         {
-            unique_ptr<vector<StripePoint>> pPoints(new vector<StripePoint>());
-
-            size_t numStripes = pStripeBoundaries->size();
+            unique_ptr<point_vector_t> pPoints(new point_vector_t());
 
             if (window.IsSecondPass())
             {
@@ -212,14 +210,14 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                 for (auto pendingIter = pPendingPoints->cbegin(); pendingIter != pPendingPoints->cend(); ++pendingIter)
                 {
                     if (pendingIter->second.stripe > endStripe)
-                        pPoints->push_back(pendingIter->second);
+                        pPoints->push_back({pendingIter->second.id, pendingIter->second.x, pendingIter->second.y});
                 }
             }
             else
             {
                 for (auto pendingIter = pPendingPoints->cbegin(); pendingIter != pPendingPoints->cend(); ++pendingIter)
                 {
-                    pPoints->push_back(pendingIter->second);
+                    pPoints->push_back({pendingIter->second.id, pendingIter->second.x, pendingIter->second.y});
                 }
             }
 
@@ -240,6 +238,85 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                 size_t totalNumNeighbors = numNeighbors*problem.GetInputDatasetSize();
                 pNeighborsExtVector.reset(new ext_neighbors_vector_t(totalNumNeighbors));
             }
+
+            auto pendingPointsBegin = pendingPoints.cbegin();
+            auto pendingPointsEnd = pendingPoints.cend();
+
+            for (auto pendingPointsIter = pendingPointsBegin; pendingPointsIter != pendingPointsEnd; ++pendingPointsIter)
+            {
+                auto pointId = pendingPointsIter->id;
+                auto& pointNeighbors = pPendingNeighborsContainer->at(pointId);
+                if (IsSearchCompleted(pointNeighbors))
+                {
+                    size_t posNeighbor = (pointId-1)*numNeighbors;
+                    while (pointNeighbors.HasNext())
+                    {
+                        Neighbor neighbor = pointNeighbors.Next();
+                        auto& extNeighbor = pNeighborsExtVector->at(posNeighbor);
+                        extNeighbor.pointId = neighbor.pointId;
+                        extNeighbor.distanceSquared = neighbor.distanceSquared;
+                        ++posNeighbor;
+                    }
+                    pPendingPoints->erase(pointId);
+                    pPendingNeighborsContainer->erase(pointId);
+                }
+            }
+
+            bool isSecondPass = window.IsSecondPass();
+            if (!isSecondPass)
+            {
+                auto stripeData = window.GetStripeData();
+                auto& neighborsContainer = window.GetNeighborsContainer();
+                size_t numWindowStripes = window.GetNumStripes();
+                size_t windowStartStripe = window.GetStartStripe();
+
+                for (size_t iWindowStripe = 0; iWindowStripe < numWindowStripes; ++iWindowStripe)
+                {
+                    auto& inputDataset = stripeData.InputDatasetStripe[iWindowStripe];
+                    size_t numInputPoints = inputDataset.size();
+
+                    if (numInputPoints > 0)
+                    {
+                        auto& stripeNeighbors = neighborsContainer.at(iWindowStripe);
+
+                        for (size_t iPoint=0; iPoint < numInputPoints; ++iPoint)
+                        {
+                            auto& pointNeighbors = stripeNeighbors[iPoint];
+                            auto& point = inputDataset[iPoint];
+                            unsigned long pointId = point.id;
+
+                            if (IsSearchCompleted(pointNeighbors))
+                            {
+                                size_t posNeighbor = (pointId-1)*numNeighbors;
+                                while (pointNeighbors.HasNext())
+                                {
+                                    Neighbor neighbor = pointNeighbors.Next();
+                                    auto& extNeighbor = pNeighborsExtVector->at(posNeighbor);
+                                    extNeighbor.pointId = neighbor.pointId;
+                                    extNeighbor.distanceSquared = neighbor.distanceSquared;
+                                    ++posNeighbor;
+                                }
+                            }
+                            else
+                            {
+                                StripePoint stripePoint;
+                                stripePoint.id = pointId;
+                                stripePoint.x = point.x;
+                                stripePoint.y = point.y;
+                                stripePoint.stripe = iWindowStripe + windowStartStripe;
+
+                                pPendingPoints->at(pointId) = stripePoint;
+                                pPendingNeighborsContainer->at(pointId) = pointNeighbors;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        size_t getNumPendingPoints() override
+        {
+            return pPendingPoints->size();
         }
 
     protected:
@@ -256,7 +333,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
         unique_ptr<vector<size_t>> pTrainingStripeCount;
         unique_ptr<vector<StripeBoundaries_t>> pStripeBoundaries;
         bool hasAllocationError = false;
-        unique_ptr<unordered_map<long, StripePoint>> pPendingPoints;
+        unique_ptr<unordered_map<unsigned long, StripePoint>> pPendingPoints;
         unique_ptr<ext_neighbors_vector_t> pNeighborsExtVector;
 
         size_t get_optimal_stripes()
@@ -304,7 +381,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             pTrainingStripeCount.reset(new vector<size_t>(numStripes, 0));
             pStripeBoundaries.reset(new vector<StripeBoundaries_t>(numStripes, {0.0, 0.0}));
 
-            pPendingPoints.reset(new unordered_map<long, StripePoint>());
+            pPendingPoints.reset(new unordered_map<unsigned long, StripePoint>());
             pPendingNeighborsContainer.reset(new pointNeighbors_priority_queue_map_t());
 
             for (size_t i=0; i < numStripes; ++i)
@@ -428,7 +505,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             pTrainingStripeCount.reset(new vector<size_t>(numStripes, 0));
             pStripeBoundaries.reset(new vector<StripeBoundaries_t>(numStripes, {0.0, 0.0}));
 
-            pPendingPoints.reset(new unordered_map<long, StripePoint>());
+            pPendingPoints.reset(new unordered_map<unsigned long, StripePoint>());
             pPendingNeighborsContainer.reset(new pointNeighbors_priority_queue_map_t());
 
             for (size_t i=0; i < numStripes; ++i)
@@ -524,6 +601,15 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                     }
                 }
             }
+        }
+
+        bool IsSearchCompleted(const PointNeighbors<neighbors_priority_queue_t>& pointNeighbors)
+        {
+            size_t lowStripe = pointNeighbors.getLowStripe();
+            size_t highStripe = pointNeighbors.getHighStripe();
+            size_t numStripes = pStripeBoundaries->size();
+
+            return (lowStripe <= 0) && (highStripe >= numStripes-1);
         }
 };
 

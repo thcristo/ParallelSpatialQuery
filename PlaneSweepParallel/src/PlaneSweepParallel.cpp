@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
 
         AllKnnProblem problem(argv[2], argv[3], numNeighbors, useExternalMemory, memoryLimitMB);
         unique_ptr<AllKnnResult> pResultReference, pResult;
-        unique_ptr<vector<long>> pDiff;
+        unique_ptr<vector<unsigned long>> pDiff;
 
         cout << "Read " << problem.GetInputDatasetSize() << " input points and " << problem.GetTrainingDatasetSize()
             << " training points " << "in " << problem.getLoadingTime().count() << " seconds" << endl;
@@ -218,7 +218,7 @@ int main(int argc, char* argv[])
         ofstream outFile(ss.str(), ios_base::out);
         outFile.imbue(locale(outFile.getloc(), new punct_facet<char, ',', '.'>));
 
-        outFile << "Algorithm;Total Duration;Sorting Duration;Total Heap Additions;Min. Heap Additions;Max. Heap Additions;Avg. Heap Additions;NumberOfStripes;Differences;First 5 different point ids" << endl;
+        outFile << "Algorithm;Total Duration;Sorting Duration;Total Heap Additions;Min. Heap Additions;Max. Heap Additions;Avg. Heap Additions;NumberOfStripes;HasAllocationError;PendingPoints;Differences;First 5 different point ids" << endl;
         outFile.flush();
 
         for (size_t iAlgo = 0; iAlgo < algorithms.size(); ++iAlgo)
@@ -230,7 +230,9 @@ int main(int argc, char* argv[])
                 <<  " minAdd: " << pResult->getMinHeapAdditions()
                 << " maxAdd: " << pResult->getMaxHeapAdditions()
                 << " avgAdd: " << pResult->getAvgHeapAdditions()
-                << " numStripes: " << pResult->getNumStripes();
+                << " numStripes: " << pResult->getNumStripes()
+                << " hasAllocationError: " << pResult->HasAllocationError()
+                << " numPendingPoints: " << pResult->getNumPendingPoints();
 
             outFile << fixed << setprecision(3) << algorithms[iAlgo]->GetTitle() << ";" << pResult->getDuration().count()
                 << ";" << pResult->getDurationSorting().count()
@@ -238,7 +240,9 @@ int main(int argc, char* argv[])
                 << ";" << pResult->getMinHeapAdditions()
                 << ";" << pResult->getMaxHeapAdditions()
                 << ";" << pResult->getAvgHeapAdditions()
-                << ";" << pResult->getNumStripes();
+                << ";" << pResult->getNumStripes()
+                << ";" << pResult->HasAllocationError()
+                << ";" << pResult->getNumPendingPoints();
 
             if (saveToFile)
             {

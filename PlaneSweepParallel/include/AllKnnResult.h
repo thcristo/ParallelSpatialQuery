@@ -79,6 +79,16 @@ class AllKnnResult
            return 0;
         }
 
+        virtual size_t getNumPendingPoints()
+        {
+            return 0;
+        }
+
+        virtual bool HasAllocationError()
+        {
+            return false;
+        }
+
         void SaveToFile() const
         {
             auto ms = chrono::duration_cast<chrono::milliseconds>(elapsed);
@@ -118,9 +128,9 @@ class AllKnnResult
                     Neighbor neighbor = pNeighbors->Next();
                     removedNeighbors.push_back(neighbor);
 
-                    if (neighbor.point != nullptr)
+                    if (neighbor.pointId > 0)
                     {
-                        outFile << "\t(" << neighbor.point->id << " " << neighbor.distanceSquared << ")";
+                        outFile << "\t(" << neighbor.pointId << " " << neighbor.distanceSquared << ")";
                     }
                     else
                     {
@@ -136,9 +146,9 @@ class AllKnnResult
             outFile.close();
         }
 
-        unique_ptr<vector<long>> FindDifferences(const AllKnnResult& result, double accuracy)
+        unique_ptr<vector<unsigned long>> FindDifferences(const AllKnnResult& result, double accuracy)
         {
-            auto differences = unique_ptr<vector<long>>(new vector<long>());
+            auto differences = unique_ptr<vector<unsigned long>>(new vector<unsigned long>());
 
             auto& inputDataset = problem.GetInputDataset();
 

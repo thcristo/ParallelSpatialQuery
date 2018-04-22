@@ -32,14 +32,14 @@ class PointNeighbors : public NeighborsEnumerator
     private:
         Container container;
         size_t numNeighbors;
-        long id;
+        unsigned long id;
 };
 
 template<>
 class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
 {
     public:
-        PointNeighbors(size_t numNeighbors) : PointNeighbors(neighbors_vector_t(numNeighbors, {nullptr, numeric_limits<double>::max()}))
+        PointNeighbors(size_t numNeighbors) : PointNeighbors(neighbors_vector_t(numNeighbors, {0, numeric_limits<double>::max()}))
         {
         }
 
@@ -69,7 +69,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             if (distanceSquared < lastNeighbor.distanceSquared)
             {
                 container.pop();
-                Neighbor newNeighbor = {&*pointIter, distanceSquared};
+                Neighbor newNeighbor = {pointIter->id, distanceSquared};
                 container.push(newNeighbor);
                 ++numAdditions;
             }
@@ -96,7 +96,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             if (distanceSquared < maxDistance)
             {
                 container.pop();
-                Neighbor newNeighbor = {&*pointIter, distanceSquared};
+                Neighbor newNeighbor = {pointIter->id, distanceSquared};
                 container.push(newNeighbor);
                 ++numAdditions;
             }
@@ -116,7 +116,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             if (distanceSquared < maxDistance)
             {
                 container.pop();
-                Neighbor newNeighbor = {&*pointIter, distanceSquared};
+                Neighbor newNeighbor = {pointIter->id, distanceSquared};
                 container.push(newNeighbor);
                 ++numAdditions;
             }
@@ -131,7 +131,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
         inline void AddNoCheck(point_vector_iterator_t pointIter, const double& distanceSquared)
         {
             container.pop();
-            Neighbor newNeighbor = {&*pointIter, distanceSquared};
+            Neighbor newNeighbor = {pointIter->id, distanceSquared};
             container.push(newNeighbor);
             ++numAdditions;
         }
@@ -151,6 +151,16 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             highStripe = stripe;
         }
 
+        size_t getLowStripe() const
+        {
+            return lowStripe;
+        }
+
+        size_t getHighStripe() const
+        {
+            return highStripe;
+        }
+
     private:
         size_t numNeighbors = 0;
         neighbors_priority_queue_t container;
@@ -160,7 +170,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
 };
 
 template<class Container>
-using pointNeighbors_generic_map_t = unordered_map<long, PointNeighbors<Container>>;
+using pointNeighbors_generic_map_t = unordered_map<unsigned long, PointNeighbors<Container>>;
 
 template<class Container>
 using pointNeighbors_generic_vector_t = vector<PointNeighbors<Container>, cache_aligned_allocator<PointNeighbors<Container>>>;

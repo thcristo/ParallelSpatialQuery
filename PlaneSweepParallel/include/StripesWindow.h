@@ -19,7 +19,8 @@ class StripesWindow
             for(size_t i=0; i < numStripes; ++i)
             {
                 size_t numInputPoints = pInputDatasetStripe->at(i).size();
-                pNeighborsContainer->at(i).assign(numInputPoints, PointNeighbors<neighbors_priority_queue_t>(numNeighbors));
+                if (numInputPoints > 0)
+                    pNeighborsContainer->at(i).assign(numInputPoints, PointNeighbors<neighbors_priority_queue_t>(numNeighbors));
             }
         }
 

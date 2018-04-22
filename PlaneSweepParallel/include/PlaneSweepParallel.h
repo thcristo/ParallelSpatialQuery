@@ -11,20 +11,14 @@ using namespace std;
 
 struct Point
 {
-    long id;
+    unsigned long id;
     double x;
     double y;
 };
 
 struct Neighbor
 {
-    const Point* point;
-    double distanceSquared;
-};
-
-struct NeighborExt
-{
-    long id;
+    unsigned long pointId;
     double distanceSquared;
 };
 
@@ -66,6 +60,6 @@ protected:
 };
 
 typedef stxxl::VECTOR_GENERATOR<Point>::result ext_point_vector_t;
-typedef stxxl::VECTOR_GENERATOR<NeighborExt>::result ext_neighbors_vector_t;
+typedef stxxl::VECTOR_GENERATOR<Neighbor>::result ext_neighbors_vector_t;
 
 #endif // PLANESWEEPPARALLEL_H_INCLUDED
