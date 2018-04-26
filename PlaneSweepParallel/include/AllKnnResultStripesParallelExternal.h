@@ -138,14 +138,14 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             else
             {
                 size_t startStripe = fromStripe;
-                size_t endStripe = startStripe - 1;
+                size_t endStripe = startStripe;
                 size_t usedMemory = 0;
 
                 do
                 {
-                    size_t sizeInput = (pInputStripeCount->at(endStripe + 1))*sizeof(Point);
-                    size_t sizeTraining = (pTrainingStripeCount->at(endStripe + 1))*sizeof(Point);
-                    size_t sizeNeighbors = (pInputStripeCount->at(endStripe + 1))*(sizeof(PointNeighbors<neighbors_priority_queue_t>) + numNeighbors*sizeof(Neighbor));
+                    size_t sizeInput = (pInputStripeCount->at(endStripe))*sizeof(Point);
+                    size_t sizeTraining = (pTrainingStripeCount->at(endStripe))*sizeof(Point);
+                    size_t sizeNeighbors = (pInputStripeCount->at(endStripe))*(sizeof(PointNeighbors<neighbors_priority_queue_t>) + numNeighbors*sizeof(Neighbor));
                     size_t additionalMemory = sizeInput + sizeTraining + sizeNeighbors;
 
                     if (usedMemory + additionalMemory <= memoryLimit)
@@ -155,9 +155,9 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                     }
                     else
                         break;
-                } while (endStripe < numStripes - 1);
+                } while (endStripe <= numStripes - 1);
 
-                if (endStripe < startStripe)
+                if (endStripe <= startStripe)
                 {
                     hasAllocationError = true;
                     return unique_ptr<StripesWindow>(nullptr);
@@ -166,7 +166,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                 unique_ptr<point_vector_vector_t> pInputStripes(new point_vector_vector_t()), pTrainingStripes(new point_vector_vector_t());
                 unique_ptr<vector<StripeBoundaries_t>> pBoundaries(new vector<StripeBoundaries_t>());
 
-                for (size_t iStripe = startStripe; iStripe <= endStripe; ++iStripe)
+                for (size_t iStripe = startStripe; iStripe < endStripe; ++iStripe)
                 {
                     point_vector_t inputPoints, trainingPoints;
 
@@ -189,7 +189,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                     pBoundaries->push_back(pStripeBoundaries->at(iStripe));
                 }
 
-                unique_ptr<StripesWindow> pWindow(new StripesWindow(startStripe, endStripe, pInputStripes, pTrainingStripes, pBoundaries, numNeighbors));
+                unique_ptr<StripesWindow> pWindow(new StripesWindow(startStripe, endStripe-1, pInputStripes, pTrainingStripes, pBoundaries, numNeighbors));
                 return pWindow;
             }
         }
@@ -205,19 +205,30 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
             if (window.IsSecondPass())
             {
-                size_t endStripe = window.GetEndStripe();
+                size_t startStripe = window.GetStartStripe();
 
                 for (auto pendingIter = pPendingPoints->cbegin(); pendingIter != pPendingPoints->cend(); ++pendingIter)
                 {
-                    if (pendingIter->second.stripe > endStripe)
+                    auto pointId = pendingIter->second.id;
+                    auto& neighbors = pPendingNeighborsContainer->at(pointId);
+                    size_t lowStripe = neighbors.getLowStripe();
+
+                    if (lowStripe > startStripe)
                         pPoints->push_back({pendingIter->second.id, pendingIter->second.x, pendingIter->second.y});
                 }
             }
             else
             {
+                size_t endStripe = window.GetEndStripe();
+
                 for (auto pendingIter = pPendingPoints->cbegin(); pendingIter != pPendingPoints->cend(); ++pendingIter)
                 {
-                    pPoints->push_back({pendingIter->second.id, pendingIter->second.x, pendingIter->second.y});
+                    auto pointId = pendingIter->second.id;
+                    auto& neighbors = pPendingNeighborsContainer->at(pointId);
+                    size_t highStripe = neighbors.getHighStripe();
+
+                    if (highStripe < endStripe)
+                        pPoints->push_back({pointId, pendingIter->second.x, pendingIter->second.y});
                 }
             }
 
@@ -305,8 +316,8 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                                 stripePoint.y = point.y;
                                 stripePoint.stripe = iWindowStripe + windowStartStripe;
 
-                                pPendingPoints->at(pointId) = stripePoint;
-                                pPendingNeighborsContainer->at(pointId) = pointNeighbors;
+                                pPendingPoints->emplace(pointId, stripePoint);
+                                pPendingNeighborsContainer->emplace(pointId, pointNeighbors);
                             }
                         }
                     }
@@ -317,6 +328,48 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
         size_t getNumPendingPoints() override
         {
             return pPendingPoints->size();
+        }
+
+        void SaveToFile() const override
+        {
+            auto ms = chrono::duration_cast<chrono::milliseconds>(getDuration());
+
+            auto now = chrono::system_clock::now();
+            auto in_time_t = chrono::system_clock::to_time_t(now);
+
+            stringstream ss;
+            ss << filePrefix << "_" << put_time(localtime(&in_time_t), "%Y%m%d%H%M%S") << "_" << ms.count() << ".txt";
+
+            ofstream outFile(ss.str(), ios_base::out);
+
+            size_t numInputPoints = problem.GetInputDatasetSize();
+            size_t numNeighbors = problem.GetNumNeighbors();
+            size_t pos = 0;
+
+            for (size_t pointId = 1; pointId <=  numInputPoints; ++pointId)
+            {
+                outFile << pointId;
+
+                for (size_t iNeighbor=0; iNeighbor < numNeighbors; ++iNeighbor)
+                {
+                    auto& neighbor = pNeighborsExtVector->at(pos);
+
+                    if (neighbor.pointId > 0)
+                    {
+                        outFile << "\t(" << neighbor.pointId << " " << neighbor.distanceSquared << ")";
+                    }
+                    else
+                    {
+                        outFile << "\t(" << "NULL" << " " << neighbor.distanceSquared << ")";
+                    }
+
+                    ++pos;
+                }
+
+                outFile << endl;
+            }
+
+            outFile.close();
         }
 
     protected:

@@ -111,7 +111,7 @@ class AllKnnProblem
             if (useExternalMemory)
                 return pExtTrainingDataset->size();
             else
-                return pExtTrainingDataset->size();
+                return pTrainingDataset->size();
         }
 
         const chrono::duration<double>& getLoadingTime() const { return loadingTime; }

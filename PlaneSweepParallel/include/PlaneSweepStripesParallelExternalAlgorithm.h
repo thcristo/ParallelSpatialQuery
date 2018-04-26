@@ -69,14 +69,14 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
 
             if (!pResult->HasAllocationError())
             {
-                nextStripe = startStripe - 1;
+                bool hasPrevStripe = startStripe > 0;
 
-                while (nextStripe >= 0)
+                while (hasPrevStripe)
                 {
-                    auto pWindow = pResult->GetWindow(nextStripe, true);
+                    auto pWindow = pResult->GetWindow(startStripe-1, true);
                     startStripe = pWindow->GetStartStripe();
-                    endStripe = pWindow->GetEndStripe();
-                    nextStripe = startStripe - 1;
+
+                    hasPrevStripe = startStripe > 0;
 
                     if (pWindow != nullptr)
                         PlaneSweepWindow(pWindow, pResult, numThreadsToUse);
@@ -119,9 +119,11 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
             for (auto inputPointIter = pendingPointsIterBegin; inputPointIter < pendingPointsIterEnd; ++inputPointIter)
             {
                 bool exit = false;
-                size_t currentStripe = isSecondPass ? windowEndStripe : windowStartStripe;
-                int step = isSecondPass ? -1 : 1;
                 auto& neighbors = pendingNeighborsContainer.at(inputPointIter->id);
+                size_t lowStripe = neighbors.getLowStripe();
+                size_t highStripe = neighbors.getHighStripe();
+                size_t currentStripe = isSecondPass ? lowStripe - 1 : highStripe + 1;
+                int step = isSecondPass ? -1 : 1;
 
                 do
                 {
@@ -178,10 +180,11 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
 
                         PlaneSweepStripe(inputPointIter, stripeData, iStripeTraining - windowStartStripe, neighbors, 0.0);
 
-                        size_t iStripeTrainingPrev = iStripeTraining - 1;
-                        size_t iStripeTrainingNext = iStripeTraining + 1;
-                        bool lowStripeEnd = iStripeTrainingPrev < windowStartStripe;
-                        bool highStripeEnd = iStripeTrainingNext > windowEndStripe;
+                        bool lowStripeEnd = iStripeTraining == windowStartStripe;
+                        bool highStripeEnd = iStripeTraining == windowEndStripe;
+
+                        size_t iStripeTrainingPrev = lowStripeEnd ? iStripeTraining : iStripeTraining - 1;
+                        size_t iStripeTrainingNext = highStripeEnd ? iStripeTraining : iStripeTraining + 1;
 
                         if (lowStripeEnd)
                         {
@@ -202,10 +205,12 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                                 if (dySquaredLow < neighbors.MaxDistanceElement().distanceSquared)
                                 {
                                     PlaneSweepStripe(inputPointIter, stripeData, iStripeTrainingPrev - windowStartStripe, neighbors, dySquaredLow);
-                                    --iStripeTrainingPrev;
-                                    lowStripeEnd = iStripeTrainingPrev < windowStartStripe;
+                                    lowStripeEnd = iStripeTrainingPrev == windowStartStripe;
+
                                     if (lowStripeEnd)
                                         neighbors.setLowStripe(windowStartStripe);
+                                    else
+                                        --iStripeTrainingPrev;
                                 }
                                 else
                                 {
@@ -221,10 +226,12 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                                 if (dySquaredHigh < neighbors.MaxDistanceElement().distanceSquared)
                                 {
                                     PlaneSweepStripe(inputPointIter, stripeData, iStripeTrainingNext - windowStartStripe, neighbors, dySquaredHigh);
-                                    ++iStripeTrainingNext;
-                                    highStripeEnd = iStripeTrainingNext > windowEndStripe;
+                                    highStripeEnd = iStripeTrainingNext == windowEndStripe;
+
                                     if (highStripeEnd)
                                         neighbors.setHighStripe(windowEndStripe);
+                                    else
+                                        ++iStripeTrainingNext;
                                 }
                                 else
                                 {

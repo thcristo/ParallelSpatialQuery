@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="10 E:\Files\eap\de\start\data\multiplied\256MClus1.bin E:\Files\eap\de\start\data\multiplied\256MClus2.bin 0 1.0E-15 0 0 0 000000000000000001 4096" />
+				<Option parameters="10 E:\Files\eap\de\start\data\syntheticdata\1000KClus1NNew.bin E:\Files\eap\de\start\data\syntheticdata\1000KClus2NNew.bin 0 1.0E-15 0 1 0 000000000000000001 10" />
 				<Compiler>
 					<Add option="-std=c++11" />
 					<Add option="-g" />
@@ -27,7 +27,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="10 E:\Files\eap\de\start\data\small-real-data\NArrpointNNew.txt E:\Files\eap\de\start\data\small-real-data\NArdpointNNew.txt" />
+				<Option parameters="10 E:\Files\eap\de\start\data\syntheticdata\1000KClus1NNew.bin E:\Files\eap\de\start\data\syntheticdata\1000KClus2NNew.bin 0 1.0E-15 0 0 0 000000000000000001 10" />
 				<Compiler>
 					<Add option="-O3" />
 					<Add option="-std=c++11" />
