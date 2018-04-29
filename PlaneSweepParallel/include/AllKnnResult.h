@@ -128,7 +128,7 @@ class AllKnnResult
             outFile.close();
         }
 
-        unique_ptr<vector<unsigned long>> FindDifferences(const AllKnnResult& result, double accuracy)
+        virtual unique_ptr<vector<unsigned long>> FindDifferences(AllKnnResult& result, double accuracy)
         {
             auto differences = unique_ptr<vector<unsigned long>>(new vector<unsigned long>());
 
@@ -179,6 +179,12 @@ class AllKnnResult
 
             return differences;
         }
+
+        pointNeighbors_priority_queue_vector_t& GetNeighborsPriorityQueueVector()
+        {
+            return *pNeighborsPriorityQueueVector;
+        }
+
     protected:
         const AllKnnProblem& problem;
         string filePrefix;

@@ -18,8 +18,9 @@
 #include "PlaneSweepStripesParallelAlgorithm.h"
 #include "PlaneSweepStripesParallelTBBAlgorithm.h"
 #include "PlaneSweepStripesParallelExternalAlgorithm.h"
+#include "PlaneSweepStripesParallelExternalTBBAlgorithm.h"
 
-#define NUM_ALGORITHMS 18
+#define NUM_ALGORITHMS 20
 
 using namespace std;
 
@@ -34,6 +35,7 @@ int main(int argc, char* argv[])
     bool findDifferences = true;
     string enableAlgo(NUM_ALGORITHMS, '1');
     bool useExternalMemory = false;
+    bool useInternalMemory = false;
     size_t memoryLimitMB = 1024;
 
     if (argc < 4)
@@ -126,89 +128,117 @@ int main(int argc, char* argv[])
 
         vector<algorithm_ptr_t> algorithms;
 
-        if (enableAlgo[16]== '1' || enableAlgo[17]== '1')
+        for (int i=0; i < NUM_ALGORITHMS; ++i)
         {
-            useExternalMemory = true;
-
-            if (enableAlgo[16] == '1')
+            if (enableAlgo[i] == '1')
             {
-                algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalAlgorithm(numStripes, numThreads, true, false)));
-            }
-            else if (enableAlgo[17] == '1')
-            {
-                algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalAlgorithm(numStripes, numThreads, true, true)));
-            }
-        }
-        else
-        {
-            for (int i=0; i < NUM_ALGORITHMS; ++i)
-            {
-                if (enableAlgo[i] == '1')
+                switch(i)
                 {
-                    switch(i)
-                    {
-                        case 0:
-                            algorithms.push_back(algorithm_ptr_t(new BruteForceAlgorithm));
-                            break;
-                        case 1:
-                            algorithms.push_back(algorithm_ptr_t(new BruteForceParallelAlgorithm(numThreads)));
-                            break;
-                        case 2:
-                            algorithms.push_back(algorithm_ptr_t(new BruteForceParallelTBBAlgorithm(numThreads)));
-                            break;
-                        case 3:
-                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepAlgorithm()));
-                            break;
-                        case 4:
-                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyAlgorithm()));
-                            break;
-                        case 5:
-                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads, false)));
-                            break;
-                        case 6:
-                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads, true)));
-                            break;
-                        case 7:
-                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads, false)));
-                            break;
-                        case 8:
-                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads, true)));
-                            break;
-                        case 9:
-                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesAlgorithm(numStripes)));
-                            break;
-                        case 10:
-                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, false, false)));
-                            break;
-                        case 11:
-                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, false)));
-                            break;
-                        case 12:
-                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, false, false)));
-                            break;
-                        case 13:
-                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, false)));
-                            break;
-                        case 14:
-                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, true)));
-                            break;
-                        case 15:
-                            algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, true)));
-                            break;
-
-                    }
+                    case 0:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new BruteForceAlgorithm));
+                        break;
+                    case 1:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new BruteForceParallelAlgorithm(numThreads)));
+                        break;
+                    case 2:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new BruteForceParallelTBBAlgorithm(numThreads)));
+                        break;
+                    case 3:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepAlgorithm()));
+                        break;
+                    case 4:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyAlgorithm()));
+                        break;
+                    case 5:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads, false)));
+                        break;
+                    case 6:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads, true)));
+                        break;
+                    case 7:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads, false)));
+                        break;
+                    case 8:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads, true)));
+                        break;
+                    case 9:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesAlgorithm(numStripes)));
+                        break;
+                    case 10:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, false, false)));
+                        break;
+                    case 11:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, false)));
+                        break;
+                    case 12:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, false, false)));
+                        break;
+                    case 13:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, false)));
+                        break;
+                    case 14:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, true)));
+                        break;
+                    case 15:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, true)));
+                        break;
+                    case 16:
+                        useExternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalAlgorithm(numStripes, numThreads, true, false)));
+                        break;
+                    case 17:
+                        useExternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalAlgorithm(numStripes, numThreads, true, true)));
+                        break;
+                    case 18:
+                        useExternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalTBBAlgorithm(numStripes, numThreads, true, false)));
+                        break;
+                    case 19:
+                        useExternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalTBBAlgorithm(numStripes, numThreads, true, true)));
+                        break;
                 }
             }
         }
 
         cout.imbue(std::locale(cout.getloc(), new punct_facet<char, ',', '.'>));
 
-        AllKnnProblem problem(argv[2], argv[3], numNeighbors, useExternalMemory, memoryLimitMB);
+        unique_ptr<AllKnnProblem> pProblem;
+        unique_ptr<AllKnnProblemExternal> pProblemExternal;
+
+        if (useInternalMemory)
+            pProblem.reset(new AllKnnProblem(argv[2], argv[3], numNeighbors));
+
+        if (useExternalMemory)
+            pProblemExternal.reset(new AllKnnProblemExternal(argv[2], argv[3], numNeighbors, memoryLimitMB));
+
         unique_ptr<AllKnnResult> pResultReference, pResult;
         unique_ptr<vector<unsigned long>> pDiff;
 
-        cout << "Read " << problem.GetInputDatasetSize() << " input points and " << problem.GetTrainingDatasetSize()
-            << " training points " << "in " << problem.getLoadingTime().count() << " seconds" << endl;
+        if (useInternalMemory)
+            cout << "Read " << pProblem->GetInputDatasetSize() << " input points and " << pProblem->GetTrainingDatasetSize()
+                << " training points " << "in " << pProblem->getLoadingTime().count() << " seconds" << endl;
+
+        if (useExternalMemory)
+            cout << "Read " << pProblemExternal->GetInputDatasetSize() << " input points and " << pProblemExternal->GetTrainingDatasetSize()
+                << " training points " << "in " << pProblemExternal->getLoadingTime().count() << " seconds" << endl;
 
         auto now = chrono::system_clock::now();
         auto in_time_t = chrono::system_clock::to_time_t(now);
@@ -223,7 +253,11 @@ int main(int argc, char* argv[])
 
         for (size_t iAlgo = 0; iAlgo < algorithms.size(); ++iAlgo)
         {
-            pResult = algorithms[iAlgo]->Process(problem);
+            if (algorithms[iAlgo]->UsesExternalMemory())
+                pResult = algorithms[iAlgo]->Process(*pProblemExternal);
+            else
+                pResult = algorithms[iAlgo]->Process(*pProblem);
+
             cout << fixed << setprecision(3) << algorithms[iAlgo]->GetTitle() << " duration: " << pResult->getDuration().count()
                 << " sorting " << pResult->getDurationSorting().count() << " seconds,"
                 << " totalAdd: " << pResult->getTotalHeapAdditions()
@@ -249,7 +283,7 @@ int main(int argc, char* argv[])
                 pResult->SaveToFile();
             }
 
-            if (!useExternalMemory && findDifferences && iAlgo > 0)
+            if (findDifferences && iAlgo > 0)
             {
                 pDiff = pResult->FindDifferences(*pResultReference, accuracy);
                 cout << " " << pDiff->size() << " differences. ";
@@ -288,7 +322,7 @@ int main(int argc, char* argv[])
             outFile << endl;
             outFile.flush();
 
-            if (!useExternalMemory && findDifferences && iAlgo == 0)
+            if (findDifferences && iAlgo == 0)
             {
                 pResultReference = move(pResult);
             }

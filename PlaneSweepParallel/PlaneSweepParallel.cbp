@@ -11,15 +11,17 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="10 E:\Files\eap\de\start\data\syntheticdata\1000KClus1NNew.bin E:\Files\eap\de\start\data\syntheticdata\1000KClus2NNew.bin 0 1.0E-15 0 1 0 000000000000000001 10" />
+				<Option parameters="10 E:\Files\eap\de\start\data\syntheticdata\1000KClus1NNew.bin E:\Files\eap\de\start\data\syntheticdata\1000KClus2NNew.bin 0 1.0E-15 0 1 1 000000000000001001 20" />
 				<Compiler>
-					<Add option="-std=c++11" />
+					<Add option="-std=c++1z" />
 					<Add option="-g" />
 					<Add option="-fopenmp" />
 					<Add directory="include" />
+					<Add directory="../../libs/stxxl/include" />
 				</Compiler>
 				<Linker>
 					<Add option="-fopenmp -ltbb -lstxxl" />
+					<Add directory="../../libs/stxxl/lib" />
 				</Linker>
 			</Target>
 			<Target title="Release">
@@ -30,14 +32,16 @@
 				<Option parameters="10 E:\Files\eap\de\start\data\syntheticdata\1000KClus1NNew.bin E:\Files\eap\de\start\data\syntheticdata\1000KClus2NNew.bin 0 1.0E-15 0 0 0 000000000000000001 10" />
 				<Compiler>
 					<Add option="-O3" />
-					<Add option="-std=c++11" />
+					<Add option="-std=c++1z" />
 					<Add option="-fopenmp -march=native" />
 					<Add directory="include" />
+					<Add directory="../../libs/stxxl/include" />
 				</Compiler>
 				<Linker>
 					<Add option="-O3" />
 					<Add option="-s" />
 					<Add option="-fopenmp -ltbb -lstxxl" />
+					<Add directory="../../libs/stxxl/lib" />
 				</Linker>
 			</Target>
 			<Target title="ReleaseProfile">
@@ -48,7 +52,7 @@
 				<Option parameters="10 E:\Files\eap\de\start\data\small-real-data\NArrpointNNew.txt E:\Files\eap\de\start\data\small-real-data\NArdpointNNew.txt" />
 				<Compiler>
 					<Add option="-O3" />
-					<Add option="-std=c++11" />
+					<Add option="-std=c++1z" />
 					<Add option="-g" />
 					<Add option="-fopenmp -gdwarf-3 -D TBB_USE_THREADING_TOOLS -march=native" />
 					<Add directory="include" />
@@ -65,6 +69,7 @@
 		</Compiler>
 		<Unit filename="include/AbstractAllKnnAlgorithm.h" />
 		<Unit filename="include/AllKnnProblem.h" />
+		<Unit filename="include/AllKnnProblemExternal.h" />
 		<Unit filename="include/AllKnnResult.h" />
 		<Unit filename="include/AllKnnResultSorted.h" />
 		<Unit filename="include/AllKnnResultStripes.h" />
@@ -75,7 +80,6 @@
 		<Unit filename="include/BruteForceAlgorithm.h" />
 		<Unit filename="include/BruteForceParallelAlgorithm.h" />
 		<Unit filename="include/BruteForceParallelTBBAlgorithm.h" />
-		<Unit filename="include/DatasetStream.h" />
 		<Unit filename="include/PlaneSweepAlgorithm.h" />
 		<Unit filename="include/PlaneSweepCopyAlgorithm.h" />
 		<Unit filename="include/PlaneSweepCopyParallelAlgorithm.h" />
@@ -84,6 +88,7 @@
 		<Unit filename="include/PlaneSweepStripesAlgorithm.h" />
 		<Unit filename="include/PlaneSweepStripesParallelAlgorithm.h" />
 		<Unit filename="include/PlaneSweepStripesParallelExternalAlgorithm.h" />
+		<Unit filename="include/PlaneSweepStripesParallelExternalTBBAlgorithm.h" />
 		<Unit filename="include/PlaneSweepStripesParallelTBBAlgorithm.h" />
 		<Unit filename="include/PointNeighbors.h" />
 		<Unit filename="include/StripesWindow.h" />

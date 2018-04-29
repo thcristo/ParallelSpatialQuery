@@ -14,6 +14,11 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
         }
         virtual ~PlaneSweepStripesParallelExternalAlgorithm() {}
 
+        bool UsesExternalMemory() override
+        {
+            return true;
+        }
+
         string GetTitle() const
         {
             if (splitByT)
@@ -43,7 +48,9 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
 
             auto start = chrono::high_resolution_clock::now();
 
-            auto pResult = unique_ptr<AllKnnResultStripesParallelExternal>(new AllKnnResultStripesParallelExternal(problem, GetPrefix(), parallelSort, splitByT));
+            auto pResult = unique_ptr<AllKnnResultStripesParallelExternal>(
+                                new AllKnnResultStripesParallelExternal(static_cast<AllKnnProblemExternal&>(problem),
+                                                GetPrefix(), parallelSort, splitByT));
 
             numStripes = pResult->SplitStripes(numStripes);
 

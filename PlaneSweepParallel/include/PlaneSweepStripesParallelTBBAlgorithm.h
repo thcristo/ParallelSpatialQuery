@@ -129,7 +129,6 @@ class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
             return pResult;
         }
-    protected:
 
     private:
         int numStripes = 0;

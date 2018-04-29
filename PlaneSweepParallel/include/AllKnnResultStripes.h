@@ -235,9 +235,7 @@ class AllKnnResultStripes : public AllKnnResult
                 outFile << i << ";" << (pStripeBoundaries->at(i)).minY  << ";" << (pStripeBoundaries->at(i)).maxY  << ";" << (pInputDatasetStripe->at(i)).size() << ";" << (pTrainingDatasetStripe->at(i)).size() << endl;
             }
 
-
             outFile.close();
-
         }
 };
 

@@ -52,91 +52,65 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
             auto inputDatasetBegin = inputDataset.cbegin();
             auto inputDatasetEnd = inputDataset.cend();
 
-            //auto inputDatasetSize = inputDataset.size();
+            #pragma omp parallel for schedule(dynamic)
+            for (auto inputPointIter = inputDatasetBegin; inputPointIter < inputDatasetEnd; ++inputPointIter)
+            {
+                auto& neighbors = pNeighborsContainer->at(inputPointIter->id - 1);
 
-            //#pragma omp parallel
-            //{
-                /*
-                int iThread = omp_get_thread_num();
-                int numThreads = omp_get_num_threads();
-                auto partitionSize = inputDatasetSize/numThreads;
+                auto nextTrainingPointIter = lower_bound(trainingDatasetBegin, trainingDatasetEnd, inputPointIter->x,
+                                    [&](const Point& point, const double& value) { return point.x < value; } );
 
-                auto partitionStart = inputDatasetBegin + iThread*partitionSize;
-                auto startSearchPos = lower_bound(trainingDatasetBegin, trainingDatasetEnd, partitionStart->x,
-                                        [&](const Point& point, const double& value) { return point.x < value; } );
-                */
-                #pragma omp parallel for schedule(dynamic)
-                for (auto inputPointIter = inputDatasetBegin; inputPointIter < inputDatasetEnd; ++inputPointIter)
+                auto prevTrainingPointIter = nextTrainingPointIter;
+                if (prevTrainingPointIter > trainingDatasetBegin)
                 {
-                    auto& neighbors = pNeighborsContainer->at(inputPointIter->id - 1);
+                    --prevTrainingPointIter;
+                }
 
+                bool lowStop = prevTrainingPointIter == nextTrainingPointIter;
+                bool highStop = nextTrainingPointIter == trainingDatasetEnd;
 
-                    auto nextTrainingPointIter = lower_bound(trainingDatasetBegin, trainingDatasetEnd, inputPointIter->x,
-                                        [&](const Point& point, const double& value) { return point.x < value; } );
-
-
-                    /*
-                    auto nextTrainingPointIter = startSearchPos;
-                    while (nextTrainingPointIter < trainingDatasetEnd && nextTrainingPointIter->x < inputPointIter->x)
+                while (!lowStop || !highStop)
+                {
+                    if (!lowStop)
                     {
-                        ++nextTrainingPointIter;
-                    }
-
-                    startSearchPos = nextTrainingPointIter;
-                    */
-                    auto prevTrainingPointIter = nextTrainingPointIter;
-                    if (prevTrainingPointIter > trainingDatasetBegin)
-                    {
-                        --prevTrainingPointIter;
-                    }
-
-                    bool lowStop = prevTrainingPointIter == nextTrainingPointIter;
-                    bool highStop = nextTrainingPointIter == trainingDatasetEnd;
-
-                    while (!lowStop || !highStop)
-                    {
-                        if (!lowStop)
+                        if (CheckAddNeighbor(inputPointIter, prevTrainingPointIter, neighbors))
                         {
-                            if (CheckAddNeighbor(inputPointIter, prevTrainingPointIter, neighbors))
+                            if (prevTrainingPointIter > trainingDatasetBegin)
                             {
-                                if (prevTrainingPointIter > trainingDatasetBegin)
-                                {
-                                    --prevTrainingPointIter;
-                                }
-                                else
-                                {
-                                    lowStop = true;
-                                }
+                                --prevTrainingPointIter;
                             }
                             else
                             {
                                 lowStop = true;
                             }
                         }
-
-                        if (!highStop)
+                        else
                         {
-                            if (CheckAddNeighbor(inputPointIter, nextTrainingPointIter, neighbors))
-                            {
-                                if (nextTrainingPointIter < trainingDatasetEnd)
-                                {
-                                    ++nextTrainingPointIter;
-                                }
+                            lowStop = true;
+                        }
+                    }
 
-                                if (nextTrainingPointIter == trainingDatasetEnd)
-                                {
-                                    highStop = true;
-                                }
+                    if (!highStop)
+                    {
+                        if (CheckAddNeighbor(inputPointIter, nextTrainingPointIter, neighbors))
+                        {
+                            if (nextTrainingPointIter < trainingDatasetEnd)
+                            {
+                                ++nextTrainingPointIter;
                             }
-                            else
+
+                            if (nextTrainingPointIter == trainingDatasetEnd)
                             {
                                 highStop = true;
                             }
                         }
+                        else
+                        {
+                            highStop = true;
+                        }
                     }
                 }
-            //}
-
+            }
 
             auto finish = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = finish - start;

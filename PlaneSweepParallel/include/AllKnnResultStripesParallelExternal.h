@@ -3,7 +3,7 @@
 #include <stxxl/sort>
 #include "AllKnnResultStripes.h"
 #include "StripesWindow.h"
-
+#include "AllKnnProblemExternal.h"
 
 struct ExternalPointComparerY
 {
@@ -47,14 +47,37 @@ struct ExternalPointComparerX
     }
 };
 
+struct ExternalNeighborComparer
+{
+    NeighborExt minval = {0, 0.0, 0, 0};
+    NeighborExt maxval = {0, 0.0, ULONG_MAX, UINT_MAX};
+
+    bool operator()(const NeighborExt& neighbor1, const NeighborExt& neighbor2) const
+    {
+        return neighbor1.inputPointId < neighbor2.inputPointId || ( (neighbor1.inputPointId == neighbor2.inputPointId) && (neighbor1.position < neighbor2.position) );
+    }
+
+    const NeighborExt& min_value() const
+    {
+        return minval;
+    }
+
+    const NeighborExt& max_value() const
+    {
+        return maxval;
+    }
+};
+
 class AllKnnResultStripesParallelExternal : public AllKnnResult
 {
     public:
-        AllKnnResultStripesParallelExternal(const AllKnnProblem& problem, const string& filePrefix) : AllKnnResult(problem, filePrefix)
+        AllKnnResultStripesParallelExternal(const AllKnnProblemExternal& problem, const string& filePrefix)
+            : AllKnnResult(problem, filePrefix), problemExt(problem)
         {
         }
 
-        AllKnnResultStripesParallelExternal(const AllKnnProblem& problem, const string& filePrefix, bool parallelSort, bool splitByT) : AllKnnResult(problem, filePrefix), splitByT(splitByT), parallelSort(parallelSort)
+        AllKnnResultStripesParallelExternal(const AllKnnProblemExternal& problem, const string& filePrefix, bool parallelSort, bool splitByT)
+            : AllKnnResult(problem, filePrefix), splitByT(splitByT), parallelSort(parallelSort), problemExt(problem)
         {
         }
 
@@ -62,9 +85,10 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
         size_t SplitStripes(size_t numStripes)
         {
-            auto& inputDatasetSortedY = problem.GetExtInputDataset();
-            auto& trainingDatasetSortedY = problem.GetExtTrainingDataset();
-            auto memoryLimit = problem.GetMemoryLimitBytes();
+            ext_point_vector_t inputDatasetSortedY(problemExt.GetExtInputDataset());
+            ext_point_vector_t trainingDatasetSortedY(problemExt.GetExtTrainingDataset());
+
+            auto memoryLimit = problemExt.GetMemoryLimitBytes();
 
             stxxl::sort(inputDatasetSortedY.cbegin(), inputDatasetSortedY.cend(), ExternalPointComparerY(), memoryLimit);
             stxxl::sort(trainingDatasetSortedY.cbegin(), trainingDatasetSortedY.cend(), ExternalPointComparerY(), memoryLimit);
@@ -84,7 +108,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
         unique_ptr<StripesWindow> GetWindow(size_t fromStripe, bool secondPass)
         {
-            auto memoryLimit = problem.GetMemoryLimitBytes();
+            auto memoryLimit = problemExt.GetMemoryLimitBytes();
             size_t numNeighbors = problem.GetNumNeighbors();
 
             size_t numStripes = pStripeBoundaries->size();
@@ -242,12 +266,9 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
         void CommitWindow(StripesWindow& window, point_vector_t& pendingPoints)
         {
-            size_t numNeighbors = problem.GetNumNeighbors();
-
             if (pNeighborsExtVector == nullptr)
             {
-                size_t totalNumNeighbors = numNeighbors*problem.GetInputDatasetSize();
-                pNeighborsExtVector.reset(new ext_neighbors_vector_t(totalNumNeighbors));
+                pNeighborsExtVector.reset(new ext_neighbors_vector_t());
             }
 
             auto pendingPointsBegin = pendingPoints.cbegin();
@@ -259,14 +280,16 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                 auto& pointNeighbors = pPendingNeighborsContainer->at(pointId);
                 if (IsSearchCompleted(pointNeighbors))
                 {
-                    size_t posNeighbor = (pointId-1)*numNeighbors;
+                    unsigned int neighborPosition = 0;
+
                     while (pointNeighbors.HasNext())
                     {
                         Neighbor neighbor = pointNeighbors.Next();
-                        auto& extNeighbor = pNeighborsExtVector->at(posNeighbor);
-                        extNeighbor.pointId = neighbor.pointId;
-                        extNeighbor.distanceSquared = neighbor.distanceSquared;
-                        ++posNeighbor;
+
+                        NeighborExt extNeighbor = {neighbor.pointId, neighbor.distanceSquared, pointId, neighborPosition};
+
+                        pNeighborsExtVector->push_back(extNeighbor);
+                        ++neighborPosition;
                     }
                     pPendingPoints->erase(pointId);
                     pPendingNeighborsContainer->erase(pointId);
@@ -298,30 +321,34 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
                             if (IsSearchCompleted(pointNeighbors))
                             {
-                                size_t posNeighbor = (pointId-1)*numNeighbors;
+                                unsigned int neighborPosition = 0;
+
                                 while (pointNeighbors.HasNext())
                                 {
                                     Neighbor neighbor = pointNeighbors.Next();
-                                    auto& extNeighbor = pNeighborsExtVector->at(posNeighbor);
-                                    extNeighbor.pointId = neighbor.pointId;
-                                    extNeighbor.distanceSquared = neighbor.distanceSquared;
-                                    ++posNeighbor;
+
+                                    NeighborExt extNeighbor = {neighbor.pointId, neighbor.distanceSquared, pointId, neighborPosition};
+
+                                    pNeighborsExtVector->push_back(extNeighbor);
+                                    ++neighborPosition;
                                 }
                             }
                             else
                             {
-                                StripePoint stripePoint;
-                                stripePoint.id = pointId;
-                                stripePoint.x = point.x;
-                                stripePoint.y = point.y;
-                                stripePoint.stripe = iWindowStripe + windowStartStripe;
-
+                                StripePoint stripePoint = {pointId, point.x, point.y, iWindowStripe + windowStartStripe};
                                 pPendingPoints->emplace(pointId, stripePoint);
-                                pPendingNeighborsContainer->emplace(pointId, pointNeighbors);
+                                pPendingNeighborsContainer->emplace(pointId, std::move(pointNeighbors));
                             }
                         }
                     }
                 }
+            }
+
+            if (isSecondPass && window.GetStartStripe() == 0)
+            {
+                auto memoryLimit = problemExt.GetMemoryLimitBytes();
+
+                stxxl::sort(pNeighborsExtVector->cbegin(), pNeighborsExtVector->cend(), ExternalNeighborComparer(), memoryLimit);
             }
         }
 
@@ -372,7 +399,57 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             outFile.close();
         }
 
-    protected:
+        unique_ptr<vector<unsigned long>> FindDifferences(AllKnnResult& result, double accuracy) override
+        {
+            auto differences = unique_ptr<vector<unsigned long>>(new vector<unsigned long>());
+
+            size_t numInputPoints = problem.GetInputDatasetSize();
+            size_t numNeighbors = problem.GetNumNeighbors();
+            size_t pos = 0;
+
+            auto& neighborsVector = result.GetNeighborsPriorityQueueVector();
+
+            for (size_t pointId = 1; pointId <=  numInputPoints; ++pointId)
+            {
+                NeighborsEnumerator* pNeighborsReference = &(neighborsVector.at(pointId - 1));
+                vector<Neighbor> removedNeighborsReference;
+
+                for (size_t iNeighbor=0; iNeighbor < numNeighbors; ++iNeighbor)
+                {
+                    auto& neighbor = pNeighborsExtVector->at(pos);
+
+                    if (pNeighborsReference->HasNext())
+                    {
+                        Neighbor neighborReference = pNeighborsReference->Next();
+                        removedNeighborsReference.push_back(neighborReference);
+
+                        double diff = neighbor.distanceSquared - neighborReference.distanceSquared;
+
+                        if (abs(diff) > accuracy)
+                        {
+                            differences->push_back(pointId);
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        differences->push_back(pointId);
+                        break;
+                    }
+
+                    ++pos;
+                }
+
+                if (pNeighborsReference->HasNext())
+                {
+                    differences->push_back(pointId);
+                }
+
+                pNeighborsReference->AddAllRemoved(removedNeighborsReference);
+            }
+
+            return differences;
+        }
 
     private:
         bool splitByT = false;
@@ -388,6 +465,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
         bool hasAllocationError = false;
         unique_ptr<unordered_map<unsigned long, StripePoint>> pPendingPoints;
         unique_ptr<ext_neighbors_vector_t> pNeighborsExtVector;
+        const AllKnnProblemExternal& problemExt;
 
         size_t get_optimal_stripes()
         {

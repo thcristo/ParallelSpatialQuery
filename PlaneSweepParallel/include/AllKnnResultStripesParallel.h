@@ -204,19 +204,6 @@ class AllKnnResultStripesParallel : public AllKnnResultStripes
                     }
                 }
             }
-
-            /*
-            for (size_t i=0; i < numStripes; ++i)
-            {
-                point_vector_t& inputVector = pInputDatasetStripe->at(i);
-                size_t numInputPoints = inputVector.size();
-                if (numInputPoints > 0)
-                {
-                    pStripeIndex->insert(pStripeIndex->end(), numInputPoints, i);
-                    pInputPoints->insert(pInputPoints->end(), inputVector.begin(), inputVector.end());
-                }
-            }
-            */
         }
 };
 

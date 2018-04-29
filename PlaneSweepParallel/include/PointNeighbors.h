@@ -48,6 +48,29 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
         {
         }
 
+        PointNeighbors(PointNeighbors&& pointNeighbors)
+        {
+            numNeighbors = pointNeighbors.numNeighbors;
+            std::swap(container, pointNeighbors.container);
+            numAdditions = pointNeighbors.numAdditions;
+            lowStripe = pointNeighbors.lowStripe;
+            highStripe = pointNeighbors.highStripe;
+        }
+
+        PointNeighbors& operator=(PointNeighbors&& pointNeighbors)
+        {
+            if (this != &pointNeighbors)
+            {
+                numNeighbors = pointNeighbors.numNeighbors;
+                std::swap(container, pointNeighbors.container);
+                numAdditions = pointNeighbors.numAdditions;
+                lowStripe = pointNeighbors.lowStripe;
+                highStripe = pointNeighbors.highStripe;
+            }
+
+            return *this;
+        }
+
         virtual ~PointNeighbors() {}
 
         bool HasNext() override

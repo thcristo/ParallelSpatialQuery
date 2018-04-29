@@ -136,9 +136,6 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
 
             return unique_ptr<AllKnnResult>(new AllKnnResult(problem, GetPrefix(), pNeighborsContainer, elapsed, elapsedSorting));
         }
-
-    private:
-
 };
 
 #endif // PLANESWEEPALGORITHM_H

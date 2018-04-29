@@ -22,6 +22,12 @@ struct Neighbor
     double distanceSquared;
 };
 
+struct NeighborExt : public Neighbor
+{
+    unsigned long inputPointId;
+    unsigned int position;
+};
+
 class NeighborComparer
 {
     public :
@@ -60,6 +66,6 @@ protected:
 };
 
 typedef stxxl::VECTOR_GENERATOR<Point>::result ext_point_vector_t;
-typedef stxxl::VECTOR_GENERATOR<Neighbor>::result ext_neighbors_vector_t;
+typedef stxxl::VECTOR_GENERATOR<NeighborExt>::result ext_neighbors_vector_t;
 
 #endif // PLANESWEEPPARALLEL_H_INCLUDED

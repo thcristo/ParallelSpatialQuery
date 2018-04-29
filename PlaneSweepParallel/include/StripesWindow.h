@@ -13,14 +13,18 @@ class StripesWindow
                         pStripeBoundaries(move(pBoundaries)), numNeighbors(numNeighbors)
         {
             size_t numStripes = GetNumStripes();
-            pNeighborsContainer.reset(new pointNeighbors_vector_vector_t(numStripes,
-                    vector<PointNeighbors<neighbors_priority_queue_t>>()));
+            pNeighborsContainer.reset(new pointNeighbors_vector_vector_t());
 
             for(size_t i=0; i < numStripes; ++i)
             {
+                pNeighborsContainer->emplace_back(vector<PointNeighbors<neighbors_priority_queue_t>>());
                 size_t numInputPoints = pInputDatasetStripe->at(i).size();
                 if (numInputPoints > 0)
-                    pNeighborsContainer->at(i).assign(numInputPoints, PointNeighbors<neighbors_priority_queue_t>(numNeighbors));
+                {
+                    auto& neighborsVector = pNeighborsContainer->at(i);
+                    for (size_t iPoint=0; iPoint < numInputPoints; ++iPoint)
+                        neighborsVector.emplace_back(PointNeighbors<neighbors_priority_queue_t>(numNeighbors));
+                }
             }
         }
 
@@ -63,8 +67,6 @@ class StripesWindow
         {
                 return *pNeighborsContainer;
         }
-
-    protected:
 
     private:
         size_t startStripe = 0;
