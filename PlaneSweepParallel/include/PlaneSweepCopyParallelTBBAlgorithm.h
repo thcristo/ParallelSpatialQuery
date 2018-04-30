@@ -6,7 +6,6 @@
 
 using namespace tbb;
 
-
 class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
@@ -65,10 +64,6 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
                     auto rangeBegin = range.begin();
                     auto rangeEnd = range.end();
 
-                    /*
-                    auto startSearchPos = lower_bound(trainingDatasetBegin, trainingDatasetEnd, rangeBegin->x,
-                                            [&](const Point& point, const double& value) { return point.x < value; } );
-                    */
                     for (auto inputPointIter = rangeBegin; inputPointIter < rangeEnd; ++inputPointIter)
                     {
                         auto& neighbors = pNeighborsContainer->at(inputPointIter->id - 1);
@@ -76,17 +71,6 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
                         auto nextTrainingPointIter = lower_bound(trainingDatasetBegin, trainingDatasetEnd, inputPointIter->x,
                                             [&](const Point& point, const double& value) { return point.x < value; } );
-
-
-                        /*
-                        auto nextTrainingPointIter = startSearchPos;
-                        while (nextTrainingPointIter < trainingDatasetEnd && nextTrainingPointIter->x < inputPointIter->x)
-                        {
-                            ++nextTrainingPointIter;
-                        }
-
-                        startSearchPos = nextTrainingPointIter;
-                        */
 
                         auto prevTrainingPointIter = nextTrainingPointIter;
                         if (prevTrainingPointIter > trainingDatasetBegin)
@@ -152,8 +136,6 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
             return pResult;
         }
-
-    protected:
 
     private:
         int numThreads = 0;

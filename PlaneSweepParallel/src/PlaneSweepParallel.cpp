@@ -17,8 +17,10 @@
 #include "PlaneSweepStripesAlgorithm.h"
 #include "PlaneSweepStripesParallelAlgorithm.h"
 #include "PlaneSweepStripesParallelTBBAlgorithm.h"
+#include "PlaneSweepStripesParallelExternalAlgorithm.h"
+#include "PlaneSweepStripesParallelExternalTBBAlgorithm.h"
 
-#define NUM_ALGORITHMS 16
+#define NUM_ALGORITHMS 20
 
 using namespace std;
 
@@ -32,6 +34,9 @@ int main(int argc, char* argv[])
     bool saveToFile = true;
     bool findDifferences = true;
     string enableAlgo(NUM_ALGORITHMS, '1');
+    bool useExternalMemory = false;
+    bool useInternalMemory = false;
+    size_t memoryLimitMB = 1024;
 
     if (argc < 4)
     {
@@ -45,6 +50,7 @@ int main(int argc, char* argv[])
         cout << "Argument 7: Save results of each algorithm to a text file (0/1, optional)\n";
         cout << "Argument 8: Compare results of each algorithm with results of the first algorithm (0/1, optional)\n";
         cout << "Argument 9: Enable/Disable algorithms (bitstream, e.g. 01100110011110, optional)\n";
+        cout << "Argument 10: Megabytes of physical memory to use for external memory algorithms (int, optional)\n";
         return 1;
     }
 
@@ -111,13 +117,14 @@ int main(int argc, char* argv[])
             }
         }
 
-        cout.imbue(std::locale(cout.getloc(), new punct_facet<char, ',', '.'>));
-
-        AllKnnProblem problem(argv[2], argv[3], numNeighbors);
-        unique_ptr<AllKnnResult> pResultReference, pResult;
-        unique_ptr<vector<long>> pDiff;
-        cout << "Read " << problem.GetInputDataset().size() << " input points and " << problem.GetTrainingDataset().size()
-            << " training points " << "in " << problem.getLoadingTime().count() << " seconds" << endl;
+        if (argc >= 11)
+        {
+            size_t limit = stoull(argv[10]);
+            if (limit > 0)
+            {
+                memoryLimitMB = limit;
+            }
+        }
 
         vector<algorithm_ptr_t> algorithms;
 
@@ -128,57 +135,110 @@ int main(int argc, char* argv[])
                 switch(i)
                 {
                     case 0:
+                        useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new BruteForceAlgorithm));
                         break;
                     case 1:
+                        useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new BruteForceParallelAlgorithm(numThreads)));
                         break;
                     case 2:
+                        useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new BruteForceParallelTBBAlgorithm(numThreads)));
                         break;
                     case 3:
+                        useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepAlgorithm()));
                         break;
                     case 4:
+                        useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyAlgorithm()));
                         break;
                     case 5:
+                        useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads, false)));
                         break;
                     case 6:
+                        useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelAlgorithm(numThreads, true)));
                         break;
                     case 7:
+                        useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads, false)));
                         break;
                     case 8:
+                        useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepCopyParallelTBBAlgorithm(numThreads, true)));
                         break;
                     case 9:
+                        useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesAlgorithm(numStripes)));
                         break;
                     case 10:
+                        useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, false, false)));
                         break;
                     case 11:
+                        useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, false)));
                         break;
                     case 12:
+                        useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, false, false)));
                         break;
                     case 13:
+                        useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, false)));
                         break;
                     case 14:
+                        useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, true)));
                         break;
                     case 15:
+                        useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, true)));
                         break;
-
+                    case 16:
+                        useExternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalAlgorithm(numStripes, numThreads, true, false)));
+                        break;
+                    case 17:
+                        useExternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalAlgorithm(numStripes, numThreads, true, true)));
+                        break;
+                    case 18:
+                        useExternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalTBBAlgorithm(numStripes, numThreads, true, false)));
+                        break;
+                    case 19:
+                        useExternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalTBBAlgorithm(numStripes, numThreads, true, true)));
+                        break;
                 }
             }
         }
+
+        cout.imbue(std::locale(cout.getloc(), new punct_facet<char, ',', '.'>));
+
+        unique_ptr<AllKnnProblem> pProblem;
+        unique_ptr<AllKnnProblemExternal> pProblemExternal;
+
+        if (useInternalMemory)
+            pProblem.reset(new AllKnnProblem(argv[2], argv[3], numNeighbors));
+
+        if (useExternalMemory)
+            pProblemExternal.reset(new AllKnnProblemExternal(argv[2], argv[3], numNeighbors, memoryLimitMB));
+
+        unique_ptr<AllKnnResult> pResultReference, pResult;
+        unique_ptr<vector<unsigned long>> pDiff;
+
+        if (useInternalMemory)
+            cout << "Read " << pProblem->GetInputDatasetSize() << " input points and " << pProblem->GetTrainingDatasetSize()
+                << " training points " << "in " << pProblem->getLoadingTime().count() << " seconds" << endl;
+
+        if (useExternalMemory)
+            cout << "Read " << pProblemExternal->GetInputDatasetSize() << " input points and " << pProblemExternal->GetTrainingDatasetSize()
+                << " training points " << "in " << pProblemExternal->getLoadingTime().count() << " seconds" << endl;
 
         auto now = chrono::system_clock::now();
         auto in_time_t = chrono::system_clock::to_time_t(now);
@@ -188,19 +248,25 @@ int main(int argc, char* argv[])
         ofstream outFile(ss.str(), ios_base::out);
         outFile.imbue(locale(outFile.getloc(), new punct_facet<char, ',', '.'>));
 
-        outFile << "Algorithm;Total Duration;Sorting Duration;Total Heap Additions;Min. Heap Additions;Max. Heap Additions;Avg. Heap Additions;NumberOfStripes;Differences;First 5 different point ids" << endl;
+        outFile << "Algorithm;Total Duration;Sorting Duration;Total Heap Additions;Min. Heap Additions;Max. Heap Additions;Avg. Heap Additions;NumberOfStripes;HasAllocationError;PendingPoints;Differences;First 5 different point ids" << endl;
         outFile.flush();
 
         for (size_t iAlgo = 0; iAlgo < algorithms.size(); ++iAlgo)
         {
-            pResult = algorithms[iAlgo]->Process(problem);
+            if (algorithms[iAlgo]->UsesExternalMemory())
+                pResult = algorithms[iAlgo]->Process(*pProblemExternal);
+            else
+                pResult = algorithms[iAlgo]->Process(*pProblem);
+
             cout << fixed << setprecision(3) << algorithms[iAlgo]->GetTitle() << " duration: " << pResult->getDuration().count()
                 << " sorting " << pResult->getDurationSorting().count() << " seconds,"
                 << " totalAdd: " << pResult->getTotalHeapAdditions()
                 <<  " minAdd: " << pResult->getMinHeapAdditions()
                 << " maxAdd: " << pResult->getMaxHeapAdditions()
                 << " avgAdd: " << pResult->getAvgHeapAdditions()
-                << " numStripes: " << pResult->getNumStripes();
+                << " numStripes: " << pResult->getNumStripes()
+                << " hasAllocationError: " << pResult->HasAllocationError()
+                << " numPendingPoints: " << pResult->getNumPendingPoints();
 
             outFile << fixed << setprecision(3) << algorithms[iAlgo]->GetTitle() << ";" << pResult->getDuration().count()
                 << ";" << pResult->getDurationSorting().count()
@@ -208,7 +274,9 @@ int main(int argc, char* argv[])
                 << ";" << pResult->getMinHeapAdditions()
                 << ";" << pResult->getMaxHeapAdditions()
                 << ";" << pResult->getAvgHeapAdditions()
-                << ";" << pResult->getNumStripes();
+                << ";" << pResult->getNumStripes()
+                << ";" << pResult->HasAllocationError()
+                << ";" << pResult->getNumPendingPoints();
 
             if (saveToFile)
             {

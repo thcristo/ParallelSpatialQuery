@@ -48,11 +48,6 @@ class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm
             {
                 auto& neighbors = pNeighborsContainer->at(inputPointIter->id - 1);
 
-                /*
-                auto nextTrainingPointIter = lower_bound(startSearchPos, trainingDataset.cend(), inputPointIter->x,
-                                    [&](const Point& point, const double& value) { return point.x < value; } );
-                */
-
                 auto nextTrainingPointIter = startSearchPos;
                 while (nextTrainingPointIter < trainingDatasetEnd && nextTrainingPointIter->x < inputPointIter->x)
                 {
@@ -122,8 +117,6 @@ class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm
 
             return pResult;
         }
-
-    private:
 };
 
 #endif // PLANESWEEPCOPYALGORITHM_H

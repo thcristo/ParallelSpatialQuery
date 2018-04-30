@@ -4,7 +4,6 @@
 #include <memory.h>
 #include <unordered_map>
 #include "PlaneSweepParallel.h"
-
 #include <tbb/tbb.h>
 
 using namespace tbb;
@@ -33,14 +32,14 @@ class PointNeighbors : public NeighborsEnumerator
     private:
         Container container;
         size_t numNeighbors;
-        long id;
+        unsigned long id;
 };
 
 template<>
 class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
 {
     public:
-        PointNeighbors(size_t numNeighbors) : PointNeighbors(neighbors_vector_t(numNeighbors, {nullptr, numeric_limits<double>::max()}))
+        PointNeighbors(size_t numNeighbors) : PointNeighbors(neighbors_vector_t(numNeighbors, {0, numeric_limits<double>::max()}))
         {
         }
 
@@ -49,11 +48,28 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
         {
         }
 
-        /*
-        PointNeighbors(size_t numNeighbors) : numNeighbors(numNeighbors)
+        PointNeighbors(PointNeighbors&& pointNeighbors)
         {
+            numNeighbors = pointNeighbors.numNeighbors;
+            std::swap(container, pointNeighbors.container);
+            numAdditions = pointNeighbors.numAdditions;
+            lowStripe = pointNeighbors.lowStripe;
+            highStripe = pointNeighbors.highStripe;
         }
-        */
+
+        PointNeighbors& operator=(PointNeighbors&& pointNeighbors)
+        {
+            if (this != &pointNeighbors)
+            {
+                numNeighbors = pointNeighbors.numNeighbors;
+                std::swap(container, pointNeighbors.container);
+                numAdditions = pointNeighbors.numAdditions;
+                lowStripe = pointNeighbors.lowStripe;
+                highStripe = pointNeighbors.highStripe;
+            }
+
+            return *this;
+        }
 
         virtual ~PointNeighbors() {}
 
@@ -76,7 +92,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             if (distanceSquared < lastNeighbor.distanceSquared)
             {
                 container.pop();
-                Neighbor newNeighbor = {&*pointIter, distanceSquared};
+                Neighbor newNeighbor = {pointIter->id, distanceSquared};
                 container.push(newNeighbor);
                 ++numAdditions;
             }
@@ -103,7 +119,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             if (distanceSquared < maxDistance)
             {
                 container.pop();
-                Neighbor newNeighbor = {&*pointIter, distanceSquared};
+                Neighbor newNeighbor = {pointIter->id, distanceSquared};
                 container.push(newNeighbor);
                 ++numAdditions;
             }
@@ -123,7 +139,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             if (distanceSquared < maxDistance)
             {
                 container.pop();
-                Neighbor newNeighbor = {&*pointIter, distanceSquared};
+                Neighbor newNeighbor = {pointIter->id, distanceSquared};
                 container.push(newNeighbor);
                 ++numAdditions;
             }
@@ -135,68 +151,10 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return true;
         }
 
-        /*
-        inline array<bool,2> CheckAdd(const array<point_vector_iterator_t,2>& pointIter, const array<double,2>& distanceSquared, const array<double,2>& dx)
-        {
-            array<bool, 2> continuations = {true, true};
-
-            for (int i=0; i < 2; ++i)
-            {
-                auto& lastNeighbor = container.top();
-                double maxDistance = lastNeighbor.distanceSquared;
-
-                if (distanceSquared[i] < maxDistance)
-                {
-                    container.pop();
-                    Neighbor newNeighbor = {&*pointIter[i], distanceSquared[i]};
-                    container.push(newNeighbor);
-                    ++numAdditions;
-                }
-                else if (dx[i]*dx[i] >= maxDistance)
-                {
-                    continuations[i] = false;
-                }
-            }
-
-            return continuations;
-        }
-        */
-
-        /*
-        inline bool CheckAdd(point_vector_iterator_t pointIter, const double& distanceSquared, const double& dx)
-        {
-
-            if (container.size() < numNeighbors)
-            {
-                Neighbor newNeighbor = {&*pointIter, distanceSquared};
-                container.push(newNeighbor);
-            }
-            else
-            {
-                auto& lastNeighbor = container.top();
-                double maxDistance = lastNeighbor.distanceSquared;
-
-                if (distanceSquared < maxDistance)
-                {
-                    container.pop();
-                    Neighbor newNeighbor = {&*pointIter, distanceSquared};
-                    container.push(newNeighbor);
-                    ++numAdditions;
-                }
-                else if (dx*dx >= maxDistance)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-        */
-
         inline void AddNoCheck(point_vector_iterator_t pointIter, const double& distanceSquared)
         {
             container.pop();
-            Neighbor newNeighbor = {&*pointIter, distanceSquared};
+            Neighbor newNeighbor = {pointIter->id, distanceSquared};
             container.push(newNeighbor);
             ++numAdditions;
         }
@@ -206,60 +164,41 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return container.top();
         }
 
+        void setLowStripe(size_t stripe)
+        {
+            lowStripe = stripe;
+        }
+
+        void setHighStripe(size_t stripe)
+        {
+            highStripe = stripe;
+        }
+
+        size_t getLowStripe() const
+        {
+            return lowStripe;
+        }
+
+        size_t getHighStripe() const
+        {
+            return highStripe;
+        }
+
     private:
         size_t numNeighbors = 0;
         neighbors_priority_queue_t container;
         size_t numAdditions = 0;
+        size_t lowStripe = numeric_limits<size_t>::max();
+        size_t highStripe = 0;
 };
-
-/*
-template<>
-class PointNeighbors<neighbors_deque_t> : public NeighborsEnumerator
-{
-    public:
-        PointNeighbors(size_t numNeighbors) : numNeighbors(numNeighbors), container(numNeighbors, {nullptr, numeric_limits<double>::max()})
-        {
-            returnPos = 0;
-            insertPos = numNeighbors - 1;
-        }
-
-        virtual ~PointNeighbors() {}
-
-        bool HasNext() override
-        {
-            return returnPos < numNeighbors;
-        }
-
-        Neighbor Next() override
-        {
-            Neighbor neighbor = container[returnPos];
-            ++returnPos;
-            return neighbor;
-        }
-
-        inline void Add(point_vector_t::const_iterator pointIter, const double distanceSquared)
-        {
-            container[insertPos] = {&*pointIter, distanceSquared};
-            --insertPos;
-        }
-
-    private:
-        size_t numNeighbors;
-        neighbors_deque_t container;
-        size_t returnPos;
-        size_t insertPos;
-};
-
 
 template<class Container>
-using neighbors_container_t = unordered_map<long, PointNeighbors<Container>>;
-*/
+using pointNeighbors_generic_map_t = unordered_map<unsigned long, PointNeighbors<Container>>;
 
 template<class Container>
 using pointNeighbors_generic_vector_t = vector<PointNeighbors<Container>, cache_aligned_allocator<PointNeighbors<Container>>>;
 
-//typedef neighbors_container_t<neighbors_priority_queue_t> neighbors_priority_queue_container_t;
-//typedef neighbors_container_t<neighbors_deque_t> neighbors_deque_container_t;
+typedef pointNeighbors_generic_map_t<neighbors_priority_queue_t> pointNeighbors_priority_queue_map_t;
 typedef pointNeighbors_generic_vector_t<neighbors_priority_queue_t> pointNeighbors_priority_queue_vector_t;
-
+typedef vector<vector<PointNeighbors<neighbors_priority_queue_t>>> pointNeighbors_vector_vector_t;
 #endif // POINTNEIGHBORS_H

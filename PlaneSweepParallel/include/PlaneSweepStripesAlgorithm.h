@@ -112,8 +112,6 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
             return pResult;
         }
 
-    protected:
-
     private:
         int numStripes = 0;
 

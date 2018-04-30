@@ -42,12 +42,6 @@ class AllKnnResult
             elapsedSorting = value;
         }
 
-        /*
-        void setNeighborsContainer(unique_ptr<neighbors_priority_queue_container_t>& pNeighborsContainer)
-        {
-            pNeighborsPriorityQueueContainer = move(pNeighborsContainer);
-        }
-        */
         void setNeighborsContainer(unique_ptr<pointNeighbors_priority_queue_vector_t>& pNeighborsContainer)
         {
             pNeighborsPriorityQueueVector = move(pNeighborsContainer);
@@ -79,7 +73,17 @@ class AllKnnResult
            return 0;
         }
 
-        void SaveToFile() const
+        virtual size_t getNumPendingPoints()
+        {
+            return 0;
+        }
+
+        virtual bool HasAllocationError()
+        {
+            return false;
+        }
+
+        virtual void SaveToFile() const
         {
             auto ms = chrono::duration_cast<chrono::milliseconds>(elapsed);
 
@@ -97,18 +101,6 @@ class AllKnnResult
             {
                 outFile << inputPoint->id;
 
-                /*
-                NeighborsEnumerator* pNeighbors = nullptr;
-                if (pNeighborsPriorityQueueVector != nullptr)
-                {
-                    pNeighbors = &pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
-                }
-                else if (pNeighborsPriorityQueueContainer != nullptr)
-                {
-                    pNeighbors = &pNeighborsPriorityQueueContainer->at(inputPoint->id);
-                }
-                */
-
                 NeighborsEnumerator* pNeighbors = &pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
 
                 vector<Neighbor> removedNeighbors;
@@ -118,9 +110,9 @@ class AllKnnResult
                     Neighbor neighbor = pNeighbors->Next();
                     removedNeighbors.push_back(neighbor);
 
-                    if (neighbor.point != nullptr)
+                    if (neighbor.pointId > 0)
                     {
-                        outFile << "\t(" << neighbor.point->id << " " << neighbor.distanceSquared << ")";
+                        outFile << "\t(" << neighbor.pointId << " " << neighbor.distanceSquared << ")";
                     }
                     else
                     {
@@ -136,39 +128,15 @@ class AllKnnResult
             outFile.close();
         }
 
-        unique_ptr<vector<long>> FindDifferences(const AllKnnResult& result, double accuracy)
+        virtual unique_ptr<vector<unsigned long>> FindDifferences(AllKnnResult& result, double accuracy)
         {
-            auto differences = unique_ptr<vector<long>>(new vector<long>());
+            auto differences = unique_ptr<vector<unsigned long>>(new vector<unsigned long>());
 
             auto& inputDataset = problem.GetInputDataset();
 
             for (auto inputPoint = inputDataset.cbegin(); inputPoint != inputDataset.cend(); ++inputPoint)
             {
-                /*
-                NeighborsEnumerator* pNeighbors = nullptr;
-                if (pNeighborsPriorityQueueVector != nullptr)
-                {
-                    pNeighbors = &pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
-                }
-                else if (pNeighborsPriorityQueueContainer != nullptr)
-                {
-                    pNeighbors = &pNeighborsPriorityQueueContainer->at(inputPoint->id);
-                }
-                */
-
                 NeighborsEnumerator* pNeighbors = &pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
-
-                /*
-                NeighborsEnumerator* pNeighborsReference = nullptr;
-                if (result.pNeighborsPriorityQueueVector != nullptr)
-                {
-                    pNeighborsReference = &result.pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
-                }
-                else if (result.pNeighborsPriorityQueueContainer != nullptr)
-                {
-                    pNeighborsReference = &result.pNeighborsPriorityQueueContainer->at(inputPoint->id);
-                }
-                */
                 NeighborsEnumerator* pNeighborsReference = &result.pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
 
                 vector<Neighbor> removedNeighbors;
@@ -211,21 +179,13 @@ class AllKnnResult
 
             return differences;
         }
-    protected:
-        const AllKnnProblem& problem;
 
-    private:
-        string filePrefix;
-        //unique_ptr<neighbors_priority_queue_container_t> pNeighborsPriorityQueueContainer;
-        unique_ptr<pointNeighbors_priority_queue_vector_t> pNeighborsPriorityQueueVector;
-        chrono::duration<double> elapsed;
-        chrono::duration<double> elapsedSorting;
-        size_t minHeapAdditions = 0;
-        size_t maxHeapAdditions = 0;
-        double avgHeapAdditions = 0.0;
-        size_t totalHeapAdditions = 0.0;
+        pointNeighbors_priority_queue_vector_t& GetNeighborsPriorityQueueVector()
+        {
+            return *pNeighborsPriorityQueueVector;
+        }
 
-        void CalcHeapStats()
+        virtual void CalcHeapStats()
         {
             minHeapAdditions = numeric_limits<size_t>::max();
             maxHeapAdditions = 0;
@@ -250,6 +210,20 @@ class AllKnnResult
 
             avgHeapAdditions = (1.0*totalHeapAdditions)/numInputPoints;
         }
+
+    protected:
+        const AllKnnProblem& problem;
+        string filePrefix;
+        size_t minHeapAdditions = 0;
+        size_t maxHeapAdditions = 0;
+        double avgHeapAdditions = 0.0;
+        size_t totalHeapAdditions = 0.0;
+
+    private:
+        unique_ptr<pointNeighbors_priority_queue_vector_t> pNeighborsPriorityQueueVector;
+        chrono::duration<double> elapsed;
+        chrono::duration<double> elapsedSorting;
+
 };
 
 #endif // AllKnnRESULT_H

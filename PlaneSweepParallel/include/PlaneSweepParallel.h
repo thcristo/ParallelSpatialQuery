@@ -1,26 +1,32 @@
 #ifndef PLANESWEEPPARALLEL_H_INCLUDED
 #define PLANESWEEPPARALLEL_H_INCLUDED
 
-
 #include <queue>
 #include <vector>
 #include <deque>
 #include <fstream>
+#include <stxxl/vector>
 
 using namespace std;
 
-struct Point {
-    long id;
+struct Point
+{
+    unsigned long id;
     double x;
     double y;
 };
 
-struct Neighbor {
-    const Point* point;
+struct Neighbor
+{
+    unsigned long pointId;
     double distanceSquared;
 };
 
-
+struct NeighborExt : public Neighbor
+{
+    unsigned long inputPointId;
+    unsigned int position;
+};
 
 class NeighborComparer
 {
@@ -31,6 +37,10 @@ class NeighborComparer
         }
 };
 
+struct StripePoint : public Point
+{
+    size_t stripe;
+};
 
 bool endsWith(const std::string& str, const std::string& suffix)
 {
@@ -54,5 +64,9 @@ protected:
     charT do_thousands_sep() const { return thousandsSeparator; }
     string do_grouping() const { return "\03"; }
 };
+
+typedef stxxl::VECTOR_GENERATOR<Point>::result ext_point_vector_t;
+typedef stxxl::VECTOR_GENERATOR<NeighborExt>::result ext_neighbors_vector_t;
+typedef stxxl::VECTOR_GENERATOR<size_t>::result ext_size_vector_t;
 
 #endif // PLANESWEEPPARALLEL_H_INCLUDED
