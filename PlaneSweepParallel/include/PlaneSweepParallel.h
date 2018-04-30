@@ -67,5 +67,6 @@ protected:
 
 typedef stxxl::VECTOR_GENERATOR<Point>::result ext_point_vector_t;
 typedef stxxl::VECTOR_GENERATOR<NeighborExt>::result ext_neighbors_vector_t;
+typedef stxxl::VECTOR_GENERATOR<size_t>::result ext_size_vector_t;
 
 #endif // PLANESWEEPPARALLEL_H_INCLUDED

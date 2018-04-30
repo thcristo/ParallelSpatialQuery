@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="10 E:\Files\eap\de\start\data\syntheticdata\1000KClus1NNew.bin E:\Files\eap\de\start\data\syntheticdata\1000KClus2NNew.bin 0 1.0E-15 0 1 1 000000000000001001 20" />
+				<Option parameters="10 E:\Files\eap\de\start\data\syntheticdata\1000KClus1NNew.bin E:\Files\eap\de\start\data\syntheticdata\1000KClus2NNew.bin 0 1.0E-15 0 0 0 00000000000000100100 20" />
 				<Compiler>
 					<Add option="-std=c++1z" />
 					<Add option="-g" />

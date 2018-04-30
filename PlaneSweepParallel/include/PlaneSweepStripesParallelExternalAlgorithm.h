@@ -98,6 +98,7 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
 
             pResult->setDuration(elapsed);
             pResult->setDurationSorting(elapsedSorting);
+            pResult->CalcHeapStats();
 
             return pResult;
         }

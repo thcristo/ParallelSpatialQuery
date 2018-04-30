@@ -188,8 +188,8 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
         size_t numNeighbors = 0;
         neighbors_priority_queue_t container;
         size_t numAdditions = 0;
-        size_t lowStripe = -1;
-        size_t highStripe = -1;
+        size_t lowStripe = numeric_limits<size_t>::max();
+        size_t highStripe = 0;
 };
 
 template<class Container>

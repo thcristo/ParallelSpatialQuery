@@ -185,20 +185,7 @@ class AllKnnResult
             return *pNeighborsPriorityQueueVector;
         }
 
-    protected:
-        const AllKnnProblem& problem;
-        string filePrefix;
-
-    private:
-        unique_ptr<pointNeighbors_priority_queue_vector_t> pNeighborsPriorityQueueVector;
-        chrono::duration<double> elapsed;
-        chrono::duration<double> elapsedSorting;
-        size_t minHeapAdditions = 0;
-        size_t maxHeapAdditions = 0;
-        double avgHeapAdditions = 0.0;
-        size_t totalHeapAdditions = 0.0;
-
-        void CalcHeapStats()
+        virtual void CalcHeapStats()
         {
             minHeapAdditions = numeric_limits<size_t>::max();
             maxHeapAdditions = 0;
@@ -223,6 +210,20 @@ class AllKnnResult
 
             avgHeapAdditions = (1.0*totalHeapAdditions)/numInputPoints;
         }
+
+    protected:
+        const AllKnnProblem& problem;
+        string filePrefix;
+        size_t minHeapAdditions = 0;
+        size_t maxHeapAdditions = 0;
+        double avgHeapAdditions = 0.0;
+        size_t totalHeapAdditions = 0.0;
+
+    private:
+        unique_ptr<pointNeighbors_priority_queue_vector_t> pNeighborsPriorityQueueVector;
+        chrono::duration<double> elapsed;
+        chrono::duration<double> elapsedSorting;
+
 };
 
 #endif // AllKnnRESULT_H

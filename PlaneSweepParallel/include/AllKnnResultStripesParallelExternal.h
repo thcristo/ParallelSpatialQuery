@@ -271,6 +271,11 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                 pNeighborsExtVector.reset(new ext_neighbors_vector_t());
             }
 
+            if (pHeapAdditionsVector == nullptr)
+            {
+                pHeapAdditionsVector.reset(new ext_size_vector_t());
+            }
+
             auto pendingPointsBegin = pendingPoints.cbegin();
             auto pendingPointsEnd = pendingPoints.cend();
 
@@ -280,6 +285,8 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                 auto& pointNeighbors = pPendingNeighborsContainer->at(pointId);
                 if (IsSearchCompleted(pointNeighbors))
                 {
+                    pHeapAdditionsVector->push_back(pointNeighbors.GetNumAdditions());
+
                     unsigned int neighborPosition = 0;
 
                     while (pointNeighbors.HasNext())
@@ -321,6 +328,8 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
                             if (IsSearchCompleted(pointNeighbors))
                             {
+                                pHeapAdditionsVector->push_back(pointNeighbors.GetNumAdditions());
+
                                 unsigned int neighborPosition = 0;
 
                                 while (pointNeighbors.HasNext())
@@ -355,6 +364,18 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
         size_t getNumPendingPoints() override
         {
             return pPendingPoints->size();
+        }
+
+        size_t getNumStripes() override
+        {
+            if (pStripeBoundaries != nullptr)
+            {
+                return pStripeBoundaries->size();
+            }
+            else
+            {
+                return 0;
+            }
         }
 
         void SaveToFile() const override
@@ -451,6 +472,33 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             return differences;
         }
 
+        void CalcHeapStats() override
+        {
+            if (pHeapAdditionsVector == nullptr)
+                return;
+
+            minHeapAdditions = numeric_limits<size_t>::max();
+            maxHeapAdditions = 0;
+            totalHeapAdditions = 0;
+
+            for (auto iter = pHeapAdditionsVector->cbegin(); iter != pHeapAdditionsVector->cend(); ++iter)
+            {
+                auto additions = *iter;
+                if (additions < minHeapAdditions)
+                {
+                    minHeapAdditions = additions;
+                }
+                if (additions > maxHeapAdditions)
+                {
+                    maxHeapAdditions = additions;
+                }
+                totalHeapAdditions += additions;
+            }
+
+            size_t numInputPoints = pHeapAdditionsVector->size();
+            avgHeapAdditions = (1.0*totalHeapAdditions)/numInputPoints;
+        }
+
     private:
         bool splitByT = false;
         bool parallelSort = false;
@@ -466,6 +514,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
         unique_ptr<unordered_map<unsigned long, StripePoint>> pPendingPoints;
         unique_ptr<ext_neighbors_vector_t> pNeighborsExtVector;
         const AllKnnProblemExternal& problemExt;
+        unique_ptr<ext_size_vector_t> pHeapAdditionsVector;
 
         size_t get_optimal_stripes()
         {
@@ -740,7 +789,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             size_t highStripe = pointNeighbors.getHighStripe();
             size_t numStripes = pStripeBoundaries->size();
 
-            return (lowStripe <= 0) && (highStripe >= numStripes-1);
+            return (lowStripe == 0) && (highStripe >= numStripes-1);
         }
 };
 
