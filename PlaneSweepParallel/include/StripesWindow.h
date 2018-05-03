@@ -13,15 +13,17 @@ class StripesWindow
                         pStripeBoundaries(move(pBoundaries)), numNeighbors(numNeighbors)
         {
             size_t numStripes = GetNumStripes();
-            pNeighborsContainer.reset(new pointNeighbors_vector_vector_t());
+            pNeighborsContainer.reset(new pointNeighbors_vector_vector_t(numStripes));
 
+            #pragma omp parallel for schedule(dynamic)
             for(size_t i=0; i < numStripes; ++i)
             {
-                pNeighborsContainer->emplace_back(vector<PointNeighbors<neighbors_priority_queue_t>>());
                 size_t numInputPoints = pInputDatasetStripe->at(i).size();
                 if (numInputPoints > 0)
                 {
                     auto& neighborsVector = pNeighborsContainer->at(i);
+                    neighborsVector.reserve(numInputPoints);
+
                     for (size_t iPoint=0; iPoint < numInputPoints; ++iPoint)
                         neighborsVector.emplace_back(PointNeighbors<neighbors_priority_queue_t>(numNeighbors));
                 }
@@ -36,7 +38,9 @@ class StripesWindow
         {
         }
 
-        virtual ~StripesWindow() {}
+        virtual ~StripesWindow()
+        {
+        }
 
         size_t GetStartStripe() const
         {
@@ -65,7 +69,7 @@ class StripesWindow
 
         pointNeighbors_vector_vector_t& GetNeighborsContainer() const
         {
-                return *pNeighborsContainer;
+            return *pNeighborsContainer;
         }
 
     private:

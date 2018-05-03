@@ -25,6 +25,7 @@ unique_ptr<pointNeighbors_priority_queue_vector_t> CreateNeighborsContainer<poin
     try
     {
         unique_ptr<pointNeighbors_priority_queue_vector_t> pContainer(new pointNeighbors_priority_queue_vector_t(cache_aligned_allocator<PointNeighbors<neighbors_priority_queue_t>>()));
+        pContainer->reserve(inputDataset.size());
 
         for (size_t i=0; i < inputDataset.size(); ++i)
             pContainer->emplace_back(PointNeighbors<neighbors_priority_queue_t>(numNeighbors));

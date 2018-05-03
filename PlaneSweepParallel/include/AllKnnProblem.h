@@ -49,13 +49,14 @@ istream& operator >>(istream& i, Point& p)
 class AllKnnProblem
 {
     public:
-        AllKnnProblem(const string& inputFilename, const string& trainingFilename, size_t numNeighbors)
+        AllKnnProblem(const string& inputFilename, const string& trainingFilename, size_t numNeighbors, bool loadDataFiles)
             : pInputDataset(new point_vector_t), pTrainingDataset(new point_vector_t)
         {
             this->inputFilename = inputFilename;
             this->trainingFilename = trainingFilename;
             this->numNeighbors = numNeighbors;
-            this->LoadDataFiles();
+            if (loadDataFiles)
+                this->LoadDataFiles();
         }
 
         virtual ~AllKnnProblem()
@@ -137,13 +138,16 @@ class AllKnnProblem
                 fs.read(reinterpret_cast<char*>(&p), streamsize(sizeof(Point)));
                 dataset.push_back(p);
             }
+
+            fs.close();
         }
 
         template<class PointVector>
         void LoadTextFile(const string& filename, PointVector& dataset)
         {
             fstream fs(filename, ios::in);
-            copy(istream_iterator<Point>(fs), istream_iterator<Point>(), back_inserter(dataset));
+            std::copy(istream_iterator<Point>(fs), istream_iterator<Point>(), std::back_inserter(dataset));
+            fs.close();
         }
 };
 

@@ -7,11 +7,12 @@
 class AllKnnProblemExternal : public AllKnnProblem
 {
     public:
-        AllKnnProblemExternal(const string& inputFilename, const string& trainingFilename, size_t numNeighbors, size_t memoryLimitMB)
-            : AllKnnProblem(inputFilename, trainingFilename, numNeighbors), memoryLimitMB(memoryLimitMB),
-                pExtInputDataset(new ext_point_vector_t()), pExtTrainingDataset(new ext_point_vector_t())
+        AllKnnProblemExternal(const string& inputFilename, const string& trainingFilename, size_t numNeighbors, bool loadDataFiles, size_t memoryLimitMB)
+            : AllKnnProblem(inputFilename, trainingFilename, numNeighbors, false),
+                memoryLimitMB(memoryLimitMB), pExtInputDataset(new ext_point_vector_t()), pExtTrainingDataset(new ext_point_vector_t())
         {
-            this->LoadExternalDataFiles();
+            if (loadDataFiles)
+                this->LoadExternalDataFiles();
         }
 
         virtual ~AllKnnProblemExternal() {}

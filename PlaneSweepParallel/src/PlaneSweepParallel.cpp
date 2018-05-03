@@ -224,10 +224,10 @@ int main(int argc, char* argv[])
         unique_ptr<AllKnnProblemExternal> pProblemExternal;
 
         if (useInternalMemory)
-            pProblem.reset(new AllKnnProblem(argv[2], argv[3], numNeighbors));
+            pProblem.reset(new AllKnnProblem(argv[2], argv[3], numNeighbors, true));
 
         if (useExternalMemory)
-            pProblemExternal.reset(new AllKnnProblemExternal(argv[2], argv[3], numNeighbors, memoryLimitMB));
+            pProblemExternal.reset(new AllKnnProblemExternal(argv[2], argv[3], numNeighbors, true, memoryLimitMB));
 
         unique_ptr<AllKnnResult> pResultReference, pResult;
         unique_ptr<vector<unsigned long>> pDiff;
@@ -248,7 +248,7 @@ int main(int argc, char* argv[])
         ofstream outFile(ss.str(), ios_base::out);
         outFile.imbue(locale(outFile.getloc(), new punct_facet<char, ',', '.'>));
 
-        outFile << "Algorithm;Total Duration;Sorting Duration;Total Heap Additions;Min. Heap Additions;Max. Heap Additions;Avg. Heap Additions;NumberOfStripes;HasAllocationError;PendingPoints;Differences;First 5 different point ids" << endl;
+        outFile << "Algorithm;Total Duration;Sorting Duration;Total Heap Additions;Min. Heap Additions;Max. Heap Additions;Avg. Heap Additions;NumberOfStripes;HasAllocationError;PendingPoints;NumFirstPassWindows;NumSecondPassWindows;CommitWindow Duration;Final Sorting Duration;Differences;First 5 different point ids" << endl;
         outFile.flush();
 
         for (size_t iAlgo = 0; iAlgo < algorithms.size(); ++iAlgo)
@@ -259,14 +259,18 @@ int main(int argc, char* argv[])
                 pResult = algorithms[iAlgo]->Process(*pProblem);
 
             cout << fixed << setprecision(3) << algorithms[iAlgo]->GetTitle() << " duration: " << pResult->getDuration().count()
-                << " sorting " << pResult->getDurationSorting().count() << " seconds,"
+                << " sorting " << pResult->getDurationSorting().count() << " seconds "
                 << " totalAdd: " << pResult->getTotalHeapAdditions()
                 <<  " minAdd: " << pResult->getMinHeapAdditions()
                 << " maxAdd: " << pResult->getMaxHeapAdditions()
                 << " avgAdd: " << pResult->getAvgHeapAdditions()
                 << " numStripes: " << pResult->getNumStripes()
                 << " hasAllocationError: " << pResult->HasAllocationError()
-                << " numPendingPoints: " << pResult->getNumPendingPoints();
+                << " numPendingPoints: " << pResult->getNumPendingPoints()
+                << " numFirstPassWindows: " << pResult->getNumFirstPassWindows()
+                << " numSecondPassWindows: " << pResult->getNumSecondPassWindows()
+                << " commitWindow: " << pResult->getDurationCommitWindow().count() << " seconds "
+                << " finalSorting: " << pResult->getDurationFinalSorting().count() << " seconds ";
 
             outFile << fixed << setprecision(3) << algorithms[iAlgo]->GetTitle() << ";" << pResult->getDuration().count()
                 << ";" << pResult->getDurationSorting().count()
@@ -276,14 +280,18 @@ int main(int argc, char* argv[])
                 << ";" << pResult->getAvgHeapAdditions()
                 << ";" << pResult->getNumStripes()
                 << ";" << pResult->HasAllocationError()
-                << ";" << pResult->getNumPendingPoints();
+                << ";" << pResult->getNumPendingPoints()
+                << ";" << pResult->getNumFirstPassWindows()
+                << ";" << pResult->getNumSecondPassWindows()
+                << ";" << pResult->getDurationCommitWindow().count()
+                << ";" << pResult->getDurationFinalSorting().count();
 
-            if (saveToFile)
+            if (saveToFile && !pResult->HasAllocationError())
             {
                 pResult->SaveToFile();
             }
 
-            if (findDifferences && iAlgo > 0)
+            if (findDifferences && iAlgo > 0 && !pResult->HasAllocationError())
             {
                 pDiff = pResult->FindDifferences(*pResultReference, accuracy);
                 cout << " " << pDiff->size() << " differences. ";

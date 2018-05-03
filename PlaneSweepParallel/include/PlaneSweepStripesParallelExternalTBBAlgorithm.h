@@ -52,44 +52,65 @@ class PlaneSweepStripesParallelExternalTBBAlgorithm : public AbstractAllKnnAlgor
                                 new AllKnnResultStripesParallelExternal(static_cast<AllKnnProblemExternal&>(problem),
                                                 GetPrefix(), parallelSort, splitByT));
 
+            cout << "split stripes start" << endl;
             numStripes = pResult->SplitStripes(numStripes);
-
+            cout << "split stripes end" << endl;
             auto finishSorting = chrono::high_resolution_clock::now();
 
             size_t startStripe = 0;
             size_t endStripe = 0;
             size_t nextStripe = 0;
 
+            cout << "first pass started" << endl;
+
             do
             {
                 auto pWindow = pResult->GetWindow(nextStripe, false);
-                startStripe = pWindow->GetStartStripe();
-                endStripe = pWindow->GetEndStripe();
-                nextStripe = endStripe + 1;
 
                 if (pWindow != nullptr)
+                {
+                    startStripe = pWindow->GetStartStripe();
+                    endStripe = pWindow->GetEndStripe();
+                    nextStripe = endStripe + 1;
+                    cout << "got window " << startStripe << " " << endStripe << endl;
                     PlaneSweepWindow(pWindow, pResult, numThreadsToUse);
+                    cout << "processed window" << endl;
+                }
                 else
                     break;
 
             } while (endStripe < numStripes - 1);
 
+            cout << "first pass ended" << endl;
+
             if (!pResult->HasAllocationError())
             {
+                cout << "second pass started" << endl;
+
                 bool hasPrevStripe = startStripe > 0;
 
                 while (hasPrevStripe)
                 {
                     auto pWindow = pResult->GetWindow(startStripe-1, true);
-                    startStripe = pWindow->GetStartStripe();
-
-                    hasPrevStripe = startStripe > 0;
 
                     if (pWindow != nullptr)
+                    {
+                        startStripe = pWindow->GetStartStripe();
+                        endStripe = pWindow->GetEndStripe();
+                        hasPrevStripe = startStripe > 0;
+                        cout << "got window " << startStripe << " " << endStripe << endl;
                         PlaneSweepWindow(pWindow, pResult, numThreadsToUse);
+                        cout << "processed window" << endl;
+                    }
                     else
                         break;
                 }
+
+                cout << "second pass ended" << endl;
+
+                cout << "neighbors sort start" << endl;
+                pResult->SortNeighbors();
+                cout << "neighbors sort end" << endl;
             }
 
             auto finish = chrono::high_resolution_clock::now();
@@ -355,7 +376,9 @@ class PlaneSweepStripesParallelExternalTBBAlgorithm : public AbstractAllKnnAlgor
                 }
             }
 
+            cout << "commit window started" << endl;
             pResult->CommitWindow(*pWindow, *pPendingPointsContainer);
+            cout << "commit window ended" << endl;
         }
 
         void PlaneSweepStripe(point_vector_iterator_t inputPointIter, StripeData stripeData, size_t iStripeTraining,

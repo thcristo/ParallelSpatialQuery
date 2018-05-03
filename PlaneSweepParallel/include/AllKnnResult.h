@@ -37,6 +37,26 @@ class AllKnnResult
 
         const chrono::duration<double>& getDurationSorting() const { return elapsedSorting; }
 
+        virtual const chrono::duration<double> getDurationCommitWindow() const
+        {
+            return chrono::duration<double>(0.0);
+        }
+
+        virtual const chrono::duration<double> getDurationFinalSorting() const
+        {
+            return chrono::duration<double>(0.0);
+        }
+
+        virtual size_t getNumFirstPassWindows() const
+        {
+            return 0;
+        }
+
+        virtual size_t getNumSecondPassWindows() const
+        {
+            return 0;
+        }
+
         void setDurationSorting(chrono::duration<double> value)
         {
             elapsedSorting = value;
