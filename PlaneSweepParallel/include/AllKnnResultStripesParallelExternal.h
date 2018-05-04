@@ -90,10 +90,12 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             ext_point_vector_t inputDatasetSortedY(problemExt.GetExtInputDataset());
             ext_point_vector_t trainingDatasetSortedY(problemExt.GetExtTrainingDataset());
 
+            size_t usedMemory = 4*64*1024*1024;
             auto memoryLimit = problemExt.GetMemoryLimitBytes();
+            auto safeMemoryLimit = memoryLimit - usedMemory;
 
-            stxxl::sort(inputDatasetSortedY.cbegin(), inputDatasetSortedY.cend(), ExternalPointComparerY(), memoryLimit);
-            stxxl::sort(trainingDatasetSortedY.cbegin(), trainingDatasetSortedY.cend(), ExternalPointComparerY(), memoryLimit);
+            stxxl::sort(inputDatasetSortedY.cbegin(), inputDatasetSortedY.cend(), ExternalPointComparerY(), safeMemoryLimit);
+            stxxl::sort(trainingDatasetSortedY.cbegin(), trainingDatasetSortedY.cend(), ExternalPointComparerY(), safeMemoryLimit);
 
             if (numStripes > 0)
             {
@@ -392,11 +394,15 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
         void SortNeighbors()
         {
+            if (hasAllocationError)
+                return;
+
             auto memoryLimit = problemExt.GetMemoryLimitBytes();
             size_t numStripes = pStripeBoundaries->size();
             size_t usedMemory = 4*numStripes*sizeof(size_t)
                                 + numStripes*sizeof(StripeBoundaries_t)
                                 + 6*64*1024*1024;
+
             auto safeMemoryLimit = (memoryLimit - usedMemory);
 
             auto finalSortStart = chrono::high_resolution_clock::now();
@@ -444,6 +450,9 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
         void SaveToFile() const override
         {
+            if (hasAllocationError)
+                return;
+
             auto ms = chrono::duration_cast<chrono::milliseconds>(getDuration());
 
             auto now = chrono::system_clock::now();
@@ -486,6 +495,9 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
         unique_ptr<vector<unsigned long>> FindDifferences(AllKnnResult& result, double accuracy) override
         {
+            if (hasAllocationError)
+                return unique_ptr<vector<unsigned long>>(nullptr);
+
             auto differences = unique_ptr<vector<unsigned long>>(new vector<unsigned long>());
 
             size_t numInputPoints = problem.GetInputDatasetSize();
@@ -538,6 +550,9 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
         void CalcHeapStats() override
         {
+            if (hasAllocationError)
+                return;
+
             if (pHeapAdditionsVector == nullptr)
                 return;
 

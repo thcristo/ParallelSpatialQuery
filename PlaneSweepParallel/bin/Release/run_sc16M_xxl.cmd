@@ -1,0 +1,1 @@
+PlaneSweepParallel 10 E:\Files\eap\de\start\data\multiplied\16MClus1.bin E:\Files\eap\de\start\data\multiplied\16MClus2.bin 0 1.0E-15 0 0 0 00000000000000001111 4096

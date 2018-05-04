@@ -5,37 +5,37 @@
 
 WORKDIR = `pwd`
 
-CC = gcc
-CXX = g++
+CC = gcc-7
+CXX = g++-7
 AR = ar
-LD = g++
+LD = g++-7
 WINDRES = windres
 
-INC = 
-CFLAGS = -Wall -fexceptions
+INC = -Iinclude -I..\..\libs\stxxl\include
+CFLAGS = -Wall -fexceptions -fopenmp -std=c++1z -march=native
 RESINC = 
-LIBDIR = 
+LIBDIR = -L..\..\libs\stxxl\lib
 LIB = 
-LDFLAGS = 
+LDFLAGS = -fopenmp -ltbb -lstxxl
 
-INC_DEBUG = $(INC) -Iinclude
-CFLAGS_DEBUG = $(CFLAGS) -g -fopenmp
+INC_DEBUG = $(INC)
+CFLAGS_DEBUG = $(CFLAGS) -g 
 RESINC_DEBUG = $(RESINC)
 RCFLAGS_DEBUG = $(RCFLAGS)
 LIBDIR_DEBUG = $(LIBDIR)
 LIB_DEBUG = $(LIB)
-LDFLAGS_DEBUG = $(LDFLAGS) -fopenmp -ltbb
+LDFLAGS_DEBUG = $(LDFLAGS)
 OBJDIR_DEBUG = obj/Debug
 DEP_DEBUG = 
 OUT_DEBUG = bin/Debug/PlaneSweepParallel
 
-INC_RELEASE = $(INC) -Iinclude
-CFLAGS_RELEASE = $(CFLAGS) -flto -O2 -fopenmp
+INC_RELEASE = $(INC)
+CFLAGS_RELEASE = $(CFLAGS) -O3
 RESINC_RELEASE = $(RESINC)
 RCFLAGS_RELEASE = $(RCFLAGS)
 LIBDIR_RELEASE = $(LIBDIR)
 LIB_RELEASE = $(LIB)
-LDFLAGS_RELEASE = $(LDFLAGS) -O2 -flto -s -fopenmp -ltbb
+LDFLAGS_RELEASE = $(LDFLAGS) -O3 -s
 OBJDIR_RELEASE = obj/Release
 DEP_RELEASE = 
 OUT_RELEASE = bin/Release/PlaneSweepParallel
