@@ -1,3 +1,3 @@
-PlaneSweepParallel: Console application that implements parallel plane sweep algorithm with external memory capability for AKNN problem.
+PlaneSweepParallel: Console application that implements parallel plane sweep algorithm with external memory capability for AKNN problem in two dimensions.
 DatasetGenerator: Console application that creates 2D datasets of points with uniform distribution.
 DatasetMultiplier: Console application that replicates a 2D dataset of points to four quadrants and thus multiplying its number of points by a factor of 2 or 4.
