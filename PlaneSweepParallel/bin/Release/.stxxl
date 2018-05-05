@@ -1,0 +1,4 @@
+disk=/home/theodore/devel/temp/stxxl,100G,syscall unlink
+disk=/media/theodore/DRIVE_E/Files/STXXL/stxxl,100G,syscall unlink
+
+

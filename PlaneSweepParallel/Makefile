@@ -11,10 +11,10 @@ AR = ar
 LD = g++-7
 WINDRES = windres
 
-INC = -Iinclude -I..\..\libs\stxxl\include
+INC = -Iinclude -I../../libs/stxxl/include
 CFLAGS = -Wall -fexceptions -fopenmp -std=c++1z -march=native
 RESINC = 
-LIBDIR = -L..\..\libs\stxxl\lib
+LIBDIR = -L../../libs/stxxl/lib
 LIB = 
 LDFLAGS = -fopenmp -ltbb -lstxxl
 
