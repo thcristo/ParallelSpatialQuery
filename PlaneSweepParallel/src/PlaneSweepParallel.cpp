@@ -20,7 +20,7 @@
 #include "PlaneSweepStripesParallelExternalAlgorithm.h"
 #include "PlaneSweepStripesParallelExternalTBBAlgorithm.h"
 
-#define NUM_ALGORITHMS 20
+#define NUM_ALGORITHMS 30
 
 using namespace std;
 
@@ -174,43 +174,86 @@ int main(int argc, char* argv[])
                         useInternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesAlgorithm(numStripes)));
                         break;
+
                     case 10:
                         useInternalMemory = true;
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, false, false)));
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, false, false, false)));
                         break;
                     case 11:
                         useInternalMemory = true;
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, false)));
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, false, true, false)));
                         break;
                     case 12:
                         useInternalMemory = true;
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, false, false)));
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, false, false)));
                         break;
                     case 13:
                         useInternalMemory = true;
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, false)));
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, true, false)));
                         break;
                     case 14:
                         useInternalMemory = true;
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, true)));
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, false, false, false)));
                         break;
                     case 15:
                         useInternalMemory = true;
-                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, true)));
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, false, true, false)));
                         break;
                     case 16:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, false, false)));
+                        break;
+                    case 17:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, true, false)));
+                        break;
+
+                    case 18:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, false, false, true)));
+                        break;
+                    case 19:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, false, true, true)));
+                        break;
+                    case 20:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, false, true)));
+                        break;
+                    case 21:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelAlgorithm(numStripes, numThreads, true, true, true)));
+                        break;
+                    case 22:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, false, false, true)));
+                        break;
+                    case 23:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, false, true, true)));
+                        break;
+                    case 24:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, false, true)));
+                        break;
+                    case 25:
+                        useInternalMemory = true;
+                        algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelTBBAlgorithm(numStripes, numThreads, true, true, true)));
+                        break;
+
+                    case 26:
                         useExternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalAlgorithm(numStripes, numThreads, true, false)));
                         break;
-                    case 17:
+                    case 27:
                         useExternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalAlgorithm(numStripes, numThreads, true, true)));
                         break;
-                    case 18:
+                    case 28:
                         useExternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalTBBAlgorithm(numStripes, numThreads, true, false)));
                         break;
-                    case 19:
+                    case 29:
                         useExternalMemory = true;
                         algorithms.push_back(algorithm_ptr_t(new PlaneSweepStripesParallelExternalTBBAlgorithm(numStripes, numThreads, true, true)));
                         break;

@@ -15,8 +15,8 @@ class AllKnnResultStripes : public AllKnnResult
         {
         }
 
-        AllKnnResultStripes(const AllKnnProblem& problem, const string& filePrefix, bool parallelSort) : AllKnnResult(problem, filePrefix),
-            parallelSort(parallelSort)
+        AllKnnResultStripes(const AllKnnProblem& problem, const string& filePrefix, bool parallelSort, bool splitByT) : AllKnnResult(problem, filePrefix),
+            parallelSort(parallelSort), splitByT(splitByT)
         {
         }
 
@@ -95,9 +95,58 @@ class AllKnnResultStripes : public AllKnnResult
                 return 0;
             }
         }
+
     protected:
+        unique_ptr<point_vector_vector_t> pInputDatasetStripe;
+        unique_ptr<point_vector_vector_t> pTrainingDatasetStripe;
+        unique_ptr<vector<StripeBoundaries_t>> pStripeBoundaries;
+        bool parallelSort = false;
+        bool splitByT = false;
 
         virtual void create_fixed_stripes(size_t numStripes, const point_vector_t& inputDatasetSortedY, const point_vector_t& trainingDatasetSortedY)
+        {
+            if (splitByT)
+                create_fixed_stripes_training(numStripes, inputDatasetSortedY, trainingDatasetSortedY);
+            else
+                create_fixed_stripes_input(numStripes, inputDatasetSortedY, trainingDatasetSortedY);
+        }
+
+        size_t get_optimal_stripes()
+        {
+            size_t numTrainingPoints = problem.GetTrainingDataset().size();
+            size_t numNeighbors = problem.GetNumNeighbors();
+
+            double numPointsPerDim = sqrt(numTrainingPoints);
+            double neighborsPerDim = sqrt(numNeighbors);
+
+            size_t optimal_stripes = llround(numPointsPerDim/neighborsPerDim);
+            return optimal_stripes;
+        }
+
+        void SaveStripes()
+        {
+            auto now = chrono::system_clock::now();
+            auto in_time_t = chrono::system_clock::to_time_t(now);
+            stringstream ss;
+            ss <<  "stripes_" << put_time(localtime(&in_time_t), "%Y%m%d%H%M%S") << ".csv";
+
+            ofstream outFile(ss.str(), ios_base::out);
+            outFile.imbue(locale(outFile.getloc(), new punct_facet<char, ',', '.'>));
+
+            outFile << "StripeId;MinY;MaxY;InputPoints;TrainingPoints" << endl;
+            outFile.flush();
+
+            size_t numStripes = pInputDatasetStripe->size();
+
+            for (size_t i=0; i < numStripes; ++i)
+            {
+                outFile << i << ";" << (pStripeBoundaries->at(i)).minY  << ";" << (pStripeBoundaries->at(i)).maxY  << ";" << (pInputDatasetStripe->at(i)).size() << ";" << (pTrainingDatasetStripe->at(i)).size() << endl;
+            }
+
+            outFile.close();
+        }
+
+        virtual void create_fixed_stripes_input(size_t numStripes, const point_vector_t& inputDatasetSortedY, const point_vector_t& trainingDatasetSortedY)
         {
             size_t inputDatasetStripeSize = inputDatasetSortedY.size()/numStripes + 1;
             auto inputDatasetSortedYEnd = inputDatasetSortedY.cend();
@@ -197,45 +246,104 @@ class AllKnnResultStripes : public AllKnnResult
             } while (!exit);
         }
 
-        unique_ptr<point_vector_vector_t> pInputDatasetStripe;
-        unique_ptr<point_vector_vector_t> pTrainingDatasetStripe;
-        unique_ptr<vector<StripeBoundaries_t>> pStripeBoundaries;
-
-        bool parallelSort = false;
-
-        size_t get_optimal_stripes()
+        virtual void create_fixed_stripes_training(size_t numStripes, const point_vector_t& inputDatasetSortedY, const point_vector_t& trainingDatasetSortedY)
         {
-            size_t numTrainingPoints = problem.GetTrainingDataset().size();
-            size_t numNeighbors = problem.GetNumNeighbors();
+            size_t trainingDatasetStripeSize = trainingDatasetSortedY.size()/numStripes + 1;
+            auto trainingDatasetSortedYEnd = trainingDatasetSortedY.cend();
+            auto inputDatasetSortedYEnd = inputDatasetSortedY.cend();
 
-            double numPointsPerDim = sqrt(numTrainingPoints);
-            double neighborsPerDim = sqrt(numNeighbors);
+            auto trainingIterStart = trainingDatasetSortedY.cbegin();
+            auto trainingIterEnd = trainingIterStart + trainingDatasetStripeSize;
+            auto inputIterStart = inputDatasetSortedY.cbegin();
 
-            size_t optimal_stripes = llround(numPointsPerDim/neighborsPerDim);
-            return optimal_stripes;
-        }
+            bool exit = false;
 
-        void SaveStripes()
-        {
-            auto now = chrono::system_clock::now();
-            auto in_time_t = chrono::system_clock::to_time_t(now);
-            stringstream ss;
-            ss <<  "stripes_" << put_time(localtime(&in_time_t), "%Y%m%d%H%M%S") << ".csv";
-
-            ofstream outFile(ss.str(), ios_base::out);
-            outFile.imbue(locale(outFile.getloc(), new punct_facet<char, ',', '.'>));
-
-            outFile << "StripeId;MinY;MaxY;InputPoints;TrainingPoints" << endl;
-            outFile.flush();
-
-            size_t numStripes = pInputDatasetStripe->size();
-
-            for (size_t i=0; i < numStripes; ++i)
+            do
             {
-                outFile << i << ";" << (pStripeBoundaries->at(i)).minY  << ";" << (pStripeBoundaries->at(i)).maxY  << ";" << (pInputDatasetStripe->at(i)).size() << ";" << (pTrainingDatasetStripe->at(i)).size() << endl;
-            }
+                while (trainingIterEnd < trainingDatasetSortedYEnd && prev(trainingIterEnd)->y == trainingIterEnd->y)
+                {
+                    ++trainingIterEnd;
+                }
 
-            outFile.close();
+                pTrainingDatasetStripe->push_back(point_vector_t(trainingIterStart, trainingIterEnd));
+
+                double minY = inputIterStart->y <= trainingIterStart->y ? inputIterStart->y : trainingIterStart->y;
+
+                if (parallelSort)
+                {
+                    parallel_sort(pTrainingDatasetStripe->back().begin(), pTrainingDatasetStripe->back().end(),
+                         [](const Point& point1, const Point& point2)
+                         {
+                             return point1.x < point2.x;
+                         });
+                }
+                else
+                {
+                    sort(pTrainingDatasetStripe->back().begin(), pTrainingDatasetStripe->back().end(),
+                         [](const Point& point1, const Point& point2)
+                         {
+                             return point1.x < point2.x;
+                         });
+                }
+
+                double maxY = minY;
+
+                if (inputIterStart < inputDatasetSortedYEnd)
+                {
+                    auto inputIterEnd = trainingIterEnd == trainingDatasetSortedYEnd ? inputDatasetSortedYEnd :
+                                            upper_bound(inputIterStart, inputDatasetSortedYEnd, prev(trainingIterEnd)->y,
+                                                          [](const double& value, const Point& point) { return value < point.y; } );
+
+                    pInputDatasetStripe->push_back(point_vector_t(inputIterStart, inputIterEnd));
+
+                    maxY = prev(inputIterEnd)->y >= prev(trainingIterEnd)->y ? prev(inputIterEnd)->y : prev(trainingIterEnd)->y;
+
+                    if (parallelSort)
+                    {
+                        parallel_sort(pInputDatasetStripe->back().begin(), pInputDatasetStripe->back().end(),
+                         [](const Point& point1, const Point& point2)
+                         {
+                             return point1.x < point2.x;
+                         });
+                    }
+                    else
+                    {
+                        sort(pInputDatasetStripe->back().begin(), pInputDatasetStripe->back().end(),
+                         [](const Point& point1, const Point& point2)
+                         {
+                             return point1.x < point2.x;
+                         });
+                    }
+
+                    inputIterStart = inputIterEnd;
+                }
+                else
+                {
+                    pInputDatasetStripe->push_back(point_vector_t());
+
+                    maxY = prev(trainingIterEnd)->y;
+                }
+
+                pStripeBoundaries->push_back({minY, maxY});
+
+                if (trainingIterEnd < trainingDatasetSortedYEnd)
+                {
+                    trainingIterStart = trainingIterEnd;
+                    if ((size_t)distance(trainingIterStart, trainingDatasetSortedYEnd) >= trainingDatasetStripeSize)
+                    {
+                        trainingIterEnd = trainingIterStart + trainingDatasetStripeSize;
+                    }
+                    else
+                    {
+                        trainingIterEnd = trainingDatasetSortedYEnd;
+                    }
+                }
+                else
+                {
+                    exit = true;
+                }
+
+            } while (!exit);
         }
 };
 

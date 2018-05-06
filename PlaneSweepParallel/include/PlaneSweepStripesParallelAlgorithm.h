@@ -7,8 +7,8 @@
 class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
-        PlaneSweepStripesParallelAlgorithm(int numStripes, int numThreads, bool parallelSort, bool splitByT) : numStripes(numStripes),
-            numThreads(numThreads), parallelSort(parallelSort), splitByT(splitByT)
+        PlaneSweepStripesParallelAlgorithm(int numStripes, int numThreads, bool parallelSort, bool parallelSplit, bool splitByT) : numStripes(numStripes),
+            numThreads(numThreads), parallelSort(parallelSort), parallelSplit(parallelSplit), splitByT(splitByT)
         {
         }
 
@@ -16,18 +16,18 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 
         string GetTitle() const
         {
-            if (splitByT)
-                return parallelSort ? "Plane sweep stripes parallel (parallel sorting, split by training)" : "Plane sweep stripes parallel (split by training)";
-            else
-                return parallelSort ? "Plane sweep stripes parallel (parallel sorting)" : "Plane sweep stripes parallel";
+            stringstream ss;
+
+            ss << "Plane sweep stripes parallel, parallelSort=" << parallelSort << ", parallelSplit=" << parallelSplit << ", splitByTraining=" << splitByT;
+            return ss.str();
         }
 
         string GetPrefix() const
         {
-            if (splitByT)
-                return parallelSort ? "planesweep_stripes_parallel_psort_splitByT" : "planesweep_stripes_parallel_splitByT";
-            else
-                return parallelSort ? "planesweep_stripes_parallel_psort" : "planesweep_stripes_parallel";
+            stringstream ss;
+
+            ss << "planesweep_stripes_parallel_psort_" << parallelSort << "_psplit_" << parallelSplit << "_splitByT_" << splitByT;
+            return ss.str();
         }
 
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
@@ -44,7 +44,12 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 
             auto start = chrono::high_resolution_clock::now();
 
-            auto pResult = unique_ptr<AllKnnResultStripesParallel>(new AllKnnResultStripesParallel(problem, GetPrefix(), parallelSort, splitByT));
+            unique_ptr<AllKnnResultStripes> pResult;
+
+            if (parallelSplit)
+                pResult.reset(new AllKnnResultStripesParallel(problem, GetPrefix(), parallelSort, splitByT));
+            else
+                pResult.reset(new AllKnnResultStripes(problem, GetPrefix(), parallelSort, splitByT));
 
             auto stripeData = pResult->GetStripeData(numStripes);
 
@@ -124,6 +129,7 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
         int numStripes = 0;
         int numThreads = 0;
         bool parallelSort = false;
+        bool parallelSplit = false;
         bool splitByT = false;
 
         void PlaneSweepStripe(point_vector_iterator_t inputPointIter, StripeData stripeData, int iStripeTraining,

@@ -11,24 +11,14 @@ class AllKnnResultStripesParallelTBB : public AllKnnResultStripes
         {
         }
 
-        AllKnnResultStripesParallelTBB(const AllKnnProblem& problem, const string& filePrefix, bool parallelSort, bool splitByT) : AllKnnResultStripes(problem, filePrefix, parallelSort), splitByT(splitByT)
+        AllKnnResultStripesParallelTBB(const AllKnnProblem& problem, const string& filePrefix, bool parallelSort, bool splitByT) : AllKnnResultStripes(problem, filePrefix, parallelSort, splitByT)
         {
         }
         virtual ~AllKnnResultStripesParallelTBB() {}
 
     protected:
-        void create_fixed_stripes(size_t numStripes, const point_vector_t& inputDatasetSortedY, const point_vector_t& trainingDatasetSortedY) override
-        {
-            if (splitByT)
-                create_fixed_stripes_training(numStripes, inputDatasetSortedY, trainingDatasetSortedY);
-            else
-                create_fixed_stripes_input(numStripes, inputDatasetSortedY, trainingDatasetSortedY);
-        }
 
-    private:
-        bool splitByT = false;
-
-        void create_fixed_stripes_input(size_t numStripes, const point_vector_t& inputDatasetSortedY, const point_vector_t& trainingDatasetSortedY)
+        void create_fixed_stripes_input(size_t numStripes, const point_vector_t& inputDatasetSortedY, const point_vector_t& trainingDatasetSortedY) override
         {
             size_t inputDatasetStripeSize = inputDatasetSortedY.size()/numStripes;
             auto inputDatasetSortedYBegin = inputDatasetSortedY.cbegin();
@@ -122,7 +112,7 @@ class AllKnnResultStripesParallelTBB : public AllKnnResultStripes
             });
         }
 
-        void create_fixed_stripes_training(size_t numStripes, const point_vector_t& inputDatasetSortedY, const point_vector_t& trainingDatasetSortedY)
+        void create_fixed_stripes_training(size_t numStripes, const point_vector_t& inputDatasetSortedY, const point_vector_t& trainingDatasetSortedY) override
         {
             size_t trainingDatasetStripeSize = trainingDatasetSortedY.size()/numStripes;
             auto inputDatasetSortedYBegin = inputDatasetSortedY.cbegin();

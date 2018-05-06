@@ -1,1 +1,1 @@
-PlaneSweepParallel 10 E:\Files\eap\de\start\data\syntheticdata\1000KClus1NNew.txt E:\Files\eap\de\start\data\syntheticdata\1000KClus2NNew.txt 0 1.0E-15 200 0 1
+PlaneSweepParallel 10 E:\Files\eap\de\start\data\syntheticdata\1000KClus1NNew.bin E:\Files\eap\de\start\data\syntheticdata\1000KClus2NNew.bin 0 1.0E-15 0 0 1 000000100011111111111111110000
