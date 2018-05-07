@@ -76,11 +76,12 @@ class AllKnnResultStripesParallel : public AllKnnResultStripes
                     stripeBoundaries.minY =  i > 0 ? inputIterStart->y : 0.0;
                     stripeBoundaries.maxY =  i < numStripes - 1 ? (inputIterEnd < inputDatasetSortedYEnd ? inputIterEnd->y : 1.0001) : 1.0001;
 
-                    auto trainingIterEnd = lower_bound(trainingDatasetSortedYBegin, trainingDatasetSortedYEnd, stripeBoundaries.maxY,
+                    auto trainingIterStart = lower_bound(trainingDatasetSortedYBegin, trainingDatasetSortedYEnd, stripeBoundaries.minY,
                                                         [](const Point& point, const double& value) { return point.y < value; });
 
-                    auto trainingIterStart = lower_bound(trainingDatasetSortedYBegin, trainingIterEnd, stripeBoundaries.minY,
-                                                        [](const Point& point, const double& value) { return point.y < value; });
+                    auto trainingIterEnd = trainingIterStart;
+                    while (trainingIterEnd < trainingDatasetSortedYEnd && trainingIterEnd->y < stripeBoundaries.maxY)
+                        ++trainingIterEnd;
 
                     if (trainingIterStart < trainingIterEnd)
                     {
@@ -165,11 +166,12 @@ class AllKnnResultStripesParallel : public AllKnnResultStripes
                     stripeBoundaries.minY =  i > 0 ? trainingIterStart->y : 0.0;
                     stripeBoundaries.maxY =  i < numStripes - 1 ? (trainingIterEnd < trainingDatasetSortedYEnd ? trainingIterEnd->y : 1.0001) : 1.0001;
 
-                    auto inputIterEnd = lower_bound(inputDatasetSortedYBegin, inputDatasetSortedYEnd, stripeBoundaries.maxY,
+                    auto inputIterStart = lower_bound(inputDatasetSortedYBegin, inputDatasetSortedYEnd, stripeBoundaries.minY,
                                                         [](const Point& point, const double& value) { return point.y < value; });
 
-                    auto inputIterStart = lower_bound(inputDatasetSortedYBegin, inputIterEnd, stripeBoundaries.minY,
-                                                        [](const Point& point, const double& value) { return point.y < value; });
+                    auto inputIterEnd = inputIterStart;
+                    while (inputIterEnd < inputDatasetSortedYEnd && inputIterEnd->y < stripeBoundaries.maxY)
+                        ++inputIterEnd;
 
                     if (inputIterStart < inputIterEnd)
                     {

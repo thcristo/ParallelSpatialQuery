@@ -190,9 +190,14 @@ class AllKnnResultStripes : public AllKnnResult
 
                 if (trainingIterStart < trainingDatasetSortedYEnd)
                 {
-                    auto trainingIterEnd = inputIterEnd == inputDatasetSortedYEnd ? trainingDatasetSortedYEnd :
-                                            upper_bound(trainingIterStart, trainingDatasetSortedYEnd, prev(inputIterEnd)->y,
-                                                          [](const double& value, const Point& point) { return value < point.y; } );
+                    auto trainingIterEnd = trainingDatasetSortedYEnd;
+                    if (inputIterEnd != inputDatasetSortedYEnd)
+                    {
+                        trainingIterEnd = trainingIterStart;
+                        double ylimit = prev(inputIterEnd)->y;
+                        while (trainingIterEnd < trainingDatasetSortedYEnd && trainingIterEnd->y <= ylimit)
+                            ++trainingIterEnd;
+                    }
 
                     pTrainingDatasetStripe->push_back(point_vector_t(trainingIterStart, trainingIterEnd));
 
@@ -290,9 +295,14 @@ class AllKnnResultStripes : public AllKnnResult
 
                 if (inputIterStart < inputDatasetSortedYEnd)
                 {
-                    auto inputIterEnd = trainingIterEnd == trainingDatasetSortedYEnd ? inputDatasetSortedYEnd :
-                                            upper_bound(inputIterStart, inputDatasetSortedYEnd, prev(trainingIterEnd)->y,
-                                                          [](const double& value, const Point& point) { return value < point.y; } );
+                    auto inputIterEnd = inputDatasetSortedYEnd;
+                    if (trainingIterEnd != trainingDatasetSortedYEnd)
+                    {
+                        inputIterEnd = inputIterStart;
+                        double ylimit = prev(trainingIterEnd)->y;
+                        while (inputIterEnd < inputDatasetSortedYEnd && inputIterEnd->y <= ylimit)
+                            ++inputIterEnd;
+                    }
 
                     pInputDatasetStripe->push_back(point_vector_t(inputIterStart, inputIterEnd));
 
