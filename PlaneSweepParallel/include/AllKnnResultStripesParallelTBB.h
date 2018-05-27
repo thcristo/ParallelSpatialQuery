@@ -1,9 +1,15 @@
+/* This file contains a class definition of AkNN result for striped plane sweep algorithm.
+    The splitting process is implemented with a parallel for loop instead of a serial while loop
+    The implementation is exactly the same as AllKnnResultStripesParallel with the only difference of using Intel TBB
+    instead of OpenMP for parallel operations
+ */
 #ifndef ALLKNNRESULTSTRIPESPARALLELTBB_H
 #define ALLKNNRESULTSTRIPESPARALLELTBB_H
 
 #include "AllKnnResultStripes.h"
 
-
+/** \brief Class definition of AkNN result of striped plane sweep algorithm (TBB version)
+ */
 class AllKnnResultStripesParallelTBB : public AllKnnResultStripes
 {
     public:

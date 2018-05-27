@@ -1,3 +1,5 @@
+/* This file contains the class definition for the AkNN problem when internal memory is used */
+
 #ifndef AllKnnPROBLEM_H
 #define AllKnnPROBLEM_H
 
@@ -15,28 +17,42 @@
 
 using namespace std;
 
+/** \brief Boundaries of a stripe
+ */
 struct StripeBoundaries_t
 {
     double minY;
     double maxY;
 };
 
+/** \brief Structure containing stripe data
+ */
 struct StripeData
 {
-    const point_vector_vector_t& InputDatasetStripe;
-    const point_vector_vector_t& TrainingDatasetStripe;
-    const vector<StripeBoundaries_t>& StripeBoundaries;
+    const point_vector_vector_t& InputDatasetStripe; /**< vector of input points for each stripe */
+    const point_vector_vector_t& TrainingDatasetStripe; /**< vector of training points for each stripe */
+    const vector<StripeBoundaries_t>& StripeBoundaries; /**< vector of boundaries for each stripe */
 };
 
+
+/** \brief Structure containing stripe data for external memory algorithm
+ */
 struct StripeDataExternal
 {
-    const vector<size_t>& InputPointsOffset;
-    const vector<size_t>& InputPointsCount;
-    const vector<size_t>& TrainingPointsCount;
-    const vector<size_t>& TrainingPointsOffset;
-    const vector<StripeBoundaries_t>& StripeBoundaries;
+    const vector<size_t>& InputPointsOffset; /**<  vector of offsets for each stripe's input points */
+    const vector<size_t>& InputPointsCount; /**<  vector of counts for each stripe's input points */
+    const vector<size_t>& TrainingPointsCount; /**<  vector of counts for each stripe's training points */
+    const vector<size_t>& TrainingPointsOffset; /**<  vector of offsets for each stripe's training points */
+    const vector<StripeBoundaries_t>& StripeBoundaries; /**< vector of boundaries for each stripe */
 };
 
+/** \brief Overloaded operator used for reading point from a text file
+ *
+ * \param i istream& input stream
+ * \param p Point& point to read
+ * \return istream& input stream
+ *
+ */
 istream& operator >>(istream& i, Point& p)
 {
     i >> p.id;
@@ -46,12 +62,16 @@ istream& operator >>(istream& i, Point& p)
     return i;
 }
 
+
+/** \brief Class definition for AkNN problem stored in internal memory
+ */
 class AllKnnProblem
 {
     public:
         AllKnnProblem(const string& inputFilename, const string& trainingFilename, size_t numNeighbors, bool loadDataFiles)
             : pInputDataset(new point_vector_t), pTrainingDataset(new point_vector_t)
         {
+            //set the filenames and read the data files
             this->inputFilename = inputFilename;
             this->trainingFilename = trainingFilename;
             this->numNeighbors = numNeighbors;
@@ -88,6 +108,11 @@ class AllKnnProblem
             return pTrainingDataset->size();
         }
 
+        /** \brief Returns the loading time of datasets in ms
+         *
+         * \return const chrono::duration<double>& loading time in ms
+         *
+         */
         const chrono::duration<double>& getLoadingTime() const { return loadingTime; }
 
     protected:
@@ -95,9 +120,16 @@ class AllKnnProblem
         string trainingFilename;
         chrono::duration<double> loadingTime;
 
+        /** \brief Template method for loading data files. It can add the points in an internal or external memory vector
+         *
+         * \param filename const string& the filename to read from
+         * \param dataset PointVector& the internal or external memory vector to add points into
+         *
+         */
         template<class PointVector>
         void LoadFile(const string& filename, PointVector& dataset)
         {
+            //Handle both binary and text dataset files
             if (endsWith(filename, ".bin"))
             {
                 LoadBinaryFile(filename, dataset);
@@ -115,6 +147,7 @@ class AllKnnProblem
 
         void LoadDataFiles()
         {
+            //Record the time for loading the data files
             auto start = chrono::high_resolution_clock::now();
 
             LoadFile(inputFilename, *pInputDataset);
@@ -127,11 +160,14 @@ class AllKnnProblem
         template<class PointVector>
         void LoadBinaryFile(const string& filename, PointVector& dataset)
         {
+            //open binary file
             fstream fs(filename, ios::in | ios::binary);
             size_t numPoints = 0;
+            //read the number of points at the beginning of the file
             fs.read(reinterpret_cast<char*>(&numPoints), streamsize(sizeof(size_t)));
             dataset.reserve(numPoints);
 
+            //read each point and add to vector
             for (size_t i=0; i < numPoints && !fs.eof(); ++i)
             {
                 Point p;

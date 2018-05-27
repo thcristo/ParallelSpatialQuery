@@ -1,3 +1,6 @@
+/* Parallel plane sweep algorithm implementation using OpenMP
+    This implementation operates on a copy of the original datasets and it is based on PlaneSweepCopyAlgorithm
+ */
 #ifndef PLANESWEEPCOPYPARALLELALGORITHM_H
 #define PLANESWEEPCOPYPARALLELALGORITHM_H
 
@@ -7,6 +10,8 @@
 #include <chrono>
 #include <omp.h>
 
+/** \brief Parallel plane sweep algorithm using copy of original datasets and OpenMP
+ */
 class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
@@ -28,6 +33,7 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
 
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
+            //the implementation is similar to PlaneSweepCopyAlgorithm
             size_t numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
@@ -52,11 +58,14 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
             auto inputDatasetBegin = inputDataset.cbegin();
             auto inputDatasetEnd = inputDataset.cend();
 
+            //OpenMP parallel loop through all input points
             #pragma omp parallel for schedule(dynamic)
             for (auto inputPointIter = inputDatasetBegin; inputPointIter < inputDatasetEnd; ++inputPointIter)
             {
                 auto& neighbors = pNeighborsContainer->at(inputPointIter->id - 1);
 
+                //in the parallel algorithm we have to do a binary search to find the next training point
+                //this is in contrast to the serial version of the algorithm where we can use the value from the previous repetition of the loop
                 auto nextTrainingPointIter = lower_bound(trainingDatasetBegin, trainingDatasetEnd, inputPointIter->x,
                                     [&](const Point& point, const double& value) { return point.x < value; } );
 
@@ -69,6 +78,7 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
                 bool lowStop = prevTrainingPointIter == nextTrainingPointIter;
                 bool highStop = nextTrainingPointIter == trainingDatasetEnd;
 
+                //start moving left and right of the input point in x axis
                 while (!lowStop || !highStop)
                 {
                     if (!lowStop)

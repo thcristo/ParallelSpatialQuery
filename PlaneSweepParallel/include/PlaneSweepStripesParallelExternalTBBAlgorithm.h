@@ -1,9 +1,16 @@
+/* External memory plane sweep with stripes algorithm (Intel TBB parallelism)
+    The implementation is the same as PlaneSweepStripesParallelExternalAlgorithm with the only difference
+    that we are using Intel TBB instead of OpenMP
+*/
+
 #ifndef PLANESWEEPSTRIPESPARALLELEXTERNALTBBALGORITHM_H
 #define PLANESWEEPSTRIPESPARALLELEXTERNALTBBALGORITHM_H
 
 #include "AbstractAllKnnAlgorithm.h"
 #include <tbb/tbb.h>
 
+/** \brief External memory plane sweep with stripes using Intel TBB
+ */
 class PlaneSweepStripesParallelExternalTBBAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:

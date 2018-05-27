@@ -1,3 +1,5 @@
+/* This file contains the class definition of AkNN result when the algorithm requires sorting of input and training datasets */
+
 #ifndef ALLKNNRESULTSORTED_H
 #define ALLKNNRESULTSORTED_H
 
@@ -7,6 +9,8 @@
 using namespace tbb;
 
 
+/** \brief Class definition of AkNN result for algorithms that require sorting
+ */
 class AllKnnResultSorted : public AllKnnResult
 {
     public:
@@ -21,14 +25,21 @@ class AllKnnResultSorted : public AllKnnResult
 
         virtual ~AllKnnResultSorted() {}
 
+        /** \brief Returns a copy of input dataset sorted
+         *
+         * \return point_vector_t& sorted input dataset
+         *
+         */
         const point_vector_t& GetInputDatasetSorted()
         {
             if (!pInputDatasetSorted)
             {
+                //makes a copy of the original dataset
                 pInputDatasetSorted.reset(new point_vector_t(problem.GetInputDataset()));
 
                 if (parallelSort)
                 {
+                    //parallel sort by using the Intel TBB sort routine
                     parallel_sort(pInputDatasetSorted->begin(), pInputDatasetSorted->end(),
                          [](const Point& point1, const Point& point2)
                          {
@@ -37,6 +48,7 @@ class AllKnnResultSorted : public AllKnnResult
                 }
                 else
                 {
+                    //serial sort by using the STL sort routine
                     sort(pInputDatasetSorted->begin(), pInputDatasetSorted->end(),
                          [](const Point& point1, const Point& point2)
                          {
@@ -48,6 +60,11 @@ class AllKnnResultSorted : public AllKnnResult
             return *pInputDatasetSorted;
         }
 
+        /** \brief Returns a copy of training dataset sorted
+         *
+         * \return point_vector_t& sorted training dataset
+         *
+         */
         const point_vector_t& GetTrainingDatasetSorted()
         {
             if (!pTrainingDatasetSorted)

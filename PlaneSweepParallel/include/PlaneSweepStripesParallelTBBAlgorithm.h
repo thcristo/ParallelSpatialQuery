@@ -1,9 +1,15 @@
+/* Parallel plane sweep algorithm with stripes (Intel TBB implementation)
+    The implementation is the same as PlaneSweepStripesParallelAlgorithm with the only difference
+    that we are using Intel TBB instead of OpenMP
+*/
 #ifndef PLANESWEEPSTRIPESPARALLELTBBALGORITHM_H
 #define PLANESWEEPSTRIPESPARALLELTBBALGORITHM_H
 
 #include "AbstractAllKnnAlgorithm.h"
 #include "AllKnnResultStripesParallelTBB.h"
 
+/** \brief Parallel plane sweep with stripes (Intel TBB)
+ */
 class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:

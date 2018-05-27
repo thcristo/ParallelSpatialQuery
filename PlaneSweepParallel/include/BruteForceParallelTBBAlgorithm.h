@@ -1,3 +1,5 @@
+/* Parallel brute force algorithm implementation using Intel TBB */
+
 #ifndef BRUTEFORCEPARALLELTBBALGORITHM_H
 #define BRUTEFORCEPARALLELTBBALGORITHM_H
 
@@ -6,6 +8,8 @@
 
 using namespace tbb;
 
+/** \brief Parallel brute force algorithm using Intel TBB
+ */
 class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
@@ -41,10 +45,12 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
             if (numThreads > 0)
             {
+                //user-defined number of threads
                 scheduler.initialize(numThreads);
             }
             else
             {
+                //automatic number of threads equal to the number of cores
                 scheduler.initialize(task_scheduler_init::automatic);
             }
 
@@ -55,15 +61,19 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             auto inputDatasetBegin = inputDataset.cbegin();
             auto inputDatasetEnd = inputDataset.cend();
 
+            //Intel TBB parallel loop, the input dataset is recursively split into ranges and each range is assigned to a thread
             parallel_for(point_range_t(inputDatasetBegin, inputDatasetEnd), [&](point_range_t& range)
                 {
+                    //get the beginning and end of current range
                     auto rangeBegin = range.begin();
                     auto rangeEnd = range.end();
 
+                    //loop through input points of this range
                     for (auto inputPoint = rangeBegin; inputPoint < rangeEnd; ++inputPoint)
                     {
                         auto& neighbors = pNeighborsContainer->at(inputPoint->id - 1);
 
+                        //loop through all training points
                         for (auto trainingPoint = trainingDatasetBegin; trainingPoint < trainingDatasetEnd; ++trainingPoint)
                         {
                             AddNeighbor(inputPoint, trainingPoint, neighbors);

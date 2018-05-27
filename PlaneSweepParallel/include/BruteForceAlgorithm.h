@@ -1,9 +1,13 @@
+/* Brute  force algorithm implementation */
+
 #ifndef BRUTEFORCEALGORITHM_H
 #define BRUTEFORCEALGORITHM_H
 
 #include "AbstractAllKnnAlgorithm.h"
 #include <chrono>
 
+/** \brief Brute force algorithm
+ */
 class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
@@ -25,6 +29,7 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
         {
             int numNeighbors = problem.GetNumNeighbors();
 
+            //allocate vector for neighbors
             auto pNeighborsContainer =
                 this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
 
@@ -38,12 +43,16 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
             auto inputDatasetBegin = inputDataset.cbegin();
             auto inputDatasetEnd = inputDataset.cend();
 
+            //loop through all input points
             for (auto inputPoint = inputDatasetBegin; inputPoint < inputDatasetEnd; ++inputPoint)
             {
+                //get the neighbors of this input point
                 auto& neighbors = pNeighborsContainer->at(inputPoint->id - 1);
 
+                //loop through all training points
                 for (auto trainingPoint = trainingDatasetBegin; trainingPoint < trainingDatasetEnd; ++trainingPoint)
                 {
+                    //check distance and add neighbor to max heap
                     AddNeighbor(inputPoint, trainingPoint, neighbors);
                 }
             }

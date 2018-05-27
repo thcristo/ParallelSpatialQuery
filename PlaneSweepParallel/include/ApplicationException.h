@@ -1,3 +1,4 @@
+/* This file contains the class definition of an application exception */
 #ifndef APPLICATIONEXCEPTION_H
 #define APPLICATIONEXCEPTION_H
 
@@ -5,6 +6,8 @@
 #include <string>
 using namespace std;
 
+/** \brief Application exception class
+ */
 class ApplicationException : public exception
 {
     public:

@@ -1,3 +1,7 @@
+/* Serial plane sweep algorithm implementation
+    This implementation operates on a copy of the original datasets so it is faster than the index version (PlaneSweepAlgorithm).
+    The disadvantage is that it needs more memory
+ */
 #ifndef PLANESWEEPCOPYALGORITHM_H
 #define PLANESWEEPCOPYALGORITHM_H
 
@@ -5,6 +9,8 @@
 #include <cmath>
 #include "AllKnnResultSorted.h"
 
+/** \brief Serial plane sweep algorithm using copy of original datasets
+ */
 class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
@@ -23,6 +29,7 @@ class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm
 
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
+            //the implementation is the same as PlaneSweepAlgorithm with the only difference that it uses a copy of the original problem datasets
             size_t numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
@@ -42,6 +49,7 @@ class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm
             auto inputDatasetBegin = inputDataset.cbegin();
             auto inputDatasetEnd = inputDataset.cend();
 
+
             auto startSearchPos = trainingDatasetBegin;
 
             for (auto inputPointIter = inputDatasetBegin; inputPointIter < inputDatasetEnd; ++inputPointIter)
@@ -54,6 +62,7 @@ class PlaneSweepCopyAlgorithm : public AbstractAllKnnAlgorithm
                     ++nextTrainingPointIter;
                 }
 
+                //in the serial algorithm we can store the position of the next training point so we can use it in the next repetition
                 startSearchPos = nextTrainingPointIter;
                 auto prevTrainingPointIter = nextTrainingPointIter;
                 if (prevTrainingPointIter > trainingDatasetBegin)

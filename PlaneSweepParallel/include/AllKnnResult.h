@@ -1,3 +1,5 @@
+/* This file contains the class definition of the AkNN algorithm result */
+
 #ifndef AllKnnRESULT_H
 #define AllKnnRESULT_H
 
@@ -9,6 +11,8 @@
 #include "AllKnnProblem.h"
 #include "PointNeighbors.h"
 
+/** \brief Class definition of AkNN result
+ */
 class AllKnnResult
 {
     public:
@@ -23,6 +27,7 @@ class AllKnnResult
                      :  problem(problem), filePrefix(filePrefix),
                         pNeighborsPriorityQueueVector(move(pNeighborsContainer)), elapsed(elapsed), elapsedSorting(elapsedSorting)
         {
+            //calculate heap statistics (additions etc.) for reporting purposes
             CalcHeapStats();
         }
 
@@ -103,6 +108,9 @@ class AllKnnResult
             return false;
         }
 
+        /** \brief Saves neighbors found for each input point to a text file
+         *
+         */
         virtual void SaveToFile() const
         {
             auto ms = chrono::duration_cast<chrono::milliseconds>(elapsed);
@@ -110,6 +118,7 @@ class AllKnnResult
             auto now = chrono::system_clock::now();
             auto in_time_t = chrono::system_clock::to_time_t(now);
 
+            //generate a unique filename
             stringstream ss;
             ss << filePrefix << "_" << put_time(localtime(&in_time_t), "%Y%m%d%H%M%S") << "_" << ms.count() << ".txt";
 
@@ -117,6 +126,7 @@ class AllKnnResult
 
             const point_vector_t& inputDataset = problem.GetInputDataset();
 
+            //loop through the input dataset
             for (auto inputPoint = inputDataset.cbegin(); inputPoint != inputDataset.cend(); ++inputPoint)
             {
                 outFile << inputPoint->id;
@@ -125,11 +135,15 @@ class AllKnnResult
 
                 vector<Neighbor> removedNeighbors;
 
+                //loop through all the neighbors in the max heap
                 while (pNeighbors->HasNext())
                 {
                     Neighbor neighbor = pNeighbors->Next();
+                    //add neighbor to a second vector so we can put it back again
+                    //(this is needed when we want to use the result as a reference for comparison)
                     removedNeighbors.push_back(neighbor);
 
+                    //output point Id and squared distance
                     if (neighbor.pointId > 0)
                     {
                         outFile << "\t(" << neighbor.pointId << " " << neighbor.distanceSquared << ")";
@@ -142,18 +156,27 @@ class AllKnnResult
 
                 outFile << endl;
 
+                //put back all removed neighbors
                 pNeighbors->AddAllRemoved(removedNeighbors);
             }
 
             outFile.close();
         }
 
+        /** \brief Compares a result with a reference result to find any differences in distances of neighbors
+         *
+         * \param result AllKnnResult& the result to check for differences
+         * \param accuracy double the accuracy to use for comparisons
+         * \return unique_ptr<vector<unsigned long>>  vector of input point ids where differences exist
+         *
+         */
         virtual unique_ptr<vector<unsigned long>> FindDifferences(AllKnnResult& result, double accuracy)
         {
             auto differences = unique_ptr<vector<unsigned long>>(new vector<unsigned long>());
 
             auto& inputDataset = problem.GetInputDataset();
 
+            //loop through all input points
             for (auto inputPoint = inputDataset.cbegin(); inputPoint != inputDataset.cend(); ++inputPoint)
             {
                 NeighborsEnumerator* pNeighbors = &pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
@@ -162,6 +185,7 @@ class AllKnnResult
                 vector<Neighbor> removedNeighbors;
                 vector<Neighbor> removedNeighborsReference;
 
+                //loop through all neighbors
                 while (pNeighbors->HasNext())
                 {
                     Neighbor neighbor = pNeighbors->Next();
@@ -172,14 +196,15 @@ class AllKnnResult
                         Neighbor neighborReference = pNeighborsReference->Next();
                         removedNeighborsReference.push_back(neighborReference);
 
+                        //compare with reference result and check if difference in squared distance exceeds the desired accuracy
                         double diff = neighbor.distanceSquared - neighborReference.distanceSquared;
 
                         if (abs(diff) > accuracy)
                         {
+                            //insert the id of input point in a vector for reporting purposes
                             differences->push_back(inputPoint->id);
                             break;
                         }
-
                     }
                     else
                     {
@@ -193,6 +218,7 @@ class AllKnnResult
                     differences->push_back(inputPoint->id);
                 }
 
+                //put back all removed neighbors from both vectors
                 pNeighbors->AddAllRemoved(removedNeighbors);
                 pNeighborsReference->AddAllRemoved(removedNeighborsReference);
             }
@@ -205,6 +231,8 @@ class AllKnnResult
             return *pNeighborsPriorityQueueVector;
         }
 
+        /** \brief Calculates heap statistics for reporting purposes
+         */
         virtual void CalcHeapStats()
         {
             minHeapAdditions = numeric_limits<size_t>::max();
@@ -213,21 +241,29 @@ class AllKnnResult
 
             size_t numInputPoints = pNeighborsPriorityQueueVector->size();
 
+            //loop through all input points
             for (size_t i=0; i < numInputPoints;  ++i)
             {
                 auto& neighbors = pNeighborsPriorityQueueVector->at(i);
                 auto additions = neighbors.GetNumAdditions();
+
+                //find the minimum additions to max heap
                 if (additions < minHeapAdditions)
                 {
                         minHeapAdditions = additions;
                 }
+
+                //find the maximum additions to max heap
                 if (additions > maxHeapAdditions)
                 {
                         maxHeapAdditions = additions;
                 }
+
+                //find the total additions to max heap
                 totalHeapAdditions += additions;
             }
 
+            //find the average additions to max heap
             avgHeapAdditions = (1.0*totalHeapAdditions)/numInputPoints;
         }
 

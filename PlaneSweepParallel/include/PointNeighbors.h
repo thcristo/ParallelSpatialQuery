@@ -1,3 +1,7 @@
+/* Class definition for the container of neighbors
+    Each instance of this class contains the nearest neighbors of an input point
+    The neighbors are stored in a max heap (priority queue)
+ */
 #ifndef POINTNEIGHBORS_H
 #define POINTNEIGHBORS_H
 
@@ -8,6 +12,8 @@
 
 using namespace tbb;
 
+/** \brief This class is used as an interface for enumerating neighbors
+ */
 class NeighborsEnumerator
 {
     public:
@@ -17,6 +23,9 @@ class NeighborsEnumerator
         virtual size_t GetNumAdditions() = 0;
 };
 
+/** \brief Generic template class used as a neighbors container
+ *          The template parameter is the actual structure that holds the neighbors
+ */
 template<class Container>
 class PointNeighbors : public NeighborsEnumerator
 {
@@ -35,6 +44,8 @@ class PointNeighbors : public NeighborsEnumerator
         unsigned long id;
 };
 
+/** \brief Template specialization for priority queue as holder of neighbors (priority queue is implemented as max heap)
+ */
 template<>
 class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
 {
@@ -48,6 +59,11 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
         {
         }
 
+        /** \brief Move constructor
+         *
+         * \param pointNeighbors PointNeighbors&& instance to move
+         *
+         */
         PointNeighbors(PointNeighbors&& pointNeighbors)
         {
             numNeighbors = pointNeighbors.numNeighbors;
@@ -57,6 +73,12 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             highStripe = pointNeighbors.highStripe;
         }
 
+        /** \brief Move assignment operator
+         *
+         * \param pointNeighbors PointNeighbors&&
+         * \return PointNeighbors&
+         *
+         */
         PointNeighbors& operator=(PointNeighbors&& pointNeighbors)
         {
             if (this != &pointNeighbors)
@@ -73,11 +95,21 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
 
         virtual ~PointNeighbors() {}
 
+        /** \brief Returns true if the heap contains more neighbors
+         *
+         * \return bool
+         *
+         */
         bool HasNext() override
         {
             return !container.empty();
         }
 
+        /** \brief Pops the next neighbor from the heap
+         *
+         * \return Neighbor
+         *
+         */
         Neighbor Next() override
         {
             Neighbor neighbor = container.top();
@@ -85,6 +117,13 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return neighbor;
         }
 
+        /** \brief Checks neighbor distance with top of the heap and adds the neighbor to the heap
+         *
+         * \param pointIter point_vector_iterator_t point to add
+         * \param distanceSquared const double squared distance calculated by the caller
+         * \return void
+         *
+         */
         inline void Add(point_vector_iterator_t pointIter, const double distanceSquared)
         {
             auto& lastNeighbor = container.top();
@@ -94,10 +133,17 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
                 container.pop();
                 Neighbor newNeighbor = {pointIter->id, distanceSquared};
                 container.push(newNeighbor);
+                //number of heap additions is recorded for reporting purposes
                 ++numAdditions;
             }
         }
 
+        /** \brief Re-inserts a list of neighbors to the heap
+         *
+         * \param neighbors const vector<Neighbor>&
+         * \return void
+         *
+         */
         void AddAllRemoved(const vector<Neighbor>& neighbors)
         {
             for (int i = neighbors.size() - 1; i >= 0; --i)
@@ -111,6 +157,14 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return numAdditions;
         }
 
+        /** \brief Checks neighbor distance with top of the heap and adds the neighbor to the heap
+         *
+         * \param pointIter point_vector_iterator_t point to add
+         * \param distanceSquared const double& squared distance calculated by the caller
+         * \param dx const double& distance difference in x axis calculated by the caller
+         * \return bool false if the caller should stop further examination of training points in the same direction
+         *
+         */
         inline bool CheckAdd(point_vector_iterator_t pointIter, const double& distanceSquared, const double& dx)
         {
             auto& lastNeighbor = container.top();
@@ -131,6 +185,15 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return true;
         }
 
+        /** \brief Checks neighbor distance with top of the heap and adds the neighbor to the heap
+         *          It takes into account an additional distance for comparisons
+         * \param pointIter point_vector_iterator_t point to add
+         * \param distanceSquared const double& squared distance calculated by the caller
+         * \param dx const double& distance difference in x axis calculated by the caller
+         * \param mindy const double& distance in y axis between the input point and the nearest boundary of the stripe
+         * \return bool false if the caller should stop further examination of training points in the same direction
+         *
+         */
         inline bool CheckAdd(point_vector_iterator_t pointIter, const double& distanceSquared, const double& dx, const double& mindy)
         {
             auto& lastNeighbor = container.top();
@@ -151,6 +214,13 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             return true;
         }
 
+        /** \brief Adds the neighbor to the heap without checking distance
+         *
+         * \param pointIter point_vector_iterator_t point to add
+         * \param distanceSquared const double squared distance calculated by the caller
+         * \return void
+         *
+         */
         inline void AddNoCheck(point_vector_iterator_t pointIter, const double& distanceSquared)
         {
             container.pop();
@@ -159,16 +229,33 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
             ++numAdditions;
         }
 
+        /** \brief Returns top of the max heap
+         *
+         * \return const Neighbor&
+         *
+         */
         inline const Neighbor& MaxDistanceElement() const
         {
             return container.top();
         }
 
+        /** \brief Sets the lowest stripe searched so far (used by the external memory algorithm)
+         *
+         * \param stripe size_t
+         * \return void
+         *
+         */
         void setLowStripe(size_t stripe)
         {
             lowStripe = stripe;
         }
 
+        /** \brief Sets the highest stripe searched so far (used by the external memory algorithm)
+         *
+         * \param stripe size_t
+         * \return void
+         *
+         */
         void setHighStripe(size_t stripe)
         {
             highStripe = stripe;
@@ -192,6 +279,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
         size_t highStripe = 0;
 };
 
+//type definitions for neighbor containers
 template<class Container>
 using pointNeighbors_generic_map_t = unordered_map<unsigned long, PointNeighbors<Container>>;
 

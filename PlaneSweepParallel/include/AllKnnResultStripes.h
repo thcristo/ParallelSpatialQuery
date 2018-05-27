@@ -1,3 +1,4 @@
+/* This file contains a class definition of AkNN result for striped plane sweep algorithm */
 #ifndef ALLKNNRESULTSTRIPES_H
 #define ALLKNNRESULTSTRIPES_H
 
@@ -8,6 +9,8 @@
 using namespace tbb;
 
 
+/** \brief Class definition of AkNN result for striped plane sweep algorithm
+ */
 class AllKnnResultStripes : public AllKnnResult
 {
     public:
@@ -22,28 +25,39 @@ class AllKnnResultStripes : public AllKnnResult
 
         virtual ~AllKnnResultStripes() {}
 
+        /** \brief Splits the input and training datasets into stripes
+         *
+         * \param numStripes size_t number of stripes to use
+         * \return StripeData the structure containing data for all stripes
+         *
+         */
         StripeData GetStripeData(size_t numStripes)
         {
             if (!pInputDatasetStripe)
             {
+                //create stripe vector for input dataset
                 pInputDatasetStripe.reset(new point_vector_vector_t());
             }
 
             if (!pTrainingDatasetStripe)
             {
+                //create stripe vector for training dataset
                 pTrainingDatasetStripe.reset(new point_vector_vector_t());
             }
 
             if (!pStripeBoundaries)
             {
+                //create vector for stripe boundaries
                 pStripeBoundaries.reset(new vector<StripeBoundaries_t>());
             }
 
+            //copy both datasets so we don't destroy the original problem data
             point_vector_t inputDatasetSortedY(problem.GetInputDataset());
             point_vector_t trainingDatasetSortedY(problem.GetTrainingDataset());
 
             if (parallelSort)
             {
+                //sort by using the Intel TBB parallel sort routine
                 parallel_sort(inputDatasetSortedY.begin(), inputDatasetSortedY.end(),
                      [](const Point& point1, const Point& point2)
                      {
@@ -58,6 +72,7 @@ class AllKnnResultStripes : public AllKnnResult
             }
             else
             {
+                //sort by using the serial STL sort routine
                 sort(inputDatasetSortedY.begin(), inputDatasetSortedY.end(),
                      [](const Point& point1, const Point& point2)
                      {
@@ -71,12 +86,15 @@ class AllKnnResultStripes : public AllKnnResult
                      });
             }
 
+            //check if specific number of stripes has been requested
             if (numStripes > 0)
             {
+                //split datasets into this number of stripes
                 create_fixed_stripes(numStripes, inputDatasetSortedY, trainingDatasetSortedY);
             }
             else
             {
+                //find the optimal number of stripes
                 numStripes = get_optimal_stripes();
                 create_fixed_stripes(numStripes, inputDatasetSortedY, trainingDatasetSortedY);
             }
@@ -84,6 +102,12 @@ class AllKnnResultStripes : public AllKnnResult
             return {*pInputDatasetStripe, *pTrainingDatasetStripe, *pStripeBoundaries};
         }
 
+
+        /** \brief Returns the number of stripes
+         *
+         * \return size_t the number of stripes
+         *
+         */
         size_t getNumStripes() override
         {
             if (pInputDatasetStripe != nullptr)
@@ -105,12 +129,18 @@ class AllKnnResultStripes : public AllKnnResult
 
         virtual void create_fixed_stripes(size_t numStripes, const point_vector_t& inputDatasetSortedY, const point_vector_t& trainingDatasetSortedY)
         {
+            //check if we want to split based on Training or input dataset
             if (splitByT)
                 create_fixed_stripes_training(numStripes, inputDatasetSortedY, trainingDatasetSortedY);
             else
                 create_fixed_stripes_input(numStripes, inputDatasetSortedY, trainingDatasetSortedY);
         }
 
+        /** \brief calculate an optimal number of stripes based on the number of training points and neighbors
+         *
+         * \return size_t the optimal number of stripes
+         *
+         */
         size_t get_optimal_stripes()
         {
             size_t numTrainingPoints = problem.GetTrainingDataset().size();
@@ -123,6 +153,11 @@ class AllKnnResultStripes : public AllKnnResult
             return optimal_stripes;
         }
 
+        /** \brief Saves the stripes to a text file for troubleshooting reasons
+         *
+         * \return void
+         *
+         */
         void SaveStripes()
         {
             auto now = chrono::system_clock::now();
@@ -146,9 +181,17 @@ class AllKnnResultStripes : public AllKnnResult
             outFile.close();
         }
 
+        /** \brief Splits the datasets into stripes based on the input dataset (fixed number of input points per stripe)
+         *
+         * \param numStripes size_t the desired number of stripes
+         * \param inputDatasetSortedY const point_vector_t& the sorted input dataset
+         * \param trainingDatasetSortedY const point_vector_t& the sorted training dataset
+         * \return void
+         *
+         */
         virtual void create_fixed_stripes_input(size_t numStripes, const point_vector_t& inputDatasetSortedY, const point_vector_t& trainingDatasetSortedY)
         {
-            size_t inputDatasetStripeSize = inputDatasetSortedY.size()/numStripes + 1;
+            size_t inputDatasetStripeSize = inputDatasetSortedY.size()/numStripes + 1; /**< the count of input points  per stripe */
             auto inputDatasetSortedYEnd = inputDatasetSortedY.cend();
             auto trainingDatasetSortedYEnd = trainingDatasetSortedY.cend();
 
@@ -158,17 +201,22 @@ class AllKnnResultStripes : public AllKnnResult
 
             bool exit = false;
 
+            //loop through input dataset, each step should contain the same number of input points
             do
             {
+                //while there are any input points having same y, advance the end of the stripe to the next input point
                 while (inputIterEnd < inputDatasetSortedYEnd && prev(inputIterEnd)->y == inputIterEnd->y)
                 {
                     ++inputIterEnd;
                 }
 
+                //we found input points for the current stripe
                 pInputDatasetStripe->push_back(point_vector_t(inputIterStart, inputIterEnd));
 
+                //miny boundary for current stripe
                 double minY = inputIterStart->y <= trainingIterStart->y ? inputIterStart->y : trainingIterStart->y;
 
+                //sort input points of current stripe by x
                 if (parallelSort)
                 {
                     parallel_sort(pInputDatasetStripe->back().begin(), pInputDatasetStripe->back().end(),
@@ -186,8 +234,10 @@ class AllKnnResultStripes : public AllKnnResult
                          });
                 }
 
+                //now find the maxy boundary of current stripe
                 double maxY = minY;
 
+                //find the training point for current stripe
                 if (trainingIterStart < trainingDatasetSortedYEnd)
                 {
                     auto trainingIterEnd = trainingDatasetSortedYEnd;
@@ -195,14 +245,17 @@ class AllKnnResultStripes : public AllKnnResult
                     {
                         trainingIterEnd = trainingIterStart;
                         double ylimit = prev(inputIterEnd)->y;
+                        //while there are points with same y, advance the end of the current stripe
                         while (trainingIterEnd < trainingDatasetSortedYEnd && trainingIterEnd->y <= ylimit)
                             ++trainingIterEnd;
                     }
 
+                    //we found training points for current stripe
                     pTrainingDatasetStripe->push_back(point_vector_t(trainingIterStart, trainingIterEnd));
 
                     maxY = prev(trainingIterEnd)->y >= prev(inputIterEnd)->y ? prev(trainingIterEnd)->y : prev(inputIterEnd)->y;
 
+                    //sort training points of current stripe by x
                     if (parallelSort)
                     {
                         parallel_sort(pTrainingDatasetStripe->back().begin(), pTrainingDatasetStripe->back().end(),
@@ -220,17 +273,21 @@ class AllKnnResultStripes : public AllKnnResult
                          });
                     }
 
+                    //start of next stripe is the end of current stripe
                     trainingIterStart = trainingIterEnd;
                 }
                 else
                 {
+                    //the current stripe does not contain any training points
                     pTrainingDatasetStripe->push_back(point_vector_t());
 
                     maxY = prev(inputIterEnd)->y;
                 }
 
+                //keep the boundaries of current stripe in a vector
                 pStripeBoundaries->push_back({minY, maxY});
 
+                //calculate the starting point for next stripe
                 if (inputIterEnd < inputDatasetSortedYEnd)
                 {
                     inputIterStart = inputIterEnd;
@@ -245,14 +302,26 @@ class AllKnnResultStripes : public AllKnnResult
                 }
                 else
                 {
+                    //we have examined all input points
                     exit = true;
                 }
 
             } while (!exit);
         }
 
+        /** \brief Splits the datasets into stripes based on the training dataset (fixed number of training points per stripe)
+         *
+         * \param numStripes size_t the desired number of stripes
+         * \param inputDatasetSortedY const point_vector_t& the sorted input dataset
+         * \param trainingDatasetSortedY const point_vector_t& the sorted training dataset
+         * \return void
+         *
+         */
         virtual void create_fixed_stripes_training(size_t numStripes, const point_vector_t& inputDatasetSortedY, const point_vector_t& trainingDatasetSortedY)
         {
+            //The implementation is exactly the same as create_fixed_stripes_input
+            //with the only difference of switching between input and training datasets
+
             size_t trainingDatasetStripeSize = trainingDatasetSortedY.size()/numStripes + 1;
             auto trainingDatasetSortedYEnd = trainingDatasetSortedY.cend();
             auto inputDatasetSortedYEnd = inputDatasetSortedY.cend();

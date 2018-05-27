@@ -1,3 +1,4 @@
+/* This file contains a class definition of AkNN result for striped plane sweep algorithm when external memory is used */
 #ifndef ALLKNNRESULTSTRIPESPARALLELEXTERNAL_H
 #define ALLKNNRESULTSTRIPESPARALLELEXTERNAL_H
 #include <stxxl/sort>
@@ -5,6 +6,8 @@
 #include "StripesWindow.h"
 #include "AllKnnProblemExternal.h"
 
+/** \brief Comparer for sorting points by y
+ */
 struct ExternalPointComparerY
 {
     Point minval = {0, 0.0, -0.00000001};
@@ -26,6 +29,8 @@ struct ExternalPointComparerY
     }
 };
 
+/** \brief Comparer for sorting points by x
+ */
 struct ExternalPointComparerX
 {
     Point minval = {0, -0.00000001, 0.0};
@@ -47,6 +52,9 @@ struct ExternalPointComparerX
     }
 };
 
+/** \brief Comparer for sorting neighbors by input point id and neighbor rank
+ *          This is used for sorting the result of the algorithm
+ */
 struct ExternalNeighborComparer
 {
     NeighborExt minval = {0, 0.0, 0, 0};
@@ -68,6 +76,8 @@ struct ExternalNeighborComparer
     }
 };
 
+/** \brief Class definition of AkNN result of striped plane sweep algorithm (external memory)
+ */
 class AllKnnResultStripesParallelExternal : public AllKnnResult
 {
     public:
@@ -85,24 +95,36 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
         {
         }
 
+        /** \brief Splits the datasets into stripes
+         *
+         * \param numStripes size_t the desired number of stripes
+         * \return size_t the actual number of stripes
+         *
+         */
         size_t SplitStripes(size_t numStripes)
         {
+            //copy both datasets
             ext_point_vector_t inputDatasetSortedY(problemExt.GetExtInputDataset());
             ext_point_vector_t trainingDatasetSortedY(problemExt.GetExtTrainingDataset());
 
+            //calculate memory limit based on variables
             size_t usedMemory = 4*64*1024*1024;
             auto memoryLimit = problemExt.GetMemoryLimitBytes();
             auto safeMemoryLimit = memoryLimit - usedMemory;
 
+            //call external memory sort routine of STXXL library
             stxxl::sort(inputDatasetSortedY.cbegin(), inputDatasetSortedY.cend(), ExternalPointComparerY(), safeMemoryLimit);
             stxxl::sort(trainingDatasetSortedY.cbegin(), trainingDatasetSortedY.cend(), ExternalPointComparerY(), safeMemoryLimit);
 
+            //check if specific number of stripes has been requested
             if (numStripes > 0)
             {
+                //split datasets into this number of stripes
                 create_fixed_stripes(numStripes, inputDatasetSortedY, trainingDatasetSortedY);
             }
             else
             {
+                //find the optimal number of stripes
                 numStripes = get_optimal_stripes();
                 create_fixed_stripes(numStripes, inputDatasetSortedY, trainingDatasetSortedY);
             }
@@ -110,6 +132,13 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             return pStripeBoundaries->size();
         }
 
+        /** \brief Returns a set of stripes that fits into RAM
+         *
+         * \param fromStripe size_t index of starting stripe
+         * \param secondPass bool true if this is the second phase of the algorithm (higher to lower y)
+         * \return unique_ptr<StripesWindow> the window of stripes
+         *
+         */
         unique_ptr<StripesWindow> GetWindow(size_t fromStripe, bool secondPass)
         {
             auto memoryLimit = problemExt.GetMemoryLimitBytes();
@@ -117,6 +146,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
             size_t numNeighbors = problem.GetNumNeighbors();
             size_t numStripes = pStripeBoundaries->size();
+            //estimation of required memory based on variables, this is an approximation with some safety factors
             size_t usedMemory = (pPendingPoints->size()*(sizeof(unsigned long) + sizeof(StripePoint)))
                                 + (pPendingNeighborsContainer->size()*(sizeof(unsigned long) + sizeof(PointNeighbors<neighbors_priority_queue_t>) + numNeighbors*sizeof(Neighbor)))
                                 + (pPendingPoints->size()*(sizeof(Point)))
@@ -130,11 +160,14 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
             if (secondPass)
             {
+                //in the second phase we return training points only
                 size_t endStripe = fromStripe;
                 size_t startStripe = endStripe + 1;
 
+                //find how many stripes can fit into available memory
                 do
                 {
+                    //add stripes of training points until we reach the memory limit
                     size_t sizeTraining = (pTrainingStripeCount->at(startStripe - 1))*sizeof(Point);
 
                     if (usedMemory + sizeTraining <= safeMemoryLimit)
@@ -148,6 +181,8 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
                 if (endStripe < startStripe)
                 {
+                    //we cannot allocate even a single stripe so the algorithm reports memory allocation error
+                    //this can happen if we have too many pending points
                     hasAllocationError = true;
                     return unique_ptr<StripesWindow>(nullptr);
                 }
@@ -156,6 +191,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                 unique_ptr<point_vector_vector_t> pTrainingStripes(new point_vector_vector_t(numWindowStripes));
                 unique_ptr<vector<StripeBoundaries_t>> pBoundaries(new vector<StripeBoundaries_t>(numWindowStripes));
 
+                //add stripes to current window until we reach the memory limit
                 for (size_t iStripe = startStripe; iStripe <= endStripe; ++iStripe)
                 {
                     auto& trainingPoints = pTrainingStripes->at(iStripe-startStripe);
@@ -169,6 +205,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                         std::copy(trainingStart, trainingEnd, std::back_inserter(trainingPoints));
                     }
 
+                    //store the boundaries of each stripe
                     boundaries.minY = pStripeBoundaries->at(iStripe).minY;
                     boundaries.maxY = pStripeBoundaries->at(iStripe).maxY;
                 }
@@ -179,9 +216,11 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             }
             else
             {
+                //this is the first phase of the algorithm, we return input and training point stripes
                 size_t startStripe = fromStripe;
                 size_t endStripe = startStripe;
 
+                //find how many stripes can fit into available memory
                 do
                 {
                     size_t sizeInput = (pInputStripeCount->at(endStripe))*sizeof(Point);
@@ -200,6 +239,8 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
                 if (endStripe <= startStripe)
                 {
+                    //we cannot allocate even a single stripe so the algorithm reports memory allocation error
+                    //this can happen if we have too many pending points
                     hasAllocationError = true;
                     return unique_ptr<StripesWindow>(nullptr);
                 }
@@ -209,12 +250,14 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                 unique_ptr<point_vector_vector_t> pInputStripes(new point_vector_vector_t(numWindowStripes)), pTrainingStripes(new point_vector_vector_t(numWindowStripes));
                 unique_ptr<vector<StripeBoundaries_t>> pBoundaries(new vector<StripeBoundaries_t>(numWindowStripes));
 
+                //add stripes to current window until we reach the memory limit
                 for (size_t iStripe = startStripe; iStripe < endStripe; ++iStripe)
                 {
                     auto& inputPoints = pInputStripes->at(iStripe-startStripe);
                     auto& trainingPoints = pTrainingStripes->at(iStripe-startStripe);
                     auto& boundaries = pBoundaries->at(iStripe-startStripe);
 
+                    //add input point stripes
                     if (pInputStripeCount->at(iStripe) > 0)
                     {
                         auto inputStart = pStripedInputDataset->cbegin() + pInputStripeOffset->at(iStripe);
@@ -223,6 +266,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                         std::copy(inputStart, inputEnd, std::back_inserter(inputPoints));
                     }
 
+                    //add training point stripes
                     if (pTrainingStripeCount->at(iStripe) > 0)
                     {
                         auto trainingStart = pStripedTrainingDataset->cbegin() + pTrainingStripeOffset->at(iStripe);
@@ -231,6 +275,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                         std::copy(trainingStart, trainingEnd, std::back_inserter(trainingPoints));
                     }
 
+                    //store the boundaries of each stripe
                     boundaries.minY = pStripeBoundaries->at(iStripe).minY;
                     boundaries.maxY = pStripeBoundaries->at(iStripe).maxY;
                 }
@@ -241,11 +286,22 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             }
         }
 
+        /** \brief Returns true if an allocation error happened
+         *
+         * \return bool
+         *
+         */
         bool HasAllocationError() override
         {
             return hasAllocationError;
         }
 
+        /** \brief Returns a list of pending points to be examined for a specified window
+         *
+         * \param window const StripesWindow& the window of stripes that is currently in process
+         * \return unique_ptr<point_vector_t> the vector of pending points
+         *
+         */
         unique_ptr<point_vector_t> GetPendingPointsForWindow(const StripesWindow& window)
         {
             unique_ptr<point_vector_t> pPoints(new point_vector_t());
@@ -257,12 +313,18 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             {
                 size_t startStripe = window.GetStartStripe();
 
+                //for second phase we want to examine all pending points except those
+                // with neighbors having a low stripe lower than the first stripe of current window
                 for (auto pendingIter = pendingPointsBegin; pendingIter != pendingPointsEnd; ++pendingIter)
                 {
                     auto pointId = pendingIter->second.id;
+                    //find the neighbors of pending points by looking at a hash table
                     auto& neighbors = pPendingNeighborsContainer->at(pointId);
+                    //get the lowest stripe examined so far
                     size_t lowStripe = neighbors.getLowStripe();
 
+                    //if lowest stripe examined is lower than the first stripe of current window,
+                    //we do not need to examine this pending point
                     if (lowStripe > startStripe)
                     {
                         pPoints->push_back({pendingIter->second.id, pendingIter->second.x, pendingIter->second.y});
@@ -273,12 +335,17 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             {
                 size_t endStripe = window.GetEndStripe();
 
+                //for first phase we want all pending points
                 for (auto pendingIter = pendingPointsBegin; pendingIter != pendingPointsEnd; ++pendingIter)
                 {
                     auto pointId = pendingIter->second.id;
+                    //find the neighbors of pending points by looking at a hash table
                     auto& neighbors = pPendingNeighborsContainer->at(pointId);
+                    //get the highest stripe examined so far
                     size_t highStripe = neighbors.getHighStripe();
 
+                    //if highest stripe examined is higher than the last stripe of current window,
+                    //we do not need to examine this pending point
                     if (highStripe < endStripe)
                     {
                         pPoints->push_back({pointId, pendingIter->second.x, pendingIter->second.y});
@@ -289,11 +356,23 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             return pPoints;
         }
 
+        /** \brief Returns the hash table of neighbors fo pending points
+         *
+         * \return pointNeighbors_priority_queue_map_t&
+         *
+         */
         pointNeighbors_priority_queue_map_t& GetPendingNeighborsContainer()
         {
             return *pPendingNeighborsContainer;
         }
 
+        /** \brief Transfers all the completed points to STXXL vectors. It checks points in the given window and pending points
+         *
+         * \param window StripesWindow& the window of stripes to examine
+         * \param pendingPoints point_vector_t& the list of pending points to examine
+         * \return void
+         *
+         */
         void CommitWindow(StripesWindow& window, point_vector_t& pendingPoints)
         {
             auto commitStart = chrono::high_resolution_clock::now();
@@ -313,12 +392,15 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             auto pendingPointsBegin = pendingPoints.cbegin();
             auto pendingPointsEnd = pendingPoints.cend();
 
+            //check pending list for any completed points
             for (auto pendingPointsIter = pendingPointsBegin; pendingPointsIter < pendingPointsEnd; ++pendingPointsIter)
             {
                 auto pointId = pendingPointsIter->id;
                 auto& pointNeighbors = pPendingNeighborsContainer->at(pointId);
+                //check if search has been completed
                 if (IsSearchCompleted(pointNeighbors))
                 {
+                    //transfer heap statistics
                     pHeapAdditionsVector->push_back(pointNeighbors.GetNumAdditions());
 
                     unsigned int neighborPosition = 0;
@@ -327,11 +409,14 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                     {
                         Neighbor neighbor = pointNeighbors.Next();
 
+                        //we need to store the input point id and rank so we can later sort the neighbors
                         NeighborExt extNeighbor = {neighbor.pointId, neighbor.distanceSquared, pointId, neighborPosition};
 
+                        //store the neighbors in external memory vector
                         pNeighborsExtVector->push_back(extNeighbor);
                         ++neighborPosition;
                     }
+                    //remove pending points and neighbors from RAM
                     pPendingPoints->erase(pointId);
                     pPendingNeighborsContainer->erase(pointId);
                 }
@@ -340,11 +425,13 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             bool isSecondPass = window.IsSecondPass();
             if (!isSecondPass)
             {
+                //check window of stripes for completed points
                 auto stripeData = window.GetStripeData();
                 auto& neighborsContainer = window.GetNeighborsContainer();
                 size_t numWindowStripes = window.GetNumStripes();
                 size_t windowStartStripe = window.GetStartStripe();
 
+                //examine all stripes of the window
                 for (size_t iWindowStripe = 0; iWindowStripe < numWindowStripes; ++iWindowStripe)
                 {
                     auto& inputDataset = stripeData.InputDatasetStripe[iWindowStripe];
@@ -362,6 +449,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
                             if (IsSearchCompleted(pointNeighbors))
                             {
+                                //transfer heap statistics
                                 pHeapAdditionsVector->push_back(pointNeighbors.GetNumAdditions());
 
                                 unsigned int neighborPosition = 0;
@@ -370,14 +458,17 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                                 {
                                     Neighbor neighbor = pointNeighbors.Next();
 
+                                    //we need to store the input point id and rank so we can later sort the neighbors
                                     NeighborExt extNeighbor = {neighbor.pointId, neighbor.distanceSquared, pointId, neighborPosition};
 
+                                    //store the neighbors in external memory vector
                                     pNeighborsExtVector->push_back(extNeighbor);
                                     ++neighborPosition;
                                 }
                             }
                             else
                             {
+                                //if search of neighbors has not been completed, move the point and its so far found neighbors in the pending points list
                                 StripePoint stripePoint = {pointId, point.x, point.y, iWindowStripe + windowStartStripe};
                                 pPendingPoints->emplace(pointId, stripePoint);
                                 pPendingNeighborsContainer->emplace(pointId, std::move(pointNeighbors));
@@ -387,11 +478,17 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                 }
             }
 
+            //we record the time for reporting purposes
             auto commitFinish = chrono::high_resolution_clock::now();
             chrono::duration<double> elapsed = commitFinish - commitStart;
             totalElapsedCommit += elapsed;
         }
 
+        /** \brief Sorts the final result by input point id and neighbor rank
+         *
+         * \return void
+         *
+         */
         void SortNeighbors()
         {
             if (hasAllocationError)
@@ -406,6 +503,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             auto safeMemoryLimit = (memoryLimit - usedMemory);
 
             auto finalSortStart = chrono::high_resolution_clock::now();
+            //call the STXXL sort routine to sort neighbors
             stxxl::sort(pNeighborsExtVector->cbegin(), pNeighborsExtVector->cend(), ExternalNeighborComparer(), safeMemoryLimit);
             auto finalSortEnd = chrono::high_resolution_clock::now();
             elapsedFinalSorting = finalSortEnd - finalSortStart;
@@ -438,16 +536,29 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             return elapsedFinalSorting;
         }
 
+        /** \brief Returns the number of windows processed in the first phase
+         *
+         * \return size_t
+         *
+         */
         size_t getNumFirstPassWindows() const override
         {
             return numFirstPassWindows;
         }
 
+        /** \brief Returns the number of windows processed in the second phase
+         *
+         * \return size_t
+         *
+         */
         size_t getNumSecondPassWindows() const override
         {
             return numSecondPassWindows;
         }
 
+        /** \brief Saves neighbors found for each input point to a text file
+         *
+         */
         void SaveToFile() const override
         {
             if (hasAllocationError)
@@ -493,6 +604,13 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             outFile.close();
         }
 
+        /** \brief Compares a result with a reference result to find any differences in distances of neighbors
+         *
+         * \param result AllKnnResult& the result to check for differences
+         * \param accuracy double the accuracy to use for comparisons
+         * \return unique_ptr<vector<unsigned long>>  vector of input point ids where differences exist
+         *
+         */
         unique_ptr<vector<unsigned long>> FindDifferences(AllKnnResult& result, double accuracy) override
         {
             if (hasAllocationError)
@@ -548,6 +666,8 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             return differences;
         }
 
+         /** \brief Calculates heap statistics for reporting purposes
+         */
         void CalcHeapStats() override
         {
             if (hasAllocationError)
@@ -599,6 +719,11 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
         chrono::duration<double> totalElapsedCommit = chrono::duration<double>(0.0);
         chrono::duration<double> elapsedFinalSorting = chrono::duration<double>(0.0);
 
+        /** \brief calculate an optimal number of stripes based on the number of training points and neighbors
+         *
+         * \return size_t the optimal number of stripes
+         *
+         */
         size_t get_optimal_stripes()
         {
             size_t numTrainingPoints = problem.GetTrainingDatasetSize();
@@ -619,8 +744,19 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                 create_fixed_stripes_input(numStripes, inputDatasetSortedY, trainingDatasetSortedY);
         }
 
+        /** \brief Splits the datasets into stripes based on the input dataset (fixed number of input points per stripe)
+         *
+         * \param numStripes size_t the desired number of stripes
+         * \param inputDatasetSortedY const ext_point_vector_t& the sorted input dataset
+         * \param trainingDatasetSortedY const ext_point_vector_t& the sorted training dataset
+         * \return void
+         *
+         */
         void create_fixed_stripes_input(size_t numStripes, const ext_point_vector_t& inputDatasetSortedY, const ext_point_vector_t& trainingDatasetSortedY)
         {
+            //The implementation is similar to AllKnnResultStripesParallel.create_fixed_stripes_input
+            //with the difference of using external memory vectors and a serial for loop instead of parallel
+
             size_t inputDatasetStripeSize = inputDatasetSortedY.size()/numStripes;
             auto inputDatasetSortedYBegin = inputDatasetSortedY.cbegin();
             auto inputDatasetSortedYEnd = inputDatasetSortedY.cend();
@@ -648,6 +784,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             pPendingPoints.reset(new unordered_map<unsigned long, StripePoint>());
             pPendingNeighborsContainer.reset(new pointNeighbors_priority_queue_map_t());
 
+            //we cannot use a parallel loop because the external memory vectors do not allow concurrent access by multiple threads
             for (size_t i=0; i < numStripes; ++i)
             {
                 StripeBoundaries_t& stripeBoundaries = pStripeBoundaries->at(i);
@@ -747,8 +884,19 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             }
         }
 
+        /** \brief Splits the datasets into stripes based on the training dataset (fixed number of training points per stripe)
+         *
+         * \param numStripes size_t the desired number of stripes
+         * \param inputDatasetSortedY const ext_point_vector_t& the sorted input dataset
+         * \param trainingDatasetSortedY const ext_point_vector_t& the sorted training dataset
+         * \return void
+         *
+         */
         void create_fixed_stripes_training(size_t numStripes, const ext_point_vector_t& inputDatasetSortedY, const ext_point_vector_t& trainingDatasetSortedY)
         {
+            //The implementation is similar to AllKnnResultStripesParallel.create_fixed_stripes_training
+            //with the difference of using external memory vectors and a serial for loop instead of parallel
+
             size_t trainingDatasetStripeSize = trainingDatasetSortedY.size()/numStripes;
             auto inputDatasetSortedYBegin = inputDatasetSortedY.cbegin();
             auto inputDatasetSortedYEnd = inputDatasetSortedY.cend();
@@ -776,6 +924,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             pPendingPoints.reset(new unordered_map<unsigned long, StripePoint>());
             pPendingNeighborsContainer.reset(new pointNeighbors_priority_queue_map_t());
 
+            //we cannot use a parallel loop because the external memory vectors do not allow concurrent access by multiple threads
             for (size_t i=0; i < numStripes; ++i)
             {
                 StripeBoundaries_t& stripeBoundaries = pStripeBoundaries->at(i);
@@ -873,6 +1022,12 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             }
         }
 
+        /** \brief Returns true if search of k nearest neighbors neighbors has been completed
+         *
+         * \param pointNeighbors const PointNeighbors<neighbors_priority_queue_t>& the list of k neighbors of a specific input point
+         * \return bool
+         *
+         */
         bool IsSearchCompleted(const PointNeighbors<neighbors_priority_queue_t>& pointNeighbors)
         {
             size_t lowStripe = pointNeighbors.getLowStripe();

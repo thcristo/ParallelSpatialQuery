@@ -1,9 +1,13 @@
+/* This file contains the class definition of AkNN problem when external memory is used */
+
 #ifndef ALLKNNPROBLEMEXTERNAL_H
 #define ALLKNNPROBLEMEXTERNAL_H
 
 #include "AllKnnProblem.h"
 
 
+/** \brief Class definition for AkNN problem stored in external memory
+ */
 class AllKnnProblemExternal : public AllKnnProblem
 {
     public:
@@ -37,6 +41,11 @@ class AllKnnProblemExternal : public AllKnnProblem
             return pExtTrainingDataset->size();
         }
 
+        /** \brief Returns the defined memory limit of the external memory algorithm in MB
+         *
+         * \return size_t memory limit in MB
+         *
+         */
         size_t GetMemoryLimitBytes() const
         {
             return memoryLimitMB*1024*1024;
@@ -51,6 +60,7 @@ class AllKnnProblemExternal : public AllKnnProblem
         {
             auto start = chrono::high_resolution_clock::now();
 
+            //call template method of parent class by passing an external memory vector
             LoadFile(inputFilename, *pExtInputDataset);
             LoadFile(trainingFilename, *pExtTrainingDataset);
 

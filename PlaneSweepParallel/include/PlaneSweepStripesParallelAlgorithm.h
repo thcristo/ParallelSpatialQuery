@@ -1,12 +1,24 @@
+/* Parallel plane sweep algorithm with stripes (OpenMP implementation) */
+
 #ifndef PLANESWEEPSTRIPESPARALLELALGORITHM_H
 #define PLANESWEEPSTRIPESPARALLELALGORITHM_H
 
 #include "AbstractAllKnnAlgorithm.h"
 #include "AllKnnResultStripesParallel.h"
 
+/** \brief Parallel plane sweep with stripes (OpenMP)
+ */
 class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
+        /** \brief Constructor
+         *
+         * \param numStripes int number of stripes to use
+         * \param numThreads int number of threads to use
+         * \param parallelSort bool true if we want to use parallel sorting of stripe points by x
+         * \param parallelSplit bool true if we want to use parallel splitting of datasets to stripes
+         * \param splitByT bool true if we want to split stripes by using the training dataset
+         */
         PlaneSweepStripesParallelAlgorithm(int numStripes, int numThreads, bool parallelSort, bool parallelSplit, bool splitByT) : numStripes(numStripes),
             numThreads(numThreads), parallelSort(parallelSort), parallelSplit(parallelSplit), splitByT(splitByT)
         {
@@ -32,13 +44,17 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
+            //the implementation is similar to PlaneSweepStripesAlgorithm
             size_t numNeighbors = problem.GetNumNeighbors();
 
+            //allocate vector of neighbors for all input points
             auto pNeighborsContainer =
                 this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
 
+            //if numThreads=0, let the system decide the number of threads based on number of cores
             if (numThreads > 0)
             {
+                //set the number of threads explicitly
                 omp_set_num_threads(numThreads);
             }
 
@@ -46,17 +62,22 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 
             unique_ptr<AllKnnResultStripes> pResult;
 
+            //we use a different class for result depending on splitting method
             if (parallelSplit)
                 pResult.reset(new AllKnnResultStripesParallel(problem, GetPrefix(), parallelSort, splitByT));
             else
                 pResult.reset(new AllKnnResultStripes(problem, GetPrefix(), parallelSort, splitByT));
 
+            //split datasets into stripes
             auto stripeData = pResult->GetStripeData(numStripes);
 
+            //get the actual number of stripes (may be slightly more than the desired number)
             numStripes = stripeData.InputDatasetStripe.size();
 
             auto finishSorting = chrono::high_resolution_clock::now();
 
+            //parallel loop through all stripes
+            //we use dynamic scheduling so thread scheduling is based on the workload of each stripe
             #pragma omp parallel for schedule(dynamic)
             for (int iStripeInput = 0; iStripeInput < numStripes; ++iStripeInput)
             {
@@ -64,11 +85,13 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
                 auto inputDatasetBegin = inputDataset.cbegin();
                 auto inputDatasetEnd = inputDataset.cend();
 
+                //loop through all points of current stripe
                 for (auto inputPointIter = inputDatasetBegin; inputPointIter < inputDatasetEnd; ++inputPointIter)
                 {
                     int iStripeTraining = iStripeInput;
                     auto& neighbors = pNeighborsContainer->at(inputPointIter->id - 1);
 
+                    //first check for neighbors in the same stripe
                     PlaneSweepStripe(inputPointIter, stripeData, iStripeTraining, neighbors, 0.0);
 
                     int iStripeTrainingPrev = iStripeTraining - 1;
@@ -76,6 +99,7 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
                     bool lowStripeEnd = iStripeTrainingPrev < 0;
                     bool highStripeEnd = iStripeTrainingNext >= numStripes;
 
+                    //now check for neighbors in other stripes moving alternately to higher and lower y
                     while (!lowStripeEnd || !highStripeEnd)
                     {
                         if (!lowStripeEnd)
@@ -132,9 +156,20 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
         bool parallelSplit = false;
         bool splitByT = false;
 
+        /** \brief Searches for neighbors of an input point in a specific stripe
+         *
+         * \param inputPointIter point_vector_iterator_t iterator pointing to input point
+         * \param stripeData StripeData data for all stripes
+         * \param iStripeTraining int index of stripe to be examined
+         * \param neighbors PointNeighbors<neighbors_priority_queue_t>& object containing the max heap of neighbors for the given input point
+         * \param mindy double squared distance of input point from the nearest boundary of the stripe
+         * \return
+         *
+         */
         void PlaneSweepStripe(point_vector_iterator_t inputPointIter, StripeData stripeData, int iStripeTraining,
                               PointNeighbors<neighbors_priority_queue_t>& neighbors, double mindy) const
         {
+            //the implementation is the same as PlaneSweepStripesAlgorithm
             auto& trainingDataset = stripeData.TrainingDatasetStripe[iStripeTraining];
 
             auto trainingDatasetBegin = trainingDataset.cbegin();

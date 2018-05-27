@@ -1,9 +1,12 @@
+/* Parallel brute force algorithm implementation using OpenMP */
 #ifndef BRUTEFORCEPARALLELALGORITHM_H
 #define BRUTEFORCEPARALLELALGORITHM_H
 
 #include "AbstractAllKnnAlgorithm.h"
 #include <omp.h>
 
+/** \brief Parallel brute force algorithm using OpenMP
+ */
 class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
@@ -33,8 +36,10 @@ class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();
 
+            //if numThreads=0, let the system decide the number of threads based on number of cores
             if (numThreads > 0)
             {
+                //set number of threads to use
                 omp_set_num_threads(numThreads);
             }
 
@@ -45,13 +50,16 @@ class BruteForceParallelAlgorithm : public AbstractAllKnnAlgorithm
             auto inputDatasetBegin = inputDataset.cbegin();
             auto inputDatasetEnd = inputDataset.cend();
 
+            //parallel loop through all input points
             #pragma omp parallel for schedule(dynamic)
             for (auto inputPoint = inputDatasetBegin; inputPoint < inputDatasetEnd; ++inputPoint)
             {
                 auto& neighbors = pNeighborsContainer->at(inputPoint->id - 1);
 
+                //loop through all training points
                 for (auto trainingPoint = trainingDatasetBegin; trainingPoint < trainingDatasetEnd; ++trainingPoint)
                 {
+                    //check distance and add neighbor to max heap
                     AddNeighbor(inputPoint, trainingPoint, neighbors);
                 }
             }

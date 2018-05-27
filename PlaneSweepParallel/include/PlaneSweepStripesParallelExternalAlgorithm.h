@@ -1,3 +1,5 @@
+/* External memory plane sweep with stripes algorithm (OpenMP parallelism) */
+
 #ifndef PLANESWEEPSTRIPESPARALLELEXTERNALALGORITHM_H
 #define PLANESWEEPSTRIPESPARALLELEXTERNALALGORITHM_H
 
@@ -5,9 +7,18 @@
 #include "StripesWindow.h"
 #include "AllKnnResultStripesParallelExternal.h"
 
+/** \brief External memory plane sweep with stripes using OpenMP
+ */
 class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
+        /** \brief Constructor
+         *
+         * \param numStripes int number of stripes to use
+         * \param numThreads int number of threads to use
+         * \param parallelSort bool true if we want to use parallel sorting of stripe points by x
+         * \param splitByT bool true if we want to split stripes by using the training dataset
+         */
         PlaneSweepStripesParallelExternalAlgorithm(size_t numStripes, int numThreads, bool parallelSort, bool splitByT) : numStripes(numStripes),
             numThreads(numThreads), parallelSort(parallelSort), splitByT(splitByT)
         {
@@ -40,6 +51,7 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
         {
             int numThreadsToUse = omp_get_max_threads();
 
+            //if numThreads=0, let the system decide the number of threads based on number of cores
             if (numThreads > 0)
             {
                 omp_set_num_threads(numThreads);
@@ -48,6 +60,7 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
 
             auto start = chrono::high_resolution_clock::now();
 
+            //create result object
             auto pResult = unique_ptr<AllKnnResultStripesParallelExternal>(
                                 new AllKnnResultStripesParallelExternal(static_cast<AllKnnProblemExternal&>(problem),
                                                 GetPrefix(), parallelSort, splitByT));
@@ -63,8 +76,10 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
 
             cout << "first pass started" << endl;
 
+            //first phase of the algorithm
             do
             {
+                //load a window of stripes that fits into RAM
                 auto pWindow = pResult->GetWindow(nextStripe, false);
 
                 if (pWindow != nullptr)
@@ -73,16 +88,19 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                     endStripe = pWindow->GetEndStripe();
                     nextStripe = endStripe + 1;
                     cout << "got window " << startStripe << " " << endStripe << endl;
+                    //run the plane sweep algorithm for this window
                     PlaneSweepWindow(pWindow, pResult, numThreadsToUse);
                     cout << "processed window" << endl;
                 }
                 else
+                    //no more windows available
                     break;
 
             } while (endStripe < numStripes - 1);
 
             cout << "first pass ended" << endl;
 
+            //second phase of the algorithm, we examine pending points from the previous phase
             if (!pResult->HasAllocationError())
             {
                 cout << "second pass started" << endl;
@@ -91,6 +109,7 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
 
                 while (hasPrevStripe)
                 {
+                    //get next window of stripes (training points only)
                     auto pWindow = pResult->GetWindow(startStripe-1, true);
 
                     if (pWindow != nullptr)
@@ -99,6 +118,7 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                         endStripe = pWindow->GetEndStripe();
                         hasPrevStripe = startStripe > 0;
                         cout << "got window " << startStripe << " " << endStripe << endl;
+                        //run the plane sweep algorithm for this window
                         PlaneSweepWindow(pWindow, pResult, numThreadsToUse);
                         cout << "processed window" << endl;
                     }
@@ -109,6 +129,8 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                 cout << "second pass ended" << endl;
 
                 cout << "neighbors sort start" << endl;
+
+                //sort the final result by input point id and neighbor position
                 pResult->SortNeighbors();
                 cout << "neighbors sort end" << endl;
             }
@@ -130,37 +152,58 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
         bool parallelSort = false;
         bool splitByT = false;
 
+        /** \brief Runs the plane sweep algorithm in a window of stripes
+         *
+         * \param pWindow unique_ptr<StripesWindow>& window of stripes
+         * \param pResult unique_ptr<AllKnnResultStripesParallelExternal>& result object that holds all pointers to data structures
+         * \param numThreadsToUse unsigned int number of threads to use
+         * \return void
+         *
+         */
         void PlaneSweepWindow(unique_ptr<StripesWindow>& pWindow, unique_ptr<AllKnnResultStripesParallelExternal>& pResult, unsigned int numThreadsToUse)
         {
+            //check if this is the second phase of the algorithm
             bool isSecondPass = pWindow->IsSecondPass();
             size_t windowStartStripe = pWindow->GetStartStripe();
             size_t windowEndStripe = pWindow->GetEndStripe();
             size_t numWindowStripes = pWindow->GetNumStripes();
+            //get stripe data for this window
             auto stripeData = pWindow->GetStripeData();
 
+            //get pending points that are of interest to this window
             auto pPendingPointsContainer = pResult->GetPendingPointsForWindow(*pWindow);
             auto pendingPointsIterBegin = pPendingPointsContainer->cbegin();
             auto pendingPointsIterEnd = pPendingPointsContainer->cend();
 
+            //get container of neighbors
+            //in this case it is a hash table (a mapping between input point id and heap of neighbors)
             auto& pendingNeighborsContainer = pResult->GetPendingNeighborsContainer();
 
+            //parallel loop through all pending points, each chunk of work contains 10 pending points
             #pragma omp parallel for schedule(dynamic, 10)
             for (auto inputPointIter = pendingPointsIterBegin; inputPointIter < pendingPointsIterEnd; ++inputPointIter)
             {
                 bool exit = false;
+                //get the neighbors by using the map
                 auto& neighbors = pendingNeighborsContainer.at(inputPointIter->id);
                 size_t lowStripe = neighbors.getLowStripe();
                 size_t highStripe = neighbors.getHighStripe();
                 size_t currentStripe = isSecondPass ? lowStripe - 1 : highStripe + 1;
                 int step = isSecondPass ? -1 : 1;
 
+                //in this loop we are looking for new neighbors of pending points
+                //the direction of search depends on whether we are in the first or second phase of the algorithm
+                //in the first phase we are moving upwards (to higher y)
+                //in the second phase we are moving downwards (to lower y)
                 do
                 {
+                    //distance of input point with the nearest boundary of the stripe
                     double dy = isSecondPass ? inputPointIter->y - stripeData.StripeBoundaries[currentStripe - windowStartStripe].maxY
                                 : stripeData.StripeBoundaries[currentStripe - windowStartStripe].minY - inputPointIter->y;
                     double dySquared = dy*dy;
                     if (dySquared < neighbors.MaxDistanceElement().distanceSquared)
                     {
+                        //check this stripe
                         PlaneSweepStripe(inputPointIter, stripeData, currentStripe - windowStartStripe, neighbors, dySquared);
                         exit = isSecondPass ? currentStripe == windowStartStripe : currentStripe == windowEndStripe;
 
@@ -174,6 +217,8 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                     }
                     else
                     {
+                        //the search has been completed for this window
+                        //update the range of stripes searched so far
                         exit = true;
                         if (isSecondPass)
                             neighbors.setLowStripe(0);
@@ -190,8 +235,10 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
 
             if (!isSecondPass)
             {
+                //this is the usual plane sweep algorithm as implemented in the other algorithms
                 auto& neighborsContainer = pWindow->GetNeighborsContainer();
 
+                //if number of stripes is greater than the number of threads, then parallelize the outer loop
                 #pragma omp parallel for schedule(dynamic) if (numWindowStripes >= numThreadsToUse)
                 for (size_t iStripeInput = windowStartStripe; iStripeInput <= windowEndStripe; ++iStripeInput)
                 {
@@ -200,6 +247,7 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                     auto inputDatasetEnd = inputDataset.cend();
                     auto& stripeNeighborsContainer = neighborsContainer[iStripeInput - windowStartStripe];
 
+                    //if number of stripes is less than the number of threads, then parallelize the inner loop
                     #pragma omp parallel for if (numWindowStripes < numThreadsToUse)
                     for (auto inputPointIter = inputDatasetBegin; inputPointIter < inputDatasetEnd; ++inputPointIter)
                     {
@@ -207,6 +255,7 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                         size_t inputPointOffset = std::distance(inputDatasetBegin, inputPointIter);
                         auto& neighbors = stripeNeighborsContainer.at(inputPointOffset);
 
+                        //first check for neighbors in the same stripe
                         PlaneSweepStripe(inputPointIter, stripeData, iStripeTraining - windowStartStripe, neighbors, 0.0);
 
                         bool lowStripeEnd = iStripeTraining == windowStartStripe;
@@ -215,6 +264,8 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                         size_t iStripeTrainingPrev = lowStripeEnd ? iStripeTraining : iStripeTraining - 1;
                         size_t iStripeTrainingNext = highStripeEnd ? iStripeTraining : iStripeTraining + 1;
 
+                        //always update the range of stripes searched so far
+                        //we need this information at the commit step to decide if search of neighbors has been completed
                         if (lowStripeEnd)
                         {
                             neighbors.setLowStripe(iStripeTraining);
@@ -225,6 +276,7 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                             neighbors.setHighStripe(iStripeTraining);
                         }
 
+                        //now check for neighbors in other stripes moving alternately to higher and lower y
                         while (!lowStripeEnd || !highStripeEnd)
                         {
                             if (!lowStripeEnd)
@@ -274,10 +326,23 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
             }
 
             cout << "commit window started" << endl;
+
+            //commit the window: check for any completed points and transfer their neighbors to external memory vectors
+            //and update the list of pending points
             pResult->CommitWindow(*pWindow, *pPendingPointsContainer);
             cout << "commit window ended" << endl;
         }
 
+        /** \brief Searches for neighbors of an input point in a specific stripe
+         *
+         * \param inputPointIter point_vector_iterator_t iterator pointing to input point
+         * \param stripeData StripeData data for all stripes
+         * \param iStripeTraining int index of stripe to be examined
+         * \param neighbors PointNeighbors<neighbors_priority_queue_t>& object containing the max heap of neighbors for the given input point
+         * \param mindy double squared distance of input point from the nearest boundary of the stripe
+         * \return
+         *
+         */
         void PlaneSweepStripe(point_vector_iterator_t inputPointIter, StripeData stripeData, size_t iStripeTraining,
                               PointNeighbors<neighbors_priority_queue_t>& neighbors, double mindy) const
         {

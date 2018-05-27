@@ -1,3 +1,6 @@
+/* Parallel plane sweep algorithm implementation using Intel TBB
+    This implementation operates on a copy of the original datasets and it is based on PlaneSweepCopyAlgorithm
+ */
 #ifndef PLANESWEEPCOPYPARALLELTBBALGORITHM_H
 #define PLANESWEEPCOPYPARALLELTBBALGORITHM_H
 
@@ -6,6 +9,8 @@
 
 using namespace tbb;
 
+/** \brief Parallel plane sweep algorithm using copy of original datasets and Intel TBB
+ */
 class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 {
     public:
@@ -27,6 +32,7 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
         unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
+            //the implementation is similar to PlaneSweepCopyAlgorithm
             size_t numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
@@ -38,10 +44,12 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
             if (numThreads > 0)
             {
+                //user-defined number of threads
                 scheduler.initialize(numThreads);
             }
             else
             {
+                //automatic number of threads equal to the number of cores
                 scheduler.initialize(task_scheduler_init::automatic);
             }
 
@@ -59,11 +67,13 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             auto inputDatasetBegin = inputDataset.cbegin();
             auto inputDatasetEnd = inputDataset.cend();
 
+            //Intel TBB parallel loop, the input dataset is recursively split into ranges and each range is assigned to a thread
             parallel_for(point_range_t(inputDatasetBegin, inputDatasetEnd), [&](point_range_t& range)
                 {
                     auto rangeBegin = range.begin();
                     auto rangeEnd = range.end();
 
+                    //loop through input points of this range
                     for (auto inputPointIter = rangeBegin; inputPointIter < rangeEnd; ++inputPointIter)
                     {
                         auto& neighbors = pNeighborsContainer->at(inputPointIter->id - 1);
@@ -81,6 +91,7 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
                         bool lowStop = prevTrainingPointIter == nextTrainingPointIter;
                         bool highStop = nextTrainingPointIter == trainingDatasetEnd;
 
+                        //start moving left and right of the input point in x axis
                         while (!lowStop || !highStop)
                         {
                             if (!lowStop)
