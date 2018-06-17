@@ -1,0 +1,2 @@
+PlaneSweepParallel 10 E:\Files\eap\de\start\data\water_parks\linearwaterNNew_1.txt E:\Files\eap\de\start\data\water_parks\paskrsNNew_obj.txt 0 1.0E-15 0 0 1 011111111111111111111111110000
+PlaneSweepParallel 10 E:\Files\eap\de\start\data\water_parks\linearwaterNNew_2.txt E:\Files\eap\de\start\data\water_parks\paskrsNNew_obj.txt 0 1.0E-15 0 0 1 011111111111111111111111110000

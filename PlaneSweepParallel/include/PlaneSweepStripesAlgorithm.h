@@ -34,23 +34,15 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
             auto pNeighborsContainer =
                 this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
 
-            int numStripesLocal = omp_get_max_threads();
-
-            //check if a user-defined number of stripes was requested, otherwise use the number of cores as number of stripes
-            if (numStripes > 0)
-            {
-                numStripesLocal = numStripes;
-            }
-
             auto start = chrono::high_resolution_clock::now();
 
             //create result object
             auto pResult = unique_ptr<AllKnnResultStripes>(new AllKnnResultStripes(problem, GetPrefix()));
 
             //split datasets into stripes
-            auto stripeData = pResult->GetStripeData(numStripesLocal);
+            auto stripeData = pResult->GetStripeData(numStripes);
             //get the actual number of stripes
-            numStripesLocal = stripeData.InputDatasetStripe.size();
+            int numStripesLocal = stripeData.InputDatasetStripe.size();
             //record the time used for splitting stripes
             auto finishSorting = chrono::high_resolution_clock::now();
 

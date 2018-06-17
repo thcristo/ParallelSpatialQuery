@@ -23,7 +23,11 @@ bool endsWith(const string& str, const string& suffix)
 
 size_t getTargetNumOfPoints(size_t sourcePoints, int factor)
 {
-    if (factor == 1)
+    if (factor < 0)
+    {
+        return sourcePoints/2;
+    }
+    else if (factor == 1)
     {
         return sourcePoints;
     }
@@ -48,7 +52,18 @@ size_t getTargetNumOfPoints(size_t sourcePoints, int factor)
 
 void write_output_points(const Point& point, unique_ptr<fstream>& pTargetStream, bool isBinaryTarget, size_t pos, int factor)
 {
-    if (factor == 1)
+    if (factor < 0)
+    {
+        if (isBinaryTarget)
+        {
+            Point targetPoint = {(long)(pos+1), point.x, point.y};
+
+            pTargetStream->write(reinterpret_cast<const char*>(&targetPoint), streamsize(sizeof(Point)));
+        }
+        else
+            *pTargetStream << pos+1 << '\t' << point.x << '\t' << point.y << '\n';
+    }
+    else if (factor == 1)
     {
         if (isBinaryTarget)
             pTargetStream->write(reinterpret_cast<const char*>(&point), streamsize(sizeof(Point)));
@@ -91,7 +106,7 @@ int main(int argc, char* argv[])
         cout << "Argument error. Please enter:\n";
         cout << "Argument 1: The original filename to use as base\n";
         cout << "Argument 2: The target filename to create\n";
-        cout << "Argument 3: factor (1, 2 or 4)\n";
+        cout << "Argument 3: factor (-2, -1, 1, 2 or 4)\n";
 
         return 1;
     }
@@ -101,9 +116,9 @@ int main(int argc, char* argv[])
     string sourceFilename(argv[1]), targetFilename(argv[2]);
     int factor = atoi(argv[3]);
 
-    if (factor != 1 && factor != 2 && factor != 4)
+    if (factor != -2 && factor != -1 && factor != 1 && factor != 2 && factor != 4)
     {
-        cout << "Factor argument must be equal to 1, 2 or 4" << endl;
+        cout << "Factor argument must be equal to -2, -1, 1, 2 or 4" << endl;
         return 1;
     }
 
@@ -117,7 +132,10 @@ int main(int argc, char* argv[])
     else
     {
         pTargetStream.reset(new fstream(targetFilename, ios::out));
-        *pTargetStream << fixed << setprecision(8);
+        if (factor < 0)
+            *pTargetStream << fixed << setprecision(10);
+        else
+            *pTargetStream << fixed << setprecision(8);
     }
 
     if ( !pTargetStream->is_open() )
@@ -150,7 +168,8 @@ int main(int argc, char* argv[])
             Point p;
             fsSource.read(reinterpret_cast<char*>(&p), streamsize(sizeof(Point)));
 
-            if (factor == 1 || factor == 4 || (factor == 2 && i%2 == 1))
+            if ((factor == -1 && i%2 == 1) || (factor == -2 && i%2 == 0)
+                || factor == 1 || factor == 4 || (factor == 2 && i%2 == 1))
             {
                 write_output_points(p, pTargetStream, isBinaryTarget, j, factor);
                 ++j;
@@ -186,7 +205,9 @@ int main(int argc, char* argv[])
         while (iter != eof)
         {
             Point p = *iter++;
-            if (factor == 1 || factor == 4 || (factor == 2 && i%2 == 1))
+
+            if ((factor == -1 && i%2 == 1) || (factor == -2 && i%2 == 0)
+                || factor == 1 || factor == 4 || (factor == 2 && i%2 == 1))
             {
                 write_output_points(p, pTargetStream, isBinaryTarget, j, factor);
                 ++j;
