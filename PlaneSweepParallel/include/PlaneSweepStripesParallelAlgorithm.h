@@ -26,23 +26,23 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
 
         virtual ~PlaneSweepStripesParallelAlgorithm() {}
 
-        string GetTitle() const
+        std::string GetTitle() const
         {
-            stringstream ss;
+            std::stringstream ss;
 
             ss << "Plane sweep stripes parallel, parallelSort=" << parallelSort << ", parallelSplit=" << parallelSplit << ", splitByTraining=" << splitByT;
             return ss.str();
         }
 
-        string GetPrefix() const
+        std::string GetPrefix() const
         {
-            stringstream ss;
+            std::stringstream ss;
 
             ss << "planesweep_stripes_parallel_psort_" << parallelSort << "_psplit_" << parallelSplit << "_splitByT_" << splitByT;
             return ss.str();
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
+        std::unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
             //the implementation is similar to PlaneSweepStripesAlgorithm
             size_t numNeighbors = problem.GetNumNeighbors();
@@ -58,9 +58,9 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
                 omp_set_num_threads(numThreads);
             }
 
-            auto start = chrono::high_resolution_clock::now();
+            auto start = std::chrono::high_resolution_clock::now();
 
-            unique_ptr<AllKnnResultStripes> pResult;
+            std::unique_ptr<AllKnnResultStripes> pResult;
 
             //we use a different class for result depending on splitting method
             if (parallelSplit)
@@ -74,7 +74,7 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
             //get the actual number of stripes (may be slightly more than the desired number)
             numStripes = stripeData.InputDatasetStripe.size();
 
-            auto finishSorting = chrono::high_resolution_clock::now();
+            auto finishSorting = std::chrono::high_resolution_clock::now();
 
             //parallel loop through all stripes
             //we use dynamic scheduling so thread scheduling is based on the workload of each stripe
@@ -137,9 +137,9 @@ class PlaneSweepStripesParallelAlgorithm : public AbstractAllKnnAlgorithm
                 }
             }
 
-            auto finish = chrono::high_resolution_clock::now();
-            chrono::duration<double> elapsed = finish - start;
-            chrono::duration<double> elapsedSorting = finishSorting - start;
+            auto finish = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = finish - start;
+            std::chrono::duration<double> elapsedSorting = finishSorting - start;
 
             pResult->setDuration(elapsed);
             pResult->setDurationSorting(elapsedSorting);

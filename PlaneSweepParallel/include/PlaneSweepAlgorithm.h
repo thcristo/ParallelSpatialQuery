@@ -17,17 +17,17 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
         PlaneSweepAlgorithm() {}
         virtual ~PlaneSweepAlgorithm() {}
 
-        string GetTitle() const
+        std::string GetTitle() const
         {
             return "Plane sweep";
         }
 
-        string GetPrefix() const
+        std::string GetPrefix() const
         {
             return "planesweep_serial";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
+        std::unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
             size_t numNeighbors = problem.GetNumNeighbors();
 
@@ -38,7 +38,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();
 
-            auto start = chrono::high_resolution_clock::now();
+            auto start = std::chrono::high_resolution_clock::now();
 
             //copy the datasets
             point_vector_index_t inputDatasetIndex(inputDataset.size());
@@ -64,7 +64,7 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                      return iter1->x < iter2->x;
                  });
 
-            auto finishSorting = chrono::high_resolution_clock::now();
+            auto finishSorting = std::chrono::high_resolution_clock::now();
 
             auto startSearchPos = trainingDatasetIndex.cbegin();
             auto trainingDatasetIndexBegin = trainingDatasetIndex.cbegin();
@@ -150,11 +150,11 @@ class PlaneSweepAlgorithm : public AbstractAllKnnAlgorithm
                 }
             }
 
-            auto finish = chrono::high_resolution_clock::now();
-            chrono::duration<double> elapsed = finish - start;
-            chrono::duration<double> elapsedSorting = finishSorting - start;
+            auto finish = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = finish - start;
+            std::chrono::duration<double> elapsedSorting = finishSorting - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(problem, GetPrefix(), pNeighborsContainer, elapsed, elapsedSorting));
+            return std::unique_ptr<AllKnnResult>(new AllKnnResult(problem, GetPrefix(), pNeighborsContainer, elapsed, elapsedSorting));
         }
 };
 

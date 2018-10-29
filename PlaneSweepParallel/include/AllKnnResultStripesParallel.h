@@ -14,11 +14,11 @@
 class AllKnnResultStripesParallel : public AllKnnResultStripes
 {
     public:
-        AllKnnResultStripesParallel(const AllKnnProblem& problem, const string& filePrefix) : AllKnnResultStripes(problem, filePrefix)
+        AllKnnResultStripesParallel(const AllKnnProblem& problem, const std::string& filePrefix) : AllKnnResultStripes(problem, filePrefix)
         {
         }
 
-        AllKnnResultStripesParallel(const AllKnnProblem& problem, const string& filePrefix, bool parallelSort, bool splitByT) : AllKnnResultStripes(problem, filePrefix, parallelSort, splitByT)
+        AllKnnResultStripesParallel(const AllKnnProblem& problem, const std::string& filePrefix, bool parallelSort, bool splitByT) : AllKnnResultStripes(problem, filePrefix, parallelSort, splitByT)
         {
         }
         virtual ~AllKnnResultStripesParallel() {}

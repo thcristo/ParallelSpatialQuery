@@ -13,11 +13,11 @@
 class AllKnnResultStripesParallelTBB : public AllKnnResultStripes
 {
     public:
-        AllKnnResultStripesParallelTBB(const AllKnnProblem& problem, const string& filePrefix) : AllKnnResultStripes(problem, filePrefix)
+        AllKnnResultStripesParallelTBB(const AllKnnProblem& problem, const std::string& filePrefix) : AllKnnResultStripes(problem, filePrefix)
         {
         }
 
-        AllKnnResultStripesParallelTBB(const AllKnnProblem& problem, const string& filePrefix, bool parallelSort, bool splitByT) : AllKnnResultStripes(problem, filePrefix, parallelSort, splitByT)
+        AllKnnResultStripesParallelTBB(const AllKnnProblem& problem, const std::string& filePrefix, bool parallelSort, bool splitByT) : AllKnnResultStripes(problem, filePrefix, parallelSort, splitByT)
         {
         }
         virtual ~AllKnnResultStripesParallelTBB() {}
@@ -42,7 +42,7 @@ class AllKnnResultStripesParallelTBB : public AllKnnResultStripes
             pTrainingDatasetStripe->resize(numStripes, point_vector_t());
             pStripeBoundaries->resize(numStripes, {0.0, 0.0});
 
-            parallel_for(blocked_range<size_t>(0, numStripes), [&](blocked_range<size_t>& range)
+            tbb::parallel_for(tbb::blocked_range<size_t>(0, numStripes), [&](tbb::blocked_range<size_t>& range)
             {
                 auto rangeBegin = range.begin();
                 auto rangeEnd = range.end();
@@ -137,7 +137,7 @@ class AllKnnResultStripesParallelTBB : public AllKnnResultStripes
             pTrainingDatasetStripe->resize(numStripes, point_vector_t());
             pStripeBoundaries->resize(numStripes, {0.0, 0.0});
 
-            parallel_for(blocked_range<size_t>(0, numStripes), [&](blocked_range<size_t>& range)
+            tbb::parallel_for(tbb::blocked_range<size_t>(0, numStripes), [&](tbb::blocked_range<size_t>& range)
             {
                 auto rangeBegin = range.begin();
                 auto rangeEnd = range.end();

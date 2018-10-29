@@ -20,30 +20,30 @@ class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
         virtual ~PlaneSweepStripesParallelTBBAlgorithm() {}
 
-        string GetTitle() const
+        std::string GetTitle() const
         {
-            stringstream ss;
+            std::stringstream ss;
 
             ss << "Plane sweep stripes parallel TBB, parallelSort=" << parallelSort << ", parallelSplit=" << parallelSplit << ", splitByTraining=" << splitByT;
             return ss.str();
         }
 
-        string GetPrefix() const
+        std::string GetPrefix() const
         {
-            stringstream ss;
+            std::stringstream ss;
 
             ss << "planesweep_stripes_parallel_TBB_psort_" << parallelSort << "_psplit_" << parallelSplit << "_splitByT_" << splitByT;
             return ss.str();
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
+        std::unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
             size_t numNeighbors = problem.GetNumNeighbors();
 
             auto pNeighborsContainer =
                 this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
 
-            task_scheduler_init scheduler(task_scheduler_init::deferred);
+            tbb::task_scheduler_init scheduler(tbb::task_scheduler_init::deferred);
 
             if (numThreads > 0)
             {
@@ -51,12 +51,12 @@ class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             }
             else
             {
-                scheduler.initialize(task_scheduler_init::automatic);
+                scheduler.initialize(tbb::task_scheduler_init::automatic);
             }
 
-            auto start = chrono::high_resolution_clock::now();
+            auto start = std::chrono::high_resolution_clock::now();
 
-            unique_ptr<AllKnnResultStripes> pResult;
+            std::unique_ptr<AllKnnResultStripes> pResult;
 
             if (parallelSplit)
                 pResult.reset(new AllKnnResultStripesParallelTBB(problem, GetPrefix(), parallelSort, splitByT));
@@ -67,9 +67,9 @@ class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
             numStripes = stripeData.InputDatasetStripe.size();
 
-            auto finishSorting = chrono::high_resolution_clock::now();
+            auto finishSorting = std::chrono::high_resolution_clock::now();
 
-            parallel_for(blocked_range<int>(0, numStripes), [&](blocked_range<int>& range)
+            parallel_for(tbb::blocked_range<int>(0, numStripes), [&](tbb::blocked_range<int>& range)
                 {
                     auto rangeBegin = range.begin();
                     auto rangeEnd = range.end();
@@ -130,9 +130,9 @@ class PlaneSweepStripesParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
                     }
                 });
 
-            auto finish = chrono::high_resolution_clock::now();
-            chrono::duration<double> elapsed = finish - start;
-            chrono::duration<double> elapsedSorting = finishSorting - start;
+            auto finish = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = finish - start;
+            std::chrono::duration<double> elapsedSorting = finishSorting - start;
 
             pResult->setDuration(elapsed);
             pResult->setDurationSorting(elapsedSorting);

@@ -7,15 +7,13 @@
 #include <algorithm>
 #include <iomanip>
 
-using namespace std;
-
 struct Point {
     long id;
     double x;
     double y;
 };
 
-bool endsWith(const string& str, const string& suffix)
+bool endsWith(const std::string& str, const std::string& suffix)
 {
     return str.size() >= suffix.size() &&
            str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
@@ -50,7 +48,7 @@ size_t getTargetNumOfPoints(size_t sourcePoints, int factor)
         return 0;
 }
 
-void write_output_points(const Point& point, unique_ptr<fstream>& pTargetStream, bool isBinaryTarget, size_t pos, int factor)
+void write_output_points(const Point& point, std::unique_ptr<std::fstream>& pTargetStream, bool isBinaryTarget, size_t pos, int factor)
 {
     if (factor < 0)
     {
@@ -58,7 +56,7 @@ void write_output_points(const Point& point, unique_ptr<fstream>& pTargetStream,
         {
             Point targetPoint = {(long)(pos+1), point.x, point.y};
 
-            pTargetStream->write(reinterpret_cast<const char*>(&targetPoint), streamsize(sizeof(Point)));
+            pTargetStream->write(reinterpret_cast<const char*>(&targetPoint), std::streamsize(sizeof(Point)));
         }
         else
             *pTargetStream << pos+1 << '\t' << point.x << '\t' << point.y << '\n';
@@ -66,7 +64,7 @@ void write_output_points(const Point& point, unique_ptr<fstream>& pTargetStream,
     else if (factor == 1)
     {
         if (isBinaryTarget)
-            pTargetStream->write(reinterpret_cast<const char*>(&point), streamsize(sizeof(Point)));
+            pTargetStream->write(reinterpret_cast<const char*>(&point), std::streamsize(sizeof(Point)));
         else
             *pTargetStream << point.id << '\t' << point.x << '\t' << point.y << '\n';
     }
@@ -83,14 +81,14 @@ void write_output_points(const Point& point, unique_ptr<fstream>& pTargetStream,
         for (int i=0; i < 4; ++i)
         {
             if (isBinaryTarget)
-                pTargetStream->write(reinterpret_cast<const char*>(targetPoints + i), streamsize(sizeof(Point)));
+                pTargetStream->write(reinterpret_cast<const char*>(targetPoints + i), std::streamsize(sizeof(Point)));
             else
                 *pTargetStream << targetPoints[i].id << '\t' << targetPoints[i].x << '\t' << targetPoints[i].y << '\n';
         }
     }
 }
 
-istream& operator >>(istream& i, Point& p)
+std::istream& operator >>(std::istream& i, Point& p)
 {
     i >> p.id;
     i >> p.x;
@@ -103,62 +101,62 @@ int main(int argc, char* argv[])
 {
     if (argc < 4)
     {
-        cout << "Argument error. Please enter:\n";
-        cout << "Argument 1: The original filename to use as base\n";
-        cout << "Argument 2: The target filename to create\n";
-        cout << "Argument 3: factor (-2, -1, 1, 2 or 4)\n";
+        std::cout << "Argument error. Please enter:\n";
+        std::cout << "Argument 1: The original filename to use as base\n";
+        std::cout << "Argument 2: The target filename to create\n";
+        std::cout << "Argument 3: factor (-2, -1, 1, 2 or 4)\n";
 
         return 1;
     }
 
     bool isBinaryTarget = false;
 
-    string sourceFilename(argv[1]), targetFilename(argv[2]);
+    std::string sourceFilename(argv[1]), targetFilename(argv[2]);
     int factor = atoi(argv[3]);
 
     if (factor != -2 && factor != -1 && factor != 1 && factor != 2 && factor != 4)
     {
-        cout << "Factor argument must be equal to -2, -1, 1, 2 or 4" << endl;
+        std::cout << "Factor argument must be equal to -2, -1, 1, 2 or 4" << std::endl;
         return 1;
     }
 
-    unique_ptr<fstream> pTargetStream;
+    std::unique_ptr<std::fstream> pTargetStream;
 
     if (endsWith(targetFilename, ".bin"))
     {
         isBinaryTarget = true;
-        pTargetStream.reset(new fstream(targetFilename, ios::binary | ios::out));
+        pTargetStream.reset(new std::fstream(targetFilename, std::ios::binary | std::ios::out));
     }
     else
     {
-        pTargetStream.reset(new fstream(targetFilename, ios::out));
+        pTargetStream.reset(new std::fstream(targetFilename, std::ios::out));
         if (factor < 0)
-            *pTargetStream << fixed << setprecision(10);
+            *pTargetStream << std::fixed << std::setprecision(10);
         else
-            *pTargetStream << fixed << setprecision(8);
+            *pTargetStream << std::fixed << std::setprecision(8);
     }
 
     if ( !pTargetStream->is_open() )
     {
-        cout << "Cannot create output file" << endl;
+        std::cout << "Cannot create output file" << std::endl;
         return 1;
     }
 
     if (endsWith(sourceFilename, ".bin"))
     {
-        fstream fsSource(sourceFilename, ios::in | ios::binary);
+        std::fstream fsSource(sourceFilename, std::ios::in | std::ios::binary);
         if ( !fsSource.is_open() )
         {
-            cout << "Cannot open input file" << endl;
+            std::cout << "Cannot open input file" << std::endl;
             return 1;
         }
         size_t numPointsSource = 0;
-        fsSource.read(reinterpret_cast<char*>(&numPointsSource), streamsize(sizeof(size_t)));
+        fsSource.read(reinterpret_cast<char*>(&numPointsSource), std::streamsize(sizeof(size_t)));
         size_t numPointsTarget = getTargetNumOfPoints(numPointsSource, factor);
 
         if (isBinaryTarget)
         {
-            pTargetStream->write(reinterpret_cast<const char*>(&numPointsTarget), streamsize(sizeof(size_t)));
+            pTargetStream->write(reinterpret_cast<const char*>(&numPointsTarget), std::streamsize(sizeof(size_t)));
         }
 
         size_t j=0;
@@ -166,7 +164,7 @@ int main(int argc, char* argv[])
         for (size_t i=0; i < numPointsSource && !fsSource.eof(); ++i)
         {
             Point p;
-            fsSource.read(reinterpret_cast<char*>(&p), streamsize(sizeof(Point)));
+            fsSource.read(reinterpret_cast<char*>(&p), std::streamsize(sizeof(Point)));
 
             if ((factor == -1 && i%2 == 1) || (factor == -2 && i%2 == 0)
                 || factor == 1 || factor == 4 || (factor == 2 && i%2 == 1))
@@ -181,24 +179,24 @@ int main(int argc, char* argv[])
     }
     else
     {
-        fstream fsSource(sourceFilename, ios::in);
+        std::fstream fsSource(sourceFilename, std::ios::in);
         if ( !fsSource.is_open() )
         {
-            cout << "Cannot open input file" << endl;
+            std::cout << "Cannot open input file" << std::endl;
             return 1;
         }
-        size_t numPointsSource = count(istreambuf_iterator<char>(fsSource), istreambuf_iterator<char>(), '\n');
+        size_t numPointsSource = count(std::istreambuf_iterator<char>(fsSource), std::istreambuf_iterator<char>(), '\n');
         size_t numPointsTarget = getTargetNumOfPoints(numPointsSource, factor);
         if (isBinaryTarget)
         {
-            pTargetStream->write(reinterpret_cast<const char*>(&numPointsTarget), streamsize(sizeof(size_t)));
+            pTargetStream->write(reinterpret_cast<const char*>(&numPointsTarget), std::streamsize(sizeof(size_t)));
         }
 
         fsSource.clear();
-        fsSource.seekg(0, ios::beg);
+        fsSource.seekg(0, std::ios::beg);
 
-        istream_iterator<Point> iter(fsSource);
-        istream_iterator<Point> eof;
+        std::istream_iterator<Point> iter(fsSource);
+        std::istream_iterator<Point> eof;
 
         size_t i =0, j = 0;
 

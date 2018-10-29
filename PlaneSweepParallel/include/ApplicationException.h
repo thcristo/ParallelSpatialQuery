@@ -4,14 +4,13 @@
 
 #include <exception>
 #include <string>
-using namespace std;
 
 /** \brief Application exception class
  */
-class ApplicationException : public exception
+class ApplicationException : public std::exception
 {
     public:
-        ApplicationException(const string& message) : message(message) {}
+        ApplicationException(const std::string& message) : message(message) {}
 
         virtual ~ApplicationException() {}
 
@@ -22,7 +21,7 @@ class ApplicationException : public exception
     protected:
 
     private:
-        string message;
+        std::string message;
 };
 
 #endif // APPLICATIONEXCEPTION_H

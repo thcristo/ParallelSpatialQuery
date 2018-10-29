@@ -12,12 +12,12 @@ class StripesWindow
         /** \brief Constructor for a window to be used by first phase of external memory algorithm (input and training points)
          *
          */
-        StripesWindow(size_t startStripe, size_t endStripe, unique_ptr<point_vector_vector_t>& pInputStripes,
-                      unique_ptr<point_vector_vector_t>& pTrainingStripes, unique_ptr<vector<StripeBoundaries_t>>& pBoundaries,
+        StripesWindow(size_t startStripe, size_t endStripe, std::unique_ptr<point_vector_vector_t>& pInputStripes,
+                      std::unique_ptr<point_vector_vector_t>& pTrainingStripes, std::unique_ptr<std::vector<StripeBoundaries_t>>& pBoundaries,
                       size_t numNeighbors)
                       : startStripe(startStripe), endStripe(endStripe), secondPass(false),
-                        pInputDatasetStripe(move(pInputStripes)), pTrainingDatasetStripe(move(pTrainingStripes)),
-                        pStripeBoundaries(move(pBoundaries)), numNeighbors(numNeighbors)
+                        pInputDatasetStripe(std::move(pInputStripes)), pTrainingDatasetStripe(std::move(pTrainingStripes)),
+                        pStripeBoundaries(std::move(pBoundaries)), numNeighbors(numNeighbors)
         {
             size_t numStripes = GetNumStripes();
             pNeighborsContainer.reset(new pointNeighbors_vector_vector_t(numStripes));
@@ -43,11 +43,11 @@ class StripesWindow
         /** \brief Constructor for a window to be used by second phase of external memory algorithm (training points only)
          *
          */
-        StripesWindow(size_t startStripe, size_t endStripe, unique_ptr<point_vector_vector_t>& pTrainingStripes,
-                      unique_ptr<vector<StripeBoundaries_t>>& pBoundaries)
+        StripesWindow(size_t startStripe, size_t endStripe, std::unique_ptr<point_vector_vector_t>& pTrainingStripes,
+                      std::unique_ptr<std::vector<StripeBoundaries_t>>& pBoundaries)
                       : startStripe(startStripe), endStripe(endStripe), secondPass(true),
-                        pTrainingDatasetStripe(move(pTrainingStripes)),
-                        pStripeBoundaries(move(pBoundaries))
+                        pTrainingDatasetStripe(std::move(pTrainingStripes)),
+                        pStripeBoundaries(std::move(pBoundaries))
         {
         }
 
@@ -119,10 +119,10 @@ class StripesWindow
         size_t startStripe = 0;
         size_t endStripe = 0;
         bool secondPass = false;
-        unique_ptr<point_vector_vector_t> pInputDatasetStripe;
-        unique_ptr<point_vector_vector_t> pTrainingDatasetStripe;
-        unique_ptr<vector<StripeBoundaries_t>> pStripeBoundaries;
-        unique_ptr<pointNeighbors_vector_vector_t> pNeighborsContainer;
+        std::unique_ptr<point_vector_vector_t> pInputDatasetStripe;
+        std::unique_ptr<point_vector_vector_t> pTrainingDatasetStripe;
+        std::unique_ptr<std::vector<StripeBoundaries_t>> pStripeBoundaries;
+        std::unique_ptr<pointNeighbors_vector_vector_t> pNeighborsContainer;
         size_t numNeighbors = 0;
 };
 

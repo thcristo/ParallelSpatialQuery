@@ -6,8 +6,6 @@
 #include "AbstractAllKnnAlgorithm.h"
 #include <tbb/tbb.h>
 
-using namespace tbb;
-
 /** \brief Parallel brute force algorithm using Intel TBB
  */
 class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
@@ -19,17 +17,17 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
         virtual ~BruteForceParallelTBBAlgorithm() {}
 
-        string GetTitle() const
+        std::string GetTitle() const
         {
             return "Brute force parallel TBB";
         }
 
-        string GetPrefix() const
+        std::string GetPrefix() const
         {
             return "bruteforce_parallel_tbb";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
+        std::unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
             int numNeighbors = problem.GetNumNeighbors();
 
@@ -39,9 +37,9 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();
 
-            typedef blocked_range<point_vector_t::const_iterator> point_range_t;
+            typedef tbb::blocked_range<point_vector_t::const_iterator> point_range_t;
 
-            task_scheduler_init scheduler(task_scheduler_init::deferred);
+            tbb::task_scheduler_init scheduler(tbb::task_scheduler_init::deferred);
 
             if (numThreads > 0)
             {
@@ -51,10 +49,10 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             else
             {
                 //automatic number of threads equal to the number of cores
-                scheduler.initialize(task_scheduler_init::automatic);
+                scheduler.initialize(tbb::task_scheduler_init::automatic);
             }
 
-            auto start = chrono::high_resolution_clock::now();
+            auto start = std::chrono::high_resolution_clock::now();
 
             auto trainingDatasetBegin = trainingDataset.cbegin();
             auto trainingDatasetEnd = trainingDataset.cend();
@@ -82,10 +80,10 @@ class BruteForceParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
                 }
             );
 
-            auto finish = chrono::high_resolution_clock::now();
-            chrono::duration<double> elapsed = finish - start;
+            auto finish = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = finish - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(problem, GetPrefix(), pNeighborsContainer, elapsed, chrono::duration<double>()));
+            return std::unique_ptr<AllKnnResult>(new AllKnnResult(problem, GetPrefix(), pNeighborsContainer, elapsed, std::chrono::duration<double>()));
         }
 
     private:

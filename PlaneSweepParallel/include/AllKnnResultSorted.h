@@ -6,19 +6,16 @@
 #include "AllKnnResult.h"
 #include <tbb/tbb.h>
 
-using namespace tbb;
-
-
 /** \brief Class definition of AkNN result for algorithms that require sorting
  */
 class AllKnnResultSorted : public AllKnnResult
 {
     public:
-        AllKnnResultSorted(const AllKnnProblem& problem, const string& filePrefix) : AllKnnResult(problem, filePrefix)
+        AllKnnResultSorted(const AllKnnProblem& problem, const std::string& filePrefix) : AllKnnResult(problem, filePrefix)
         {
         }
 
-        AllKnnResultSorted(const AllKnnProblem& problem, const string& filePrefix, bool parallelSort) : AllKnnResult(problem, filePrefix),
+        AllKnnResultSorted(const AllKnnProblem& problem, const std::string& filePrefix, bool parallelSort) : AllKnnResult(problem, filePrefix),
             parallelSort(parallelSort)
         {
         }
@@ -40,7 +37,7 @@ class AllKnnResultSorted : public AllKnnResult
                 if (parallelSort)
                 {
                     //parallel sort by using the Intel TBB sort routine
-                    parallel_sort(pInputDatasetSorted->begin(), pInputDatasetSorted->end(),
+                    tbb::parallel_sort(pInputDatasetSorted->begin(), pInputDatasetSorted->end(),
                          [](const Point& point1, const Point& point2)
                          {
                              return point1.x < point2.x;
@@ -73,7 +70,7 @@ class AllKnnResultSorted : public AllKnnResult
 
                 if (parallelSort)
                 {
-                    parallel_sort(pTrainingDatasetSorted->begin(), pTrainingDatasetSorted->end(),
+                    tbb::parallel_sort(pTrainingDatasetSorted->begin(), pTrainingDatasetSorted->end(),
                          [](const Point& point1, const Point& point2)
                          {
                              return point1.x < point2.x;
@@ -95,8 +92,8 @@ class AllKnnResultSorted : public AllKnnResult
     protected:
 
     private:
-        unique_ptr<point_vector_t> pInputDatasetSorted;
-        unique_ptr<point_vector_t> pTrainingDatasetSorted;
+        std::unique_ptr<point_vector_t> pInputDatasetSorted;
+        std::unique_ptr<point_vector_t> pTrainingDatasetSorted;
         bool parallelSort = false;
 };
 

@@ -6,19 +6,16 @@
 #include <tbb/tbb.h>
 #include <cmath>
 
-using namespace tbb;
-
-
 /** \brief Class definition of AkNN result for striped plane sweep algorithm
  */
 class AllKnnResultStripes : public AllKnnResult
 {
     public:
-        AllKnnResultStripes(const AllKnnProblem& problem, const string& filePrefix) : AllKnnResult(problem, filePrefix)
+        AllKnnResultStripes(const AllKnnProblem& problem, const std::string& filePrefix) : AllKnnResult(problem, filePrefix)
         {
         }
 
-        AllKnnResultStripes(const AllKnnProblem& problem, const string& filePrefix, bool parallelSort, bool splitByT) : AllKnnResult(problem, filePrefix),
+        AllKnnResultStripes(const AllKnnProblem& problem, const std::string& filePrefix, bool parallelSort, bool splitByT) : AllKnnResult(problem, filePrefix),
             parallelSort(parallelSort), splitByT(splitByT)
         {
         }
@@ -48,7 +45,7 @@ class AllKnnResultStripes : public AllKnnResult
             if (!pStripeBoundaries)
             {
                 //create vector for stripe boundaries
-                pStripeBoundaries.reset(new vector<StripeBoundaries_t>());
+                pStripeBoundaries.reset(new std::vector<StripeBoundaries_t>());
             }
 
             //copy both datasets so we don't destroy the original problem data
@@ -58,13 +55,13 @@ class AllKnnResultStripes : public AllKnnResult
             if (parallelSort)
             {
                 //sort by using the Intel TBB parallel sort routine
-                parallel_sort(inputDatasetSortedY.begin(), inputDatasetSortedY.end(),
+                tbb::parallel_sort(inputDatasetSortedY.begin(), inputDatasetSortedY.end(),
                      [](const Point& point1, const Point& point2)
                      {
                          return point1.y < point2.y;
                      });
 
-                parallel_sort(trainingDatasetSortedY.begin(), trainingDatasetSortedY.end(),
+                tbb::parallel_sort(trainingDatasetSortedY.begin(), trainingDatasetSortedY.end(),
                      [](const Point& point1, const Point& point2)
                      {
                          return point1.y < point2.y;
@@ -121,9 +118,9 @@ class AllKnnResultStripes : public AllKnnResult
         }
 
     protected:
-        unique_ptr<point_vector_vector_t> pInputDatasetStripe;
-        unique_ptr<point_vector_vector_t> pTrainingDatasetStripe;
-        unique_ptr<vector<StripeBoundaries_t>> pStripeBoundaries;
+        std::unique_ptr<point_vector_vector_t> pInputDatasetStripe;
+        std::unique_ptr<point_vector_vector_t> pTrainingDatasetStripe;
+        std::unique_ptr<std::vector<StripeBoundaries_t>> pStripeBoundaries;
         bool parallelSort = false;
         bool splitByT = false;
 
@@ -160,22 +157,22 @@ class AllKnnResultStripes : public AllKnnResult
          */
         void SaveStripes()
         {
-            auto now = chrono::system_clock::now();
-            auto in_time_t = chrono::system_clock::to_time_t(now);
-            stringstream ss;
-            ss <<  "stripes_" << put_time(localtime(&in_time_t), "%Y%m%d%H%M%S") << ".csv";
+            auto now = std::chrono::system_clock::now();
+            auto in_time_t = std::chrono::system_clock::to_time_t(now);
+            std::stringstream ss;
+            ss <<  "stripes_" << std::put_time(std::localtime(&in_time_t), "%Y%m%d%H%M%S") << ".csv";
 
-            ofstream outFile(ss.str(), ios_base::out);
-            outFile.imbue(locale(outFile.getloc(), new punct_facet<char, ',', '.'>));
+            std::ofstream outFile(ss.str(), std::ios_base::out);
+            outFile.imbue(std::locale(outFile.getloc(), new punct_facet<char, ',', '.'>));
 
-            outFile << "StripeId;MinY;MaxY;InputPoints;TrainingPoints" << endl;
+            outFile << "StripeId;MinY;MaxY;InputPoints;TrainingPoints" << std::endl;
             outFile.flush();
 
             size_t numStripes = pInputDatasetStripe->size();
 
             for (size_t i=0; i < numStripes; ++i)
             {
-                outFile << i << ";" << (pStripeBoundaries->at(i)).minY  << ";" << (pStripeBoundaries->at(i)).maxY  << ";" << (pInputDatasetStripe->at(i)).size() << ";" << (pTrainingDatasetStripe->at(i)).size() << endl;
+                outFile << i << ";" << (pStripeBoundaries->at(i)).minY  << ";" << (pStripeBoundaries->at(i)).maxY  << ";" << (pInputDatasetStripe->at(i)).size() << ";" << (pTrainingDatasetStripe->at(i)).size() << std::endl;
             }
 
             outFile.close();
@@ -219,7 +216,7 @@ class AllKnnResultStripes : public AllKnnResult
                 //sort input points of current stripe by x
                 if (parallelSort)
                 {
-                    parallel_sort(pInputDatasetStripe->back().begin(), pInputDatasetStripe->back().end(),
+                    tbb::parallel_sort(pInputDatasetStripe->back().begin(), pInputDatasetStripe->back().end(),
                          [](const Point& point1, const Point& point2)
                          {
                              return point1.x < point2.x;
@@ -258,7 +255,7 @@ class AllKnnResultStripes : public AllKnnResult
                     //sort training points of current stripe by x
                     if (parallelSort)
                     {
-                        parallel_sort(pTrainingDatasetStripe->back().begin(), pTrainingDatasetStripe->back().end(),
+                        tbb::parallel_sort(pTrainingDatasetStripe->back().begin(), pTrainingDatasetStripe->back().end(),
                          [](const Point& point1, const Point& point2)
                          {
                              return point1.x < point2.x;
@@ -345,7 +342,7 @@ class AllKnnResultStripes : public AllKnnResult
 
                 if (parallelSort)
                 {
-                    parallel_sort(pTrainingDatasetStripe->back().begin(), pTrainingDatasetStripe->back().end(),
+                    tbb::parallel_sort(pTrainingDatasetStripe->back().begin(), pTrainingDatasetStripe->back().end(),
                          [](const Point& point1, const Point& point2)
                          {
                              return point1.x < point2.x;
@@ -379,7 +376,7 @@ class AllKnnResultStripes : public AllKnnResult
 
                     if (parallelSort)
                     {
-                        parallel_sort(pInputDatasetStripe->back().begin(), pInputDatasetStripe->back().end(),
+                        tbb::parallel_sort(pInputDatasetStripe->back().begin(), pInputDatasetStripe->back().end(),
                          [](const Point& point1, const Point& point2)
                          {
                              return point1.x < point2.x;

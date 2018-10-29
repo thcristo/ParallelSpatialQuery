@@ -16,17 +16,17 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
 
         virtual ~PlaneSweepStripesAlgorithm() {}
 
-        string GetTitle() const
+        std::string GetTitle() const
         {
             return "Plane sweep stripes";
         }
 
-        string GetPrefix() const
+        std::string GetPrefix() const
         {
             return "planesweep_stripes";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
+        std::unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
             size_t numNeighbors = problem.GetNumNeighbors();
 
@@ -34,17 +34,17 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
             auto pNeighborsContainer =
                 this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
 
-            auto start = chrono::high_resolution_clock::now();
+            auto start = std::chrono::high_resolution_clock::now();
 
             //create result object
-            auto pResult = unique_ptr<AllKnnResultStripes>(new AllKnnResultStripes(problem, GetPrefix()));
+            auto pResult = std::unique_ptr<AllKnnResultStripes>(new AllKnnResultStripes(problem, GetPrefix()));
 
             //split datasets into stripes
             auto stripeData = pResult->GetStripeData(numStripes);
             //get the actual number of stripes
             int numStripesLocal = stripeData.InputDatasetStripe.size();
             //record the time used for splitting stripes
-            auto finishSorting = chrono::high_resolution_clock::now();
+            auto finishSorting = std::chrono::high_resolution_clock::now();
 
             //serial loop through all input points
             for (int iStripeInput = 0; iStripeInput < numStripesLocal; ++iStripeInput)
@@ -113,9 +113,9 @@ class PlaneSweepStripesAlgorithm : public AbstractAllKnnAlgorithm
                 }
             }
 
-            auto finish = chrono::high_resolution_clock::now();
-            chrono::duration<double> elapsed = finish - start;
-            chrono::duration<double> elapsedSorting = finishSorting - start;
+            auto finish = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = finish - start;
+            std::chrono::duration<double> elapsedSorting = finishSorting - start;
 
             pResult->setDuration(elapsed);
             pResult->setDurationSorting(elapsedSorting);

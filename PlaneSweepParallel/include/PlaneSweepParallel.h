@@ -8,8 +8,6 @@
 #include <fstream>
 #include <stxxl/vector>
 
-using namespace std;
-
 /** \brief Definition of point structure
  */
 struct Point
@@ -61,22 +59,22 @@ bool endsWith(const std::string& str, const std::string& suffix)
 }
 
 //Definitions of vector types
-typedef vector<Neighbor> neighbors_vector_t;
-typedef deque<Neighbor> neighbors_deque_t;
-typedef priority_queue<Neighbor, neighbors_vector_t, NeighborComparer> neighbors_priority_queue_t;
-typedef vector<Point> point_vector_t;
-typedef vector<point_vector_t> point_vector_vector_t;
+typedef std::vector<Neighbor> neighbors_vector_t;
+typedef std::deque<Neighbor> neighbors_deque_t;
+typedef std::priority_queue<Neighbor, neighbors_vector_t, NeighborComparer> neighbors_priority_queue_t;
+typedef std::vector<Point> point_vector_t;
+typedef std::vector<point_vector_t> point_vector_vector_t;
 typedef point_vector_t::const_iterator point_vector_iterator_t;
-typedef vector<point_vector_iterator_t> point_vector_index_t;
+typedef std::vector<point_vector_iterator_t> point_vector_index_t;
 typedef point_vector_index_t::const_iterator point_vector_index_iterator_t;
 
 //class used for output of numbers in greek format
 template <class charT, charT decimalSeparator, charT thousandsSeparator>
-class punct_facet: public numpunct<charT> {
+class punct_facet: public std::numpunct<charT> {
 protected:
     charT do_decimal_point() const { return decimalSeparator; }
     charT do_thousands_sep() const { return thousandsSeparator; }
-    string do_grouping() const { return "\03"; }
+    std::string do_grouping() const { return "\03"; }
 };
 
 //Definitions for external memory vectors

@@ -11,7 +11,7 @@
 class AllKnnProblemExternal : public AllKnnProblem
 {
     public:
-        AllKnnProblemExternal(const string& inputFilename, const string& trainingFilename, size_t numNeighbors, bool loadDataFiles, size_t memoryLimitMB)
+        AllKnnProblemExternal(const std::string& inputFilename, const std::string& trainingFilename, size_t numNeighbors, bool loadDataFiles, size_t memoryLimitMB)
             : AllKnnProblem(inputFilename, trainingFilename, numNeighbors, false),
                 memoryLimitMB(memoryLimitMB), pExtInputDataset(new ext_point_vector_t()), pExtTrainingDataset(new ext_point_vector_t())
         {
@@ -53,18 +53,18 @@ class AllKnnProblemExternal : public AllKnnProblem
 
     private:
         size_t memoryLimitMB = 0;
-        unique_ptr<ext_point_vector_t> pExtInputDataset;
-        unique_ptr<ext_point_vector_t> pExtTrainingDataset;
+        std::unique_ptr<ext_point_vector_t> pExtInputDataset;
+        std::unique_ptr<ext_point_vector_t> pExtTrainingDataset;
 
         void LoadExternalDataFiles()
         {
-            auto start = chrono::high_resolution_clock::now();
+            auto start = std::chrono::high_resolution_clock::now();
 
             //call template method of parent class by passing an external memory vector
             LoadFile(inputFilename, *pExtInputDataset);
             LoadFile(trainingFilename, *pExtTrainingDataset);
 
-            auto finish = chrono::high_resolution_clock::now();
+            auto finish = std::chrono::high_resolution_clock::now();
             loadingTime = finish - start;
         }
 };

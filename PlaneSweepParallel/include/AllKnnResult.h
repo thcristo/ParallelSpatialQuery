@@ -16,16 +16,16 @@
 class AllKnnResult
 {
     public:
-        AllKnnResult(const AllKnnProblem& problem, const string& filePrefix)
+        AllKnnResult(const AllKnnProblem& problem, const std::string& filePrefix)
                      : problem(problem), filePrefix(filePrefix)
         {
         }
 
-        AllKnnResult(const AllKnnProblem& problem, const string& filePrefix,
-                     unique_ptr<pointNeighbors_priority_queue_vector_t>& pNeighborsContainer,
-                     const chrono::duration<double>& elapsed, const chrono::duration<double>& elapsedSorting)
+        AllKnnResult(const AllKnnProblem& problem, const std::string& filePrefix,
+                     std::unique_ptr<pointNeighbors_priority_queue_vector_t>& pNeighborsContainer,
+                     const std::chrono::duration<double>& elapsed, const std::chrono::duration<double>& elapsedSorting)
                      :  problem(problem), filePrefix(filePrefix),
-                        pNeighborsPriorityQueueVector(move(pNeighborsContainer)), elapsed(elapsed), elapsedSorting(elapsedSorting)
+                        pNeighborsPriorityQueueVector(std::move(pNeighborsContainer)), elapsed(elapsed), elapsedSorting(elapsedSorting)
         {
             //calculate heap statistics (additions etc.) for reporting purposes
             CalcHeapStats();
@@ -33,23 +33,23 @@ class AllKnnResult
 
         virtual ~AllKnnResult() {}
 
-        const chrono::duration<double>& getDuration() const { return elapsed; }
+        const std::chrono::duration<double>& getDuration() const { return elapsed; }
 
-        void setDuration(chrono::duration<double> value)
+        void setDuration(std::chrono::duration<double> value)
         {
             elapsed = value;
         }
 
-        const chrono::duration<double>& getDurationSorting() const { return elapsedSorting; }
+        const std::chrono::duration<double>& getDurationSorting() const { return elapsedSorting; }
 
-        virtual const chrono::duration<double> getDurationCommitWindow() const
+        virtual const std::chrono::duration<double> getDurationCommitWindow() const
         {
-            return chrono::duration<double>(0.0);
+            return std::chrono::duration<double>(0.0);
         }
 
-        virtual const chrono::duration<double> getDurationFinalSorting() const
+        virtual const std::chrono::duration<double> getDurationFinalSorting() const
         {
-            return chrono::duration<double>(0.0);
+            return std::chrono::duration<double>(0.0);
         }
 
         virtual size_t getNumFirstPassWindows() const
@@ -62,14 +62,14 @@ class AllKnnResult
             return 0;
         }
 
-        void setDurationSorting(chrono::duration<double> value)
+        void setDurationSorting(std::chrono::duration<double> value)
         {
             elapsedSorting = value;
         }
 
-        void setNeighborsContainer(unique_ptr<pointNeighbors_priority_queue_vector_t>& pNeighborsContainer)
+        void setNeighborsContainer(std::unique_ptr<pointNeighbors_priority_queue_vector_t>& pNeighborsContainer)
         {
-            pNeighborsPriorityQueueVector = move(pNeighborsContainer);
+            pNeighborsPriorityQueueVector = std::move(pNeighborsContainer);
             CalcHeapStats();
         }
 
@@ -113,16 +113,16 @@ class AllKnnResult
          */
         virtual void SaveToFile() const
         {
-            auto ms = chrono::duration_cast<chrono::milliseconds>(elapsed);
+            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
 
-            auto now = chrono::system_clock::now();
-            auto in_time_t = chrono::system_clock::to_time_t(now);
+            auto now = std::chrono::system_clock::now();
+            auto in_time_t = std::chrono::system_clock::to_time_t(now);
 
             //generate a unique filename
-            stringstream ss;
-            ss << filePrefix << "_" << put_time(localtime(&in_time_t), "%Y%m%d%H%M%S") << "_" << ms.count() << ".txt";
+            std::stringstream ss;
+            ss << filePrefix << "_" << std::put_time(localtime(&in_time_t), "%Y%m%d%H%M%S") << "_" << ms.count() << ".txt";
 
-            ofstream outFile(ss.str(), ios_base::out);
+            std::ofstream outFile(ss.str(), std::ios_base::out);
 
             const point_vector_t& inputDataset = problem.GetInputDataset();
 
@@ -133,7 +133,7 @@ class AllKnnResult
 
                 NeighborsEnumerator* pNeighbors = &pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
 
-                vector<Neighbor> removedNeighbors;
+                std::vector<Neighbor> removedNeighbors;
 
                 //loop through all the neighbors in the max heap
                 while (pNeighbors->HasNext())
@@ -154,7 +154,7 @@ class AllKnnResult
                     }
                 }
 
-                outFile << endl;
+                outFile << std::endl;
 
                 //put back all removed neighbors
                 pNeighbors->AddAllRemoved(removedNeighbors);
@@ -170,9 +170,9 @@ class AllKnnResult
          * \return unique_ptr<vector<unsigned long>>  vector of input point ids where differences exist
          *
          */
-        virtual unique_ptr<vector<unsigned long>> FindDifferences(AllKnnResult& result, double accuracy)
+        virtual std::unique_ptr<std::vector<unsigned long>> FindDifferences(AllKnnResult& result, double accuracy)
         {
-            auto differences = unique_ptr<vector<unsigned long>>(new vector<unsigned long>());
+            auto differences = std::unique_ptr<std::vector<unsigned long>>(new std::vector<unsigned long>());
 
             auto& inputDataset = problem.GetInputDataset();
 
@@ -182,8 +182,8 @@ class AllKnnResult
                 NeighborsEnumerator* pNeighbors = &pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
                 NeighborsEnumerator* pNeighborsReference = &result.pNeighborsPriorityQueueVector->at((inputPoint->id) - 1);
 
-                vector<Neighbor> removedNeighbors;
-                vector<Neighbor> removedNeighborsReference;
+                std::vector<Neighbor> removedNeighbors;
+                std::vector<Neighbor> removedNeighborsReference;
 
                 //loop through all neighbors
                 while (pNeighbors->HasNext())
@@ -235,7 +235,7 @@ class AllKnnResult
          */
         virtual void CalcHeapStats()
         {
-            minHeapAdditions = numeric_limits<size_t>::max();
+            minHeapAdditions = std::numeric_limits<size_t>::max();
             maxHeapAdditions = 0;
             totalHeapAdditions = 0;
 
@@ -269,16 +269,16 @@ class AllKnnResult
 
     protected:
         const AllKnnProblem& problem;
-        string filePrefix;
+        std::string filePrefix;
         size_t minHeapAdditions = 0;
         size_t maxHeapAdditions = 0;
         double avgHeapAdditions = 0.0;
         size_t totalHeapAdditions = 0.0;
 
     private:
-        unique_ptr<pointNeighbors_priority_queue_vector_t> pNeighborsPriorityQueueVector;
-        chrono::duration<double> elapsed;
-        chrono::duration<double> elapsedSorting;
+        std::unique_ptr<pointNeighbors_priority_queue_vector_t> pNeighborsPriorityQueueVector;
+        std::chrono::duration<double> elapsed;
+        std::chrono::duration<double> elapsedSorting;
 
 };
 

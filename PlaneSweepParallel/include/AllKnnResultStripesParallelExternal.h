@@ -81,12 +81,12 @@ struct ExternalNeighborComparer
 class AllKnnResultStripesParallelExternal : public AllKnnResult
 {
     public:
-        AllKnnResultStripesParallelExternal(const AllKnnProblemExternal& problem, const string& filePrefix)
+        AllKnnResultStripesParallelExternal(const AllKnnProblemExternal& problem, const std::string& filePrefix)
             : AllKnnResult(problem, filePrefix), problemExt(problem)
         {
         }
 
-        AllKnnResultStripesParallelExternal(const AllKnnProblemExternal& problem, const string& filePrefix, bool parallelSort, bool splitByT)
+        AllKnnResultStripesParallelExternal(const AllKnnProblemExternal& problem, const std::string& filePrefix, bool parallelSort, bool splitByT)
             : AllKnnResult(problem, filePrefix), splitByT(splitByT), parallelSort(parallelSort), problemExt(problem)
         {
         }
@@ -139,7 +139,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
          * \return unique_ptr<StripesWindow> the window of stripes
          *
          */
-        unique_ptr<StripesWindow> GetWindow(size_t fromStripe, bool secondPass)
+        std::unique_ptr<StripesWindow> GetWindow(size_t fromStripe, bool secondPass)
         {
             auto memoryLimit = problemExt.GetMemoryLimitBytes();
             auto safeMemoryLimit = 9*memoryLimit/10;
@@ -155,8 +155,8 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                                 + numStripes*sizeof(StripeBoundaries_t)
                                 + 6*64*1024*1024;
 
-            cout << "pending points " << pPendingPoints->size() << " " << pPendingNeighborsContainer->size() << endl;
-            cout << "reserved memory " << usedMemory << endl;
+            std::cout << "pending points " << pPendingPoints->size() << " " << pPendingNeighborsContainer->size() << std::endl;
+            std::cout << "reserved memory " << usedMemory << std::endl;
 
             if (secondPass)
             {
@@ -184,12 +184,12 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                     //we cannot allocate even a single stripe so the algorithm reports memory allocation error
                     //this can happen if we have too many pending points
                     hasAllocationError = true;
-                    return unique_ptr<StripesWindow>(nullptr);
+                    return std::unique_ptr<StripesWindow>(nullptr);
                 }
 
                 size_t numWindowStripes = endStripe - startStripe + 1;
-                unique_ptr<point_vector_vector_t> pTrainingStripes(new point_vector_vector_t(numWindowStripes));
-                unique_ptr<vector<StripeBoundaries_t>> pBoundaries(new vector<StripeBoundaries_t>(numWindowStripes));
+                std::unique_ptr<point_vector_vector_t> pTrainingStripes(new point_vector_vector_t(numWindowStripes));
+                std::unique_ptr<std::vector<StripeBoundaries_t>> pBoundaries(new std::vector<StripeBoundaries_t>(numWindowStripes));
 
                 //add stripes to current window until we reach the memory limit
                 for (size_t iStripe = startStripe; iStripe <= endStripe; ++iStripe)
@@ -210,7 +210,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                     boundaries.maxY = pStripeBoundaries->at(iStripe).maxY;
                 }
 
-                unique_ptr<StripesWindow> pWindow(new StripesWindow(startStripe, endStripe, pTrainingStripes, pBoundaries));
+                std::unique_ptr<StripesWindow> pWindow(new StripesWindow(startStripe, endStripe, pTrainingStripes, pBoundaries));
                 ++numSecondPassWindows;
                 return pWindow;
             }
@@ -242,13 +242,13 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                     //we cannot allocate even a single stripe so the algorithm reports memory allocation error
                     //this can happen if we have too many pending points
                     hasAllocationError = true;
-                    return unique_ptr<StripesWindow>(nullptr);
+                    return std::unique_ptr<StripesWindow>(nullptr);
                 }
 
                 size_t numWindowStripes = endStripe - startStripe;
 
-                unique_ptr<point_vector_vector_t> pInputStripes(new point_vector_vector_t(numWindowStripes)), pTrainingStripes(new point_vector_vector_t(numWindowStripes));
-                unique_ptr<vector<StripeBoundaries_t>> pBoundaries(new vector<StripeBoundaries_t>(numWindowStripes));
+                std::unique_ptr<point_vector_vector_t> pInputStripes(new point_vector_vector_t(numWindowStripes)), pTrainingStripes(new point_vector_vector_t(numWindowStripes));
+                std::unique_ptr<std::vector<StripeBoundaries_t>> pBoundaries(new std::vector<StripeBoundaries_t>(numWindowStripes));
 
                 //add stripes to current window until we reach the memory limit
                 for (size_t iStripe = startStripe; iStripe < endStripe; ++iStripe)
@@ -280,7 +280,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                     boundaries.maxY = pStripeBoundaries->at(iStripe).maxY;
                 }
 
-                unique_ptr<StripesWindow> pWindow(new StripesWindow(startStripe, endStripe-1, pInputStripes, pTrainingStripes, pBoundaries, numNeighbors));
+                std::unique_ptr<StripesWindow> pWindow(new StripesWindow(startStripe, endStripe-1, pInputStripes, pTrainingStripes, pBoundaries, numNeighbors));
                 ++numFirstPassWindows;
                 return pWindow;
             }
@@ -302,9 +302,9 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
          * \return unique_ptr<point_vector_t> the vector of pending points
          *
          */
-        unique_ptr<point_vector_t> GetPendingPointsForWindow(const StripesWindow& window)
+        std::unique_ptr<point_vector_t> GetPendingPointsForWindow(const StripesWindow& window)
         {
-            unique_ptr<point_vector_t> pPoints(new point_vector_t());
+            std::unique_ptr<point_vector_t> pPoints(new point_vector_t());
             pPoints->reserve(pPendingPoints->size());
             auto pendingPointsBegin = pPendingPoints->cbegin();
             auto pendingPointsEnd = pPendingPoints->cend();
@@ -375,7 +375,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
          */
         void CommitWindow(StripesWindow& window, point_vector_t& pendingPoints)
         {
-            auto commitStart = chrono::high_resolution_clock::now();
+            auto commitStart = std::chrono::high_resolution_clock::now();
 
             if (pNeighborsExtVector == nullptr)
             {
@@ -479,8 +479,8 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             }
 
             //we record the time for reporting purposes
-            auto commitFinish = chrono::high_resolution_clock::now();
-            chrono::duration<double> elapsed = commitFinish - commitStart;
+            auto commitFinish = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = commitFinish - commitStart;
             totalElapsedCommit += elapsed;
         }
 
@@ -502,10 +502,10 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
             auto safeMemoryLimit = (memoryLimit - usedMemory);
 
-            auto finalSortStart = chrono::high_resolution_clock::now();
+            auto finalSortStart = std::chrono::high_resolution_clock::now();
             //call the STXXL sort routine to sort neighbors
             stxxl::sort(pNeighborsExtVector->cbegin(), pNeighborsExtVector->cend(), ExternalNeighborComparer(), safeMemoryLimit);
-            auto finalSortEnd = chrono::high_resolution_clock::now();
+            auto finalSortEnd = std::chrono::high_resolution_clock::now();
             elapsedFinalSorting = finalSortEnd - finalSortStart;
         }
 
@@ -526,12 +526,12 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             }
         }
 
-        const chrono::duration<double> getDurationCommitWindow() const override
+        const std::chrono::duration<double> getDurationCommitWindow() const override
         {
             return totalElapsedCommit;
         }
 
-        const chrono::duration<double> getDurationFinalSorting() const override
+        const std::chrono::duration<double> getDurationFinalSorting() const override
         {
             return elapsedFinalSorting;
         }
@@ -564,15 +564,15 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             if (hasAllocationError)
                 return;
 
-            auto ms = chrono::duration_cast<chrono::milliseconds>(getDuration());
+            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(getDuration());
 
-            auto now = chrono::system_clock::now();
-            auto in_time_t = chrono::system_clock::to_time_t(now);
+            auto now = std::chrono::system_clock::now();
+            auto in_time_t = std::chrono::system_clock::to_time_t(now);
 
-            stringstream ss;
-            ss << filePrefix << "_" << put_time(localtime(&in_time_t), "%Y%m%d%H%M%S") << "_" << ms.count() << ".txt";
+            std::stringstream ss;
+            ss << filePrefix << "_" << std::put_time(localtime(&in_time_t), "%Y%m%d%H%M%S") << "_" << ms.count() << ".txt";
 
-            ofstream outFile(ss.str(), ios_base::out);
+            std::ofstream outFile(ss.str(), std::ios_base::out);
 
             size_t numInputPoints = problem.GetInputDatasetSize();
             size_t numNeighbors = problem.GetNumNeighbors();
@@ -598,7 +598,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                     ++pos;
                 }
 
-                outFile << endl;
+                outFile << std::endl;
             }
 
             outFile.close();
@@ -611,12 +611,12 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
          * \return unique_ptr<vector<unsigned long>>  vector of input point ids where differences exist
          *
          */
-        unique_ptr<vector<unsigned long>> FindDifferences(AllKnnResult& result, double accuracy) override
+        std::unique_ptr<std::vector<unsigned long>> FindDifferences(AllKnnResult& result, double accuracy) override
         {
             if (hasAllocationError)
-                return unique_ptr<vector<unsigned long>>(nullptr);
+                return std::unique_ptr<std::vector<unsigned long>>(nullptr);
 
-            auto differences = unique_ptr<vector<unsigned long>>(new vector<unsigned long>());
+            auto differences = std::unique_ptr<std::vector<unsigned long>>(new std::vector<unsigned long>());
 
             size_t numInputPoints = problem.GetInputDatasetSize();
             size_t numNeighbors = problem.GetNumNeighbors();
@@ -627,7 +627,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             for (size_t pointId = 1; pointId <=  numInputPoints; ++pointId)
             {
                 NeighborsEnumerator* pNeighborsReference = &(neighborsVector.at(pointId - 1));
-                vector<Neighbor> removedNeighborsReference;
+                std::vector<Neighbor> removedNeighborsReference;
 
                 for (size_t iNeighbor=0; iNeighbor < numNeighbors; ++iNeighbor)
                 {
@@ -676,7 +676,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             if (pHeapAdditionsVector == nullptr)
                 return;
 
-            minHeapAdditions = numeric_limits<size_t>::max();
+            minHeapAdditions = std::numeric_limits<size_t>::max();
             maxHeapAdditions = 0;
             totalHeapAdditions = 0;
 
@@ -701,23 +701,23 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
     private:
         bool splitByT = false;
         bool parallelSort = false;
-        unique_ptr<pointNeighbors_priority_queue_map_t> pPendingNeighborsContainer;
-        unique_ptr<ext_point_vector_t> pStripedInputDataset;
-        unique_ptr<ext_point_vector_t> pStripedTrainingDataset;
-        unique_ptr<vector<size_t>> pInputStripeOffset;
-        unique_ptr<vector<size_t>> pInputStripeCount;
-        unique_ptr<vector<size_t>> pTrainingStripeOffset;
-        unique_ptr<vector<size_t>> pTrainingStripeCount;
-        unique_ptr<vector<StripeBoundaries_t>> pStripeBoundaries;
+        std::unique_ptr<pointNeighbors_priority_queue_map_t> pPendingNeighborsContainer;
+        std::unique_ptr<ext_point_vector_t> pStripedInputDataset;
+        std::unique_ptr<ext_point_vector_t> pStripedTrainingDataset;
+        std::unique_ptr<std::vector<size_t>> pInputStripeOffset;
+        std::unique_ptr<std::vector<size_t>> pInputStripeCount;
+        std::unique_ptr<std::vector<size_t>> pTrainingStripeOffset;
+        std::unique_ptr<std::vector<size_t>> pTrainingStripeCount;
+        std::unique_ptr<std::vector<StripeBoundaries_t>> pStripeBoundaries;
         bool hasAllocationError = false;
-        unique_ptr<unordered_map<unsigned long, StripePoint>> pPendingPoints;
-        unique_ptr<ext_neighbors_vector_t> pNeighborsExtVector;
+        std::unique_ptr<std::unordered_map<unsigned long, StripePoint>> pPendingPoints;
+        std::unique_ptr<ext_neighbors_vector_t> pNeighborsExtVector;
         const AllKnnProblemExternal& problemExt;
-        unique_ptr<ext_size_vector_t> pHeapAdditionsVector;
+        std::unique_ptr<ext_size_vector_t> pHeapAdditionsVector;
         size_t numFirstPassWindows = 0;
         size_t numSecondPassWindows = 0;
-        chrono::duration<double> totalElapsedCommit = chrono::duration<double>(0.0);
-        chrono::duration<double> elapsedFinalSorting = chrono::duration<double>(0.0);
+        std::chrono::duration<double> totalElapsedCommit = std::chrono::duration<double>(0.0);
+        std::chrono::duration<double> elapsedFinalSorting = std::chrono::duration<double>(0.0);
 
         /** \brief calculate an optimal number of stripes based on the number of training points and neighbors
          *
@@ -775,13 +775,13 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             pStripedInputDataset->reserve(inputDatasetSortedY.size());
             pStripedTrainingDataset->reserve(trainingDatasetSortedY.size());
 
-            pInputStripeOffset.reset(new vector<size_t>(numStripes, 0));
-            pInputStripeCount.reset(new vector<size_t>(numStripes, 0));
-            pTrainingStripeOffset.reset(new vector<size_t>(numStripes, 0));
-            pTrainingStripeCount.reset(new vector<size_t>(numStripes, 0));
-            pStripeBoundaries.reset(new vector<StripeBoundaries_t>(numStripes, {0.0, 0.0}));
+            pInputStripeOffset.reset(new std::vector<size_t>(numStripes, 0));
+            pInputStripeCount.reset(new std::vector<size_t>(numStripes, 0));
+            pTrainingStripeOffset.reset(new std::vector<size_t>(numStripes, 0));
+            pTrainingStripeCount.reset(new std::vector<size_t>(numStripes, 0));
+            pStripeBoundaries.reset(new std::vector<StripeBoundaries_t>(numStripes, {0.0, 0.0}));
 
-            pPendingPoints.reset(new unordered_map<unsigned long, StripePoint>());
+            pPendingPoints.reset(new std::unordered_map<unsigned long, StripePoint>());
             pPendingNeighborsContainer.reset(new pointNeighbors_priority_queue_map_t());
 
             //we cannot use a parallel loop because the external memory vectors do not allow concurrent access by multiple threads
@@ -791,27 +791,27 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
                 auto inputIterStart = inputDatasetSortedYBegin + i*inputDatasetStripeSize;
                 auto inputIterEnd = inputIterStart;
-                if ((size_t)distance(inputIterStart, inputDatasetSortedYEnd) <= inputDatasetStripeSize)
+                if ((size_t)std::distance(inputIterStart, inputDatasetSortedYEnd) <= inputDatasetStripeSize)
                     inputIterEnd = inputDatasetSortedYEnd;
                 else
                 {
                     inputIterEnd = inputIterStart + inputDatasetStripeSize;
                     auto inputIterEndLimit = inputDatasetSortedYEnd;
 
-                    if ((size_t)distance(inputIterEnd, inputDatasetSortedYEnd) > inputDatasetStripeSize)
+                    if ((size_t)std::distance(inputIterEnd, inputDatasetSortedYEnd) > inputDatasetStripeSize)
                         inputIterEndLimit = inputIterEnd + inputDatasetStripeSize;
 
-                    while (inputIterEnd < inputIterEndLimit && (prev(inputIterEnd))->y == inputIterEnd->y)
+                    while (inputIterEnd < inputIterEndLimit && (std::prev(inputIterEnd))->y == inputIterEnd->y)
                         ++inputIterEnd;
                 }
 
                 if (i > 0)
                 {
-                    while (inputIterStart < inputIterEnd && (prev(inputIterStart))->y == inputIterStart->y)
+                    while (inputIterStart < inputIterEnd && (std::prev(inputIterStart))->y == inputIterStart->y)
                         ++inputIterStart;
                 }
 
-                pInputStripeOffset->at(i) = (size_t)distance(inputDatasetSortedYBegin, inputIterStart);
+                pInputStripeOffset->at(i) = (size_t)std::distance(inputDatasetSortedYBegin, inputIterStart);
 
                 if (inputIterStart < inputIterEnd)
                 {
@@ -819,7 +819,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                     pInputStripeCount->at(i) = inputStripe.size();
                     if (parallelSort)
                     {
-                        parallel_sort(inputStripe.begin(), inputStripe.end(), [](const Point& point1, const Point& point2)
+                        tbb::parallel_sort(inputStripe.begin(), inputStripe.end(), [](const Point& point1, const Point& point2)
                              {
                                  return point1.x < point2.x;
                              });
@@ -844,7 +844,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
                     prevTrainingIterEnd = trainingIterEnd;
 
-                    pTrainingStripeOffset->at(i) = (size_t)distance(trainingDatasetSortedYBegin, trainingIterStart);
+                    pTrainingStripeOffset->at(i) = (size_t)std::distance(trainingDatasetSortedYBegin, trainingIterStart);
 
                     if (trainingIterStart < trainingIterEnd)
                     {
@@ -852,7 +852,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                         pTrainingStripeCount->at(i) = trainingStripe.size();
                         if (parallelSort)
                         {
-                            parallel_sort(trainingStripe.begin(), trainingStripe.end(), [](const Point& point1, const Point& point2)
+                            tbb::parallel_sort(trainingStripe.begin(), trainingStripe.end(), [](const Point& point1, const Point& point2)
                              {
                                  return point1.x < point2.x;
                              });
@@ -915,13 +915,13 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
             pStripedInputDataset->reserve(inputDatasetSortedY.size());
             pStripedTrainingDataset->reserve(trainingDatasetSortedY.size());
 
-            pInputStripeOffset.reset(new vector<size_t>(numStripes, 0));
-            pInputStripeCount.reset(new vector<size_t>(numStripes, 0));
-            pTrainingStripeOffset.reset(new vector<size_t>(numStripes, 0));
-            pTrainingStripeCount.reset(new vector<size_t>(numStripes, 0));
-            pStripeBoundaries.reset(new vector<StripeBoundaries_t>(numStripes, {0.0, 0.0}));
+            pInputStripeOffset.reset(new std::vector<size_t>(numStripes, 0));
+            pInputStripeCount.reset(new std::vector<size_t>(numStripes, 0));
+            pTrainingStripeOffset.reset(new std::vector<size_t>(numStripes, 0));
+            pTrainingStripeCount.reset(new std::vector<size_t>(numStripes, 0));
+            pStripeBoundaries.reset(new std::vector<StripeBoundaries_t>(numStripes, {0.0, 0.0}));
 
-            pPendingPoints.reset(new unordered_map<unsigned long, StripePoint>());
+            pPendingPoints.reset(new std::unordered_map<unsigned long, StripePoint>());
             pPendingNeighborsContainer.reset(new pointNeighbors_priority_queue_map_t());
 
             //we cannot use a parallel loop because the external memory vectors do not allow concurrent access by multiple threads
@@ -931,27 +931,27 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
                 auto trainingIterStart = trainingDatasetSortedYBegin + i*trainingDatasetStripeSize;
                 auto trainingIterEnd = trainingIterStart;
-                if ((size_t)distance(trainingIterStart, trainingDatasetSortedYEnd) <= trainingDatasetStripeSize)
+                if ((size_t)std::distance(trainingIterStart, trainingDatasetSortedYEnd) <= trainingDatasetStripeSize)
                     trainingIterEnd = trainingDatasetSortedYEnd;
                 else
                 {
                     trainingIterEnd = trainingIterStart + trainingDatasetStripeSize;
                     auto trainingIterEndLimit = trainingDatasetSortedYEnd;
 
-                    if ((size_t)distance(trainingIterEnd, trainingDatasetSortedYEnd) > trainingDatasetStripeSize)
+                    if ((size_t)std::distance(trainingIterEnd, trainingDatasetSortedYEnd) > trainingDatasetStripeSize)
                         trainingIterEndLimit = trainingIterEnd + trainingDatasetStripeSize;
 
-                    while (trainingIterEnd < trainingIterEndLimit && (prev(trainingIterEnd))->y == trainingIterEnd->y)
+                    while (trainingIterEnd < trainingIterEndLimit && (std::prev(trainingIterEnd))->y == trainingIterEnd->y)
                         ++trainingIterEnd;
                 }
 
                 if (i > 0)
                 {
-                    while (trainingIterStart < trainingIterEnd && (prev(trainingIterStart))->y == trainingIterStart->y)
+                    while (trainingIterStart < trainingIterEnd && (std::prev(trainingIterStart))->y == trainingIterStart->y)
                         ++trainingIterStart;
                 }
 
-                pTrainingStripeOffset->at(i) = (size_t)distance(trainingDatasetSortedYBegin, trainingIterStart);
+                pTrainingStripeOffset->at(i) = (size_t)std::distance(trainingDatasetSortedYBegin, trainingIterStart);
 
                 if (trainingIterStart < trainingIterEnd)
                 {
@@ -959,7 +959,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                     pTrainingStripeCount->at(i) = trainingStripe.size();
                     if (parallelSort)
                     {
-                            parallel_sort(trainingStripe.begin(), trainingStripe.end(), [](const Point& point1, const Point& point2)
+                            tbb::parallel_sort(trainingStripe.begin(), trainingStripe.end(), [](const Point& point1, const Point& point2)
                                  {
                                      return point1.x < point2.x;
                                  });
@@ -983,7 +983,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
 
                     prevInputIterEnd = inputIterEnd;
 
-                    pInputStripeOffset->at(i) = (size_t)distance(inputDatasetSortedYBegin, inputIterStart);
+                    pInputStripeOffset->at(i) = (size_t)std::distance(inputDatasetSortedYBegin, inputIterStart);
 
                     if (inputIterStart < inputIterEnd)
                     {
@@ -991,7 +991,7 @@ class AllKnnResultStripesParallelExternal : public AllKnnResult
                         pInputStripeCount->at(i) = inputStripe.size();
                         if (parallelSort)
                         {
-                            parallel_sort(inputStripe.begin(), inputStripe.end(), [](const Point& point1, const Point& point2)
+                            tbb::parallel_sort(inputStripe.begin(), inputStripe.end(), [](const Point& point1, const Point& point2)
                                  {
                                      return point1.x < point2.x;
                                  });

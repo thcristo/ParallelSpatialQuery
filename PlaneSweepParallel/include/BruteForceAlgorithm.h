@@ -15,17 +15,17 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
 
         virtual ~BruteForceAlgorithm() {}
 
-        string GetTitle() const
+        std::string GetTitle() const
         {
             return "Brute force";
         }
 
-        string GetPrefix() const
+        std::string GetPrefix() const
         {
             return "bruteforce_serial";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
+        std::unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
             int numNeighbors = problem.GetNumNeighbors();
 
@@ -36,7 +36,7 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
             auto& inputDataset = problem.GetInputDataset();
             auto& trainingDataset = problem.GetTrainingDataset();
 
-            auto start = chrono::high_resolution_clock::now();
+            auto start = std::chrono::high_resolution_clock::now();
 
             auto trainingDatasetBegin = trainingDataset.cbegin();
             auto trainingDatasetEnd = trainingDataset.cend();
@@ -57,10 +57,10 @@ class BruteForceAlgorithm : public AbstractAllKnnAlgorithm
                 }
             }
 
-            auto finish = chrono::high_resolution_clock::now();
-            chrono::duration<double> elapsed = finish - start;
+            auto finish = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = finish - start;
 
-            return unique_ptr<AllKnnResult>(new AllKnnResult(problem, GetPrefix(), pNeighborsContainer, elapsed, chrono::duration<double>()));
+            return std::unique_ptr<AllKnnResult>(new AllKnnResult(problem, GetPrefix(), pNeighborsContainer, elapsed, std::chrono::duration<double>()));
         }
 
     private:

@@ -10,8 +10,6 @@
 #include "PlaneSweepParallel.h"
 #include <tbb/tbb.h>
 
-using namespace tbb;
-
 /** \brief This class is used as an interface for enumerating neighbors
  */
 class NeighborsEnumerator
@@ -19,7 +17,7 @@ class NeighborsEnumerator
     public:
         virtual bool HasNext() = 0;
         virtual Neighbor Next() = 0;
-        virtual void AddAllRemoved(const vector<Neighbor>& neighbors) = 0;
+        virtual void AddAllRemoved(const std::vector<Neighbor>& neighbors) = 0;
         virtual size_t GetNumAdditions() = 0;
 };
 
@@ -36,7 +34,7 @@ class PointNeighbors : public NeighborsEnumerator
         bool HasNext();
         Neighbor Next();
 
-        void AddAllRemoved(const vector<Neighbor>& neighbors);
+        void AddAllRemoved(const std::vector<Neighbor>& neighbors);
 
     private:
         Container container;
@@ -50,7 +48,7 @@ template<>
 class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
 {
     public:
-        PointNeighbors(size_t numNeighbors) : PointNeighbors(neighbors_vector_t(numNeighbors, {0, numeric_limits<double>::max()}))
+        PointNeighbors(size_t numNeighbors) : PointNeighbors(neighbors_vector_t(numNeighbors, {0, std::numeric_limits<double>::max()}))
         {
         }
 
@@ -144,7 +142,7 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
          * \return void
          *
          */
-        void AddAllRemoved(const vector<Neighbor>& neighbors)
+        void AddAllRemoved(const std::vector<Neighbor>& neighbors)
         {
             for (int i = neighbors.size() - 1; i >= 0; --i)
             {
@@ -275,18 +273,18 @@ class PointNeighbors<neighbors_priority_queue_t> : public NeighborsEnumerator
         size_t numNeighbors = 0;
         neighbors_priority_queue_t container;
         size_t numAdditions = 0;
-        size_t lowStripe = numeric_limits<size_t>::max();
+        size_t lowStripe = std::numeric_limits<size_t>::max();
         size_t highStripe = 0;
 };
 
 //type definitions for neighbor containers
 template<class Container>
-using pointNeighbors_generic_map_t = unordered_map<unsigned long, PointNeighbors<Container>>;
+using pointNeighbors_generic_map_t = std::unordered_map<unsigned long, PointNeighbors<Container>>;
 
 template<class Container>
-using pointNeighbors_generic_vector_t = vector<PointNeighbors<Container>, cache_aligned_allocator<PointNeighbors<Container>>>;
+using pointNeighbors_generic_vector_t = std::vector<PointNeighbors<Container>, tbb::cache_aligned_allocator<PointNeighbors<Container>>>;
 
 typedef pointNeighbors_generic_map_t<neighbors_priority_queue_t> pointNeighbors_priority_queue_map_t;
 typedef pointNeighbors_generic_vector_t<neighbors_priority_queue_t> pointNeighbors_priority_queue_vector_t;
-typedef vector<vector<PointNeighbors<neighbors_priority_queue_t>>> pointNeighbors_vector_vector_t;
+typedef std::vector<std::vector<PointNeighbors<neighbors_priority_queue_t>>> pointNeighbors_vector_vector_t;
 #endif // POINTNEIGHBORS_H

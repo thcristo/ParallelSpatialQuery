@@ -30,7 +30,7 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
             return true;
         }
 
-        string GetTitle() const
+        std::string GetTitle() const
         {
             if (splitByT)
                 return parallelSort ? "Plane sweep stripes parallel external (parallel sorting, split by training)" : "Plane sweep stripes parallel external (split by training)";
@@ -38,7 +38,7 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                 return parallelSort ? "Plane sweep stripes parallel external (parallel sorting)" : "Plane sweep stripes parallel external";
         }
 
-        string GetPrefix() const
+        std::string GetPrefix() const
         {
             if (splitByT)
                 return parallelSort ? "planesweep_stripes_parallel_external_psort_splitByT" : "planesweep_stripes_parallel_external_splitByT";
@@ -47,7 +47,7 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
         }
     protected:
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
+        std::unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
             int numThreadsToUse = omp_get_max_threads();
 
@@ -58,23 +58,23 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                 numThreadsToUse = numThreads;
             }
 
-            auto start = chrono::high_resolution_clock::now();
+            auto start = std::chrono::high_resolution_clock::now();
 
             //create result object
-            auto pResult = unique_ptr<AllKnnResultStripesParallelExternal>(
+            auto pResult = std::unique_ptr<AllKnnResultStripesParallelExternal>(
                                 new AllKnnResultStripesParallelExternal(static_cast<AllKnnProblemExternal&>(problem),
                                                 GetPrefix(), parallelSort, splitByT));
 
-            cout << "split stripes start" << endl;
+            std::cout << "split stripes start" << std::endl;
             numStripes = pResult->SplitStripes(numStripes);
-            cout << "split stripes end" << endl;
-            auto finishSorting = chrono::high_resolution_clock::now();
+            std::cout << "split stripes end" << std::endl;
+            auto finishSorting = std::chrono::high_resolution_clock::now();
 
             size_t startStripe = 0;
             size_t endStripe = 0;
             size_t nextStripe = 0;
 
-            cout << "first pass started" << endl;
+            std::cout << "first pass started" << std::endl;
 
             //first phase of the algorithm
             do
@@ -87,10 +87,10 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                     startStripe = pWindow->GetStartStripe();
                     endStripe = pWindow->GetEndStripe();
                     nextStripe = endStripe + 1;
-                    cout << "got window " << startStripe << " " << endStripe << endl;
+                    std::cout << "got window " << startStripe << " " << endStripe << std::endl;
                     //run the plane sweep algorithm for this window
                     PlaneSweepWindow(pWindow, pResult, numThreadsToUse);
-                    cout << "processed window" << endl;
+                    std::cout << "processed window" << std::endl;
                 }
                 else
                     //no more windows available
@@ -98,12 +98,12 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
 
             } while (endStripe < numStripes - 1);
 
-            cout << "first pass ended" << endl;
+            std::cout << "first pass ended" << std::endl;
 
             //second phase of the algorithm, we examine pending points from the previous phase
             if (!pResult->HasAllocationError())
             {
-                cout << "second pass started" << endl;
+                std::cout << "second pass started" << std::endl;
 
                 bool hasPrevStripe = startStripe > 0;
 
@@ -117,27 +117,27 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                         startStripe = pWindow->GetStartStripe();
                         endStripe = pWindow->GetEndStripe();
                         hasPrevStripe = startStripe > 0;
-                        cout << "got window " << startStripe << " " << endStripe << endl;
+                        std::cout << "got window " << startStripe << " " << endStripe << std::endl;
                         //run the plane sweep algorithm for this window
                         PlaneSweepWindow(pWindow, pResult, numThreadsToUse);
-                        cout << "processed window" << endl;
+                        std::cout << "processed window" << std::endl;
                     }
                     else
                         break;
                 }
 
-                cout << "second pass ended" << endl;
+                std::cout << "second pass ended" << std::endl;
 
-                cout << "neighbors sort start" << endl;
+                std::cout << "neighbors sort start" << std::endl;
 
                 //sort the final result by input point id and neighbor position
                 pResult->SortNeighbors();
-                cout << "neighbors sort end" << endl;
+                std::cout << "neighbors sort end" << std::endl;
             }
 
-            auto finish = chrono::high_resolution_clock::now();
-            chrono::duration<double> elapsed = finish - start;
-            chrono::duration<double> elapsedSorting = finishSorting - start;
+            auto finish = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = finish - start;
+            std::chrono::duration<double> elapsedSorting = finishSorting - start;
 
             pResult->setDuration(elapsed);
             pResult->setDurationSorting(elapsedSorting);
@@ -160,7 +160,7 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
          * \return void
          *
          */
-        void PlaneSweepWindow(unique_ptr<StripesWindow>& pWindow, unique_ptr<AllKnnResultStripesParallelExternal>& pResult, unsigned int numThreadsToUse)
+        void PlaneSweepWindow(std::unique_ptr<StripesWindow>& pWindow, std::unique_ptr<AllKnnResultStripesParallelExternal>& pResult, unsigned int numThreadsToUse)
         {
             //check if this is the second phase of the algorithm
             bool isSecondPass = pWindow->IsSecondPass();
@@ -325,12 +325,12 @@ class PlaneSweepStripesParallelExternalAlgorithm : public AbstractAllKnnAlgorith
                 }
             }
 
-            cout << "commit window started" << endl;
+            std::cout << "commit window started" << std::endl;
 
             //commit the window: check for any completed points and transfer their neighbors to external memory vectors
             //and update the list of pending points
             pResult->CommitWindow(*pWindow, *pPendingPointsContainer);
-            cout << "commit window ended" << endl;
+            std::cout << "commit window ended" << std::endl;
         }
 
         /** \brief Searches for neighbors of an input point in a specific stripe

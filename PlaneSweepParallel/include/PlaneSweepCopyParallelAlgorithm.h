@@ -21,17 +21,17 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
 
         virtual ~PlaneSweepCopyParallelAlgorithm() {}
 
-        string GetTitle() const
+        std::string GetTitle() const
         {
             return parallelSort ? "Plane sweep copy parallel (parallel sorting)" : "Plane sweep copy parallel";
         }
 
-        string GetPrefix() const
+        std::string GetPrefix() const
         {
             return parallelSort ? "planesweep_copy_parallel_psort" : "planesweep_copy_parallel";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
+        std::unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
             //the implementation is similar to PlaneSweepCopyAlgorithm
             size_t numNeighbors = problem.GetNumNeighbors();
@@ -44,14 +44,14 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
                 omp_set_num_threads(numThreads);
             }
 
-            auto start = chrono::high_resolution_clock::now();
+            auto start = std::chrono::high_resolution_clock::now();
 
-            auto pResult = unique_ptr<AllKnnResultSorted>(new AllKnnResultSorted(problem, GetPrefix(), parallelSort));
+            auto pResult = std::unique_ptr<AllKnnResultSorted>(new AllKnnResultSorted(problem, GetPrefix(), parallelSort));
 
             auto& inputDataset = pResult->GetInputDatasetSorted();
             auto& trainingDataset = pResult->GetTrainingDatasetSorted();
 
-            auto finishSorting = chrono::high_resolution_clock::now();
+            auto finishSorting = std::chrono::high_resolution_clock::now();
 
             auto trainingDatasetBegin = trainingDataset.cbegin();
             auto trainingDatasetEnd = trainingDataset.cend();
@@ -122,9 +122,9 @@ class PlaneSweepCopyParallelAlgorithm : public AbstractAllKnnAlgorithm
                 }
             }
 
-            auto finish = chrono::high_resolution_clock::now();
-            chrono::duration<double> elapsed = finish - start;
-            chrono::duration<double> elapsedSorting = finishSorting - start;
+            auto finish = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = finish - start;
+            std::chrono::duration<double> elapsedSorting = finishSorting - start;
 
             pResult->setDuration(elapsed);
             pResult->setDurationSorting(elapsedSorting);

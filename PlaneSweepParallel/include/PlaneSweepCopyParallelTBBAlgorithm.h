@@ -7,8 +7,6 @@
 #include "AbstractAllKnnAlgorithm.h"
 #include <tbb/tbb.h>
 
-using namespace tbb;
-
 /** \brief Parallel plane sweep algorithm using copy of original datasets and Intel TBB
  */
 class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
@@ -20,17 +18,17 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
 
         virtual ~PlaneSweepCopyParallelTBBAlgorithm() {}
 
-        string GetTitle() const
+        std::string GetTitle() const
         {
             return parallelSort ? "Plane sweep copy parallel TBB (parallel sorting)" : "Plane sweep copy parallel TBB";
         }
 
-        string GetPrefix() const
+        std::string GetPrefix() const
         {
             return parallelSort ? "planesweep_copy_parallel_TBB_psort" : "planesweep_copy_parallel_TBB";
         }
 
-        unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
+        std::unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) override
         {
             //the implementation is similar to PlaneSweepCopyAlgorithm
             size_t numNeighbors = problem.GetNumNeighbors();
@@ -38,9 +36,9 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             auto pNeighborsContainer =
                 this->CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(problem.GetInputDataset(), numNeighbors);
 
-            typedef blocked_range<point_vector_t::const_iterator> point_range_t;
+            typedef tbb::blocked_range<point_vector_t::const_iterator> point_range_t;
 
-            task_scheduler_init scheduler(task_scheduler_init::deferred);
+            tbb::task_scheduler_init scheduler(tbb::task_scheduler_init::deferred);
 
             if (numThreads > 0)
             {
@@ -50,17 +48,17 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
             else
             {
                 //automatic number of threads equal to the number of cores
-                scheduler.initialize(task_scheduler_init::automatic);
+                scheduler.initialize(tbb::task_scheduler_init::automatic);
             }
 
-            auto start = chrono::high_resolution_clock::now();
+            auto start = std::chrono::high_resolution_clock::now();
 
-            auto pResult = unique_ptr<AllKnnResultSorted>(new AllKnnResultSorted(problem, GetPrefix(), parallelSort));
+            auto pResult = std::unique_ptr<AllKnnResultSorted>(new AllKnnResultSorted(problem, GetPrefix(), parallelSort));
 
             auto& inputDataset = pResult->GetInputDatasetSorted();
             auto& trainingDataset = pResult->GetTrainingDatasetSorted();
 
-            auto finishSorting = chrono::high_resolution_clock::now();
+            auto finishSorting = std::chrono::high_resolution_clock::now();
 
             auto trainingDatasetBegin = trainingDataset.cbegin();
             auto trainingDatasetEnd = trainingDataset.cend();
@@ -137,9 +135,9 @@ class PlaneSweepCopyParallelTBBAlgorithm : public AbstractAllKnnAlgorithm
                 }
             );
 
-            auto finish = chrono::high_resolution_clock::now();
-            chrono::duration<double> elapsed = finish - start;
-            chrono::duration<double> elapsedSorting = finishSorting - start;
+            auto finish = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = finish - start;
+            std::chrono::duration<double> elapsedSorting = finishSorting - start;
 
             pResult->setDuration(elapsed);
             pResult->setDurationSorting(elapsedSorting);

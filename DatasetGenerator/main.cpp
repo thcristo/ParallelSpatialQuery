@@ -3,8 +3,6 @@
 #include <fstream>
 #include <random>
 
-using namespace std;
-
 struct Point
 {
     long id;
@@ -16,9 +14,9 @@ int main(int argc, char* argv[])
 {
     if (argc < 3)
     {
-        cout << "Argument error. Please enter:\n";
-        cout << "Argument 1: The number of points to create\n";
-        cout << "Argument 2: The output filename\n";
+        std::cout << "Argument error. Please enter:\n";
+        std::cout << "Argument 1: The number of points to create\n";
+        std::cout << "Argument 2: The output filename\n";
 
         return 1;
     }
@@ -26,34 +24,34 @@ int main(int argc, char* argv[])
     try
     {
         size_t numPoints = strtoul(argv[1], nullptr, 10);
-        string filename = argv[2];
+        std::string filename = argv[2];
 
-        ofstream outStream(filename, ios::binary | ios::out);
+        std::ofstream outStream(filename, std::ios::binary | std::ios::out);
         if ( !outStream.is_open() )
         {
             return 1;
         }
 
-        outStream.write(reinterpret_cast<const char*>(&numPoints), streamsize(sizeof(size_t)));
+        outStream.write(reinterpret_cast<const char*>(&numPoints), std::streamsize(sizeof(size_t)));
 
-        default_random_engine generator;
-        uniform_real_distribution<double> distribution(0.0,1.0);
+        std::default_random_engine generator;
+        std::uniform_real_distribution<double> distribution(0.0,1.0);
 
         for (size_t i=0; i < numPoints; ++i)
         {
             Point p = {(long)(i+1), distribution(generator), distribution(generator)};
-            outStream.write(reinterpret_cast<const char*>(&p), streamsize(sizeof(Point)));
+            outStream.write(reinterpret_cast<const char*>(&p), std::streamsize(sizeof(Point)));
         }
 
         outStream.close();
 
-        cout << numPoints << " points written to file " << filename << endl;
+        std::cout << numPoints << " points written to file " << filename << std::endl;
 
         return 0;
     }
-    catch(exception& ex)
+    catch(std::exception& ex)
     {
-        cout << "Exception: " << ex.what() << endl;
+        std::cout << "Exception: " << ex.what() << std::endl;
         return 1;
     }
 }

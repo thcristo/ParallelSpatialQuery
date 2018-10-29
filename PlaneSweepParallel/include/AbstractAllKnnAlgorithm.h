@@ -14,24 +14,21 @@
 #include "PlaneSweepParallel.h"
 #include <tbb/tbb.h>
 
-using namespace tbb;
-
-
 template<class OuterContainer>
-unique_ptr<OuterContainer> CreateNeighborsContainer(const point_vector_t& inputDataset, size_t numNeighbors)
+std::unique_ptr<OuterContainer> CreateNeighborsContainer(const point_vector_t& inputDataset, size_t numNeighbors)
 {
 
 }
 
 template<>
-unique_ptr<pointNeighbors_priority_queue_vector_t> CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(const point_vector_t& inputDataset, size_t numNeighbors)
+std::unique_ptr<pointNeighbors_priority_queue_vector_t> CreateNeighborsContainer<pointNeighbors_priority_queue_vector_t>(const point_vector_t& inputDataset, size_t numNeighbors)
 {
     try
     {
         //we allocate memory for the list of neighbors of each input point
         //all memory is allocated at once to avoid allocation overhead
         //this function is called only for internal memory algorithms
-        unique_ptr<pointNeighbors_priority_queue_vector_t> pContainer(new pointNeighbors_priority_queue_vector_t(cache_aligned_allocator<PointNeighbors<neighbors_priority_queue_t>>()));
+        std::unique_ptr<pointNeighbors_priority_queue_vector_t> pContainer(new pointNeighbors_priority_queue_vector_t(tbb::cache_aligned_allocator<PointNeighbors<neighbors_priority_queue_t>>()));
         pContainer->reserve(inputDataset.size());
 
         //for each input point, create a max heap filled with k neighbors of a very large distance
@@ -40,7 +37,7 @@ unique_ptr<pointNeighbors_priority_queue_vector_t> CreateNeighborsContainer<poin
 
         return pContainer;
     }
-    catch(bad_alloc)
+    catch(std::bad_alloc)
     {
         throw ApplicationException("Cannot allocate memory for neighbors container.");
     }
@@ -60,14 +57,14 @@ class AbstractAllKnnAlgorithm
          * \return unique_ptr<AllKnnResult> A smart pointer to the result of the algorithm
          *
          */
-        virtual unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) = 0;
+        virtual std::unique_ptr<AllKnnResult> Process(AllKnnProblem& problem) = 0;
 
         /** \brief Returns the title of the algorithm
          *
          * \return string
          *
          */
-        virtual string GetTitle() const = 0;
+        virtual std::string GetTitle() const = 0;
 
         /** \brief
          *
@@ -88,7 +85,7 @@ class AbstractAllKnnAlgorithm
          * \return unique_ptr<OuterContainer> The container of nearest neighbors for each input point
          */
         template<class OuterContainer>
-        unique_ptr<OuterContainer> CreateNeighborsContainer(const point_vector_t& inputDataset, size_t numNeighbors) const
+        std::unique_ptr<OuterContainer> CreateNeighborsContainer(const point_vector_t& inputDataset, size_t numNeighbors) const
         {
             return ::CreateNeighborsContainer<OuterContainer>(inputDataset, numNeighbors);
         }

@@ -24,16 +24,14 @@
 
 #define NUM_ALGORITHMS 30
 
-using namespace std;
-
-typedef unique_ptr<AbstractAllKnnAlgorithm> algorithm_ptr_t;
+typedef std::unique_ptr<AbstractAllKnnAlgorithm> algorithm_ptr_t;
 
 int main(int argc, char* argv[])
 {
     double accuracy = 1.0E-15;
     bool saveToFile = true;
     bool findDifferences = true;
-    string enableAlgo(NUM_ALGORITHMS, '1');
+    std::string enableAlgo(NUM_ALGORITHMS, '1');
     bool useExternalMemory = false;
     bool useInternalMemory = false;
     size_t memoryLimitMB = 1024;
@@ -41,17 +39,17 @@ int main(int argc, char* argv[])
     //parameters must be specified in the command line
     if (argc < 4)
     {
-        cout << "Argument error. Please enter:\n";
-        cout << "Argument 1: The number of the nearest neighbors of the query,\n";
-        cout << "Argument 2: The file of the input dataset,\n";
-        cout << "Argument 3: The file of the training dataset,\n";
-        cout << "Argument 4: The number of threads (optional)\n";
-        cout << "Argument 5: The accuracy to use for comparing results (optional)\n";
-        cout << "Argument 6: The number of stripes (optional)\n";
-        cout << "Argument 7: Save results of each algorithm to a text file (0/1, optional)\n";
-        cout << "Argument 8: Compare results of each algorithm with results of the first algorithm (0/1, optional)\n";
-        cout << "Argument 9: Enable/Disable algorithms (bitstream of 30 digits 0 or 1, e.g. 01100110011110, optional)\n";
-        cout << "Argument 10: Megabytes of physical memory to use for external memory algorithms (int, optional)\n";
+        std::cout << "Argument error. Please enter:\n";
+        std::cout << "Argument 1: The number of the nearest neighbors of the query,\n";
+        std::cout << "Argument 2: The file of the input dataset,\n";
+        std::cout << "Argument 3: The file of the training dataset,\n";
+        std::cout << "Argument 4: The number of threads (optional)\n";
+        std::cout << "Argument 5: The accuracy to use for comparing results (optional)\n";
+        std::cout << "Argument 6: The number of stripes (optional)\n";
+        std::cout << "Argument 7: Save results of each algorithm to a text file (0/1, optional)\n";
+        std::cout << "Argument 8: Compare results of each algorithm with results of the first algorithm (0/1, optional)\n";
+        std::cout << "Argument 9: Enable/Disable algorithms (bitstream of 30 digits 0 or 1, e.g. 01100110011110, optional)\n";
+        std::cout << "Argument 10: Megabytes of physical memory to use for external memory algorithms (int, optional)\n";
         return 1;
     }
 
@@ -113,7 +111,7 @@ int main(int argc, char* argv[])
         //the bitstream of algorithms to run, a sequence of 30 digits 0 or 1
         if (argc >= 10)
         {
-            string bs = argv[9];
+            std::string bs = argv[9];
             if (bs.length() > 0)
             {
                 if (bs.length() < NUM_ALGORITHMS)
@@ -127,14 +125,14 @@ int main(int argc, char* argv[])
         //memory limit in MB for the external memory algorithms, do not use more memory
         if (argc >= 11)
         {
-            size_t limit = stoull(argv[10]);
+            size_t limit = std::stoull(argv[10]);
             if (limit > 0)
             {
                 memoryLimitMB = limit;
             }
         }
 
-        vector<algorithm_ptr_t> algorithms;
+        std::vector<algorithm_ptr_t> algorithms;
 
         //insert all algorithms we want to run in a vector
         for (int i=0; i < NUM_ALGORITHMS; ++i)
@@ -271,10 +269,10 @@ int main(int argc, char* argv[])
         }
 
         //set Greek numeric formatting for decimal and thousand separator
-        cout.imbue(std::locale(cout.getloc(), new punct_facet<char, ',', '.'>));
+        std::cout.imbue(std::locale(std::cout.getloc(), new punct_facet<char, ',', '.'>));
 
-        unique_ptr<AllKnnProblem> pProblem;
-        unique_ptr<AllKnnProblemExternal> pProblemExternal;
+        std::unique_ptr<AllKnnProblem> pProblem;
+        std::unique_ptr<AllKnnProblemExternal> pProblemExternal;
 
         //allocate the problem object depending on which kind of algorithm we need to run, internal memory or external, may be both of them
         if (useInternalMemory)
@@ -283,28 +281,28 @@ int main(int argc, char* argv[])
         if (useExternalMemory)
             pProblemExternal.reset(new AllKnnProblemExternal(argv[2], argv[3], numNeighbors, true, memoryLimitMB));
 
-        unique_ptr<AllKnnResult> pResultReference, pResult;
-        unique_ptr<vector<unsigned long>> pDiff;
+        std::unique_ptr<AllKnnResult> pResultReference, pResult;
+        std::unique_ptr<std::vector<unsigned long>> pDiff;
 
         //report how much time was required for loading the datasets, input and training
         if (useInternalMemory)
-            cout << "Read " << pProblem->GetInputDatasetSize() << " input points and " << pProblem->GetTrainingDatasetSize()
-                << " training points " << "in " << pProblem->getLoadingTime().count() << " seconds" << endl;
+            std::cout << "Read " << pProblem->GetInputDatasetSize() << " input points and " << pProblem->GetTrainingDatasetSize()
+                << " training points " << "in " << pProblem->getLoadingTime().count() << " seconds" << std::endl;
 
         if (useExternalMemory)
-            cout << "Read " << pProblemExternal->GetInputDatasetSize() << " input points and " << pProblemExternal->GetTrainingDatasetSize()
-                << " training points " << "in " << pProblemExternal->getLoadingTime().count() << " seconds" << endl;
+            std::cout << "Read " << pProblemExternal->GetInputDatasetSize() << " input points and " << pProblemExternal->GetTrainingDatasetSize()
+                << " training points " << "in " << pProblemExternal->getLoadingTime().count() << " seconds" << std::endl;
 
         //create the output file to record performance statistics
-        auto now = chrono::system_clock::now();
-        auto in_time_t = chrono::system_clock::to_time_t(now);
-        stringstream ss;
-        ss <<  "results_" << put_time(localtime(&in_time_t), "%Y%m%d%H%M%S") << ".csv";
+        auto now = std::chrono::system_clock::now();
+        auto in_time_t = std::chrono::system_clock::to_time_t(now);
+        std::stringstream ss;
+        ss <<  "results_" << std::put_time(localtime(&in_time_t), "%Y%m%d%H%M%S") << ".csv";
 
-        ofstream outFile(ss.str(), ios_base::out);
-        outFile.imbue(locale(outFile.getloc(), new punct_facet<char, ',', '.'>));
+        std::ofstream outFile(ss.str(), std::ios_base::out);
+        outFile.imbue(std::locale(outFile.getloc(), new punct_facet<char, ',', '.'>));
 
-        outFile << "Algorithm;Total Duration;Sorting Duration;Total Heap Additions;Min. Heap Additions;Max. Heap Additions;Avg. Heap Additions;NumberOfStripes;HasAllocationError;PendingPoints;NumFirstPassWindows;NumSecondPassWindows;CommitWindow Duration;Final Sorting Duration;Differences;First 5 different point ids" << endl;
+        outFile << "Algorithm;Total Duration;Sorting Duration;Total Heap Additions;Min. Heap Additions;Max. Heap Additions;Avg. Heap Additions;NumberOfStripes;HasAllocationError;PendingPoints;NumFirstPassWindows;NumSecondPassWindows;CommitWindow Duration;Final Sorting Duration;Differences;First 5 different point ids" << std::endl;
         outFile.flush();
 
         //run each requested algorithm
@@ -317,7 +315,7 @@ int main(int argc, char* argv[])
                 pResult = algorithms[iAlgo]->Process(*pProblem);
 
             //output the performance statistics to the console
-            cout << fixed << setprecision(3) << algorithms[iAlgo]->GetTitle() << " duration: " << pResult->getDuration().count()
+            std::cout << std::fixed << std::setprecision(3) << algorithms[iAlgo]->GetTitle() << " duration: " << pResult->getDuration().count()
                 << " sorting " << pResult->getDurationSorting().count() << " seconds "
                 << " totalAdd: " << pResult->getTotalHeapAdditions()
                 <<  " minAdd: " << pResult->getMinHeapAdditions()
@@ -332,7 +330,7 @@ int main(int argc, char* argv[])
                 << " finalSorting: " << pResult->getDurationFinalSorting().count() << " seconds ";
 
             //write the performance statistics to the output file
-            outFile << fixed << setprecision(3) << algorithms[iAlgo]->GetTitle() << ";" << pResult->getDuration().count()
+            outFile << std::fixed << std::setprecision(3) << algorithms[iAlgo]->GetTitle() << ";" << pResult->getDuration().count()
                 << ";" << pResult->getDurationSorting().count()
                 << ";" << pResult->getTotalHeapAdditions()
                 << ";" << pResult->getMinHeapAdditions()
@@ -356,20 +354,20 @@ int main(int argc, char* argv[])
             if (findDifferences && iAlgo > 0 && !pResult->HasAllocationError())
             {
                 pDiff = pResult->FindDifferences(*pResultReference, accuracy);
-                cout << " " << pDiff->size() << " differences. ";
+                std::cout << " " << pDiff->size() << " differences. ";
                 outFile << ";" << pDiff->size();
 
                 if (pDiff->size() > 0)
                 {
                     //report the first 5 different neighbor ids
-                    cout << "First 5 different point ids: ";
+                    std::cout << "First 5 different point ids: ";
                     outFile << ";";
 
                     for (size_t i = 0; i < 5; ++i)
                     {
                         if (pDiff->size() >= i+1)
                         {
-                            cout << pDiff->at(i) << " ";
+                            std::cout << pDiff->at(i) << " ";
                             outFile << pDiff->at(i) << " ";
                         }
                         else
@@ -389,14 +387,14 @@ int main(int argc, char* argv[])
                 outFile << ";;";
             }
 
-            cout << endl;
-            outFile << endl;
+            std::cout << std::endl;
+            outFile << std::endl;
             outFile.flush();
 
             //if we need to check for differences, keep the first result to use as a reference for comparing the others with it
             if (findDifferences && iAlgo == 0)
             {
-                pResultReference = move(pResult);
+                pResultReference = std::move(pResult);
             }
 
             //free the memory allocated for the result
@@ -413,10 +411,10 @@ int main(int argc, char* argv[])
 
         return 0;
     }
-    catch(exception& ex)
+    catch(std::exception& ex)
     {
         //report any exception
-        cout << "Exception: " << ex.what() << endl;
+        std::cout << "Exception: " << ex.what() << std::endl;
         return 1;
     }
 
